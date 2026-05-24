@@ -139,6 +139,17 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 .target-pts{font-size:13px;color:var(--muted)}
 .modal-cancel{width:100%;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--muted);font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px}
 
+/* ── REVERSE OFFER NOTIFICATION ── */
+#reverse-offer-notif{position:fixed;bottom:0;left:0;right:0;z-index:250;padding:14px 16px;background:var(--card);border-top:2px solid var(--green);display:flex;align-items:center;gap:12px;transform:translateY(100%);transition:transform .3s ease}
+#reverse-offer-notif.show{transform:translateY(0)}
+.rev-offer-icon{font-size:30px;flex-shrink:0}
+.rev-offer-info{flex:1;min-width:0}
+.rev-offer-msg{font-size:14px;font-weight:800;margin-bottom:2px}
+.rev-offer-timer{font-size:12px;color:var(--gold);font-weight:700}
+.rev-offer-btns{display:flex;gap:8px;flex-shrink:0}
+.rev-btn-yes{padding:10px 14px;border-radius:10px;border:none;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff}
+.rev-btn-no{padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;color:var(--muted)}
+
 /* ── WAITING OVERLAY ── */
 #waiting-overlay{position:fixed;inset:0;background:#00000095;z-index:90;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px}
 .waiting-spinner{width:52px;height:52px;border:4px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite}
@@ -294,6 +305,19 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
     <div class="modal-title" id="target-modal-title">اختر هدفك</div>
     <div id="target-list"></div>
     <button class="modal-cancel" onclick="closeTargetModal()">إلغاء</button>
+  </div>
+</div>
+
+<!-- ════ REVERSE OFFER NOTIFICATION ════ -->
+<div id="reverse-offer-notif">
+  <div class="rev-offer-icon">🔄</div>
+  <div class="rev-offer-info">
+    <div class="rev-offer-msg" id="reverse-offer-msg"></div>
+    <div class="rev-offer-timer">اعكس خلال <span id="reverse-offer-secs">5</span> ثوانٍ</div>
+  </div>
+  <div class="rev-offer-btns">
+    <button class="rev-btn-yes" onclick="sendReverseDecision(true)">اعكس! 🔄</button>
+    <button class="rev-btn-no" onclick="sendReverseDecision(false)">تجاهل</button>
   </div>
 </div>
 
@@ -641,6 +665,34 @@ function skipPreQuestion() {
 
 function closePreQModal() {
   document.getElementById('pre-q-modal').classList.remove('open');
+}
+
+// ─── REVERSE OFFER ───────────────────────────────────────────
+let reverseOfferTimer = null;
+
+socket.on('game:reverse-offer', ({ attackerName, type }) => {
+  const typeNames = { freeze:'تجميد', cut:'قطع', hole:'ثقب' };
+  document.getElementById('reverse-offer-msg').textContent =
+    `⚔️ ${attackerName} يهاجمك بـ ${typeNames[type] || type}!`;
+  let secs = 5;
+  document.getElementById('reverse-offer-secs').textContent = secs;
+  document.getElementById('reverse-offer-notif').classList.add('show');
+  reverseOfferTimer = setInterval(() => {
+    secs--;
+    const el = document.getElementById('reverse-offer-secs');
+    if (el) el.textContent = secs;
+    if (secs <= 0) {
+      clearInterval(reverseOfferTimer); reverseOfferTimer = null;
+      document.getElementById('reverse-offer-notif').classList.remove('show');
+    }
+  }, 1000);
+});
+
+function sendReverseDecision(use) {
+  if (reverseOfferTimer) { clearInterval(reverseOfferTimer); reverseOfferTimer = null; }
+  document.getElementById('reverse-offer-notif').classList.remove('show');
+  socket.emit('player:reverse-decision', { use });
+  if (use) { abilitiesState.defense = true; renderAbilitiesBar(); }
 }
 
 // ─── WAITING OVERLAY ─────────────────────────────────────────

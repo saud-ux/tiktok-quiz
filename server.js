@@ -30,6 +30,7 @@ function newState() {
     nextEffects: {},   // id → {cut?,frozen?}
     retryPending: {},  // id → true
     revivalPending: {},// id → true
+    reverseOffers: {}, // targetId → { attackerId, type, immediate, timeout }
     preQ: false,
     preQEligible: new Set(),
     preQResponded: new Set(),
@@ -59,12 +60,28 @@ function notify(targetId, type, msg) {
 // ─────────────────────────────────────────────────────────────
 // APPLY ATTACK (with reverse/immunity checks)
 // ─────────────────────────────────────────────────────────────
-function applyAttack(attackerId, type, targetId, immediate = false) {
+function applyAttack(attackerId, type, targetId, immediate = false, skipReverseOffer = false) {
   const attacker = G.players[attackerId];
   const target   = G.players[targetId];
   if (!target || !attacker) return { ok: false };
 
   const tEff = G.effects[targetId] || {};
+
+  // Reactive reverse: if target has unused reverse ability, pause and offer them 5s to decide
+  if (!skipReverseOffer && !G.reverseOffers[targetId]) {
+    const defAb = target.abilities?.defense;
+    if (defAb && defAb.type === 'reverse' && !defAb.used) {
+      G.reverseOffers[targetId] = {
+        attackerId, type, immediate,
+        timeout: setTimeout(() => {
+          delete G.reverseOffers[targetId];
+          applyAttack(attackerId, type, targetId, immediate, true);
+        }, 5000),
+      };
+      io.to(targetId).emit('game:reverse-offer', { attackerName: attacker.name, type });
+      return { ok: true, pending: true };
+    }
+  }
 
   if (tEff.reverse) {
     tEff.reverse = false;
@@ -365,8 +382,38 @@ io.on('connection', socket => {
     checkAllPreQResponded();
   });
 
+  socket.on('player:reverse-decision', ({ use }) => {
+    const offer = G.reverseOffers[socket.id];
+    if (!offer) return;
+    clearTimeout(offer.timeout);
+    delete G.reverseOffers[socket.id];
+
+    const p = G.players[socket.id];
+    if (use && p) {
+      p.abilities.defense.used = true;
+      // Reflect the attack back onto the attacker
+      if (offer.type === 'freeze') {
+        if (offer.immediate) G.effects[offer.attackerId] = { ...(G.effects[offer.attackerId] || {}), frozen: true };
+        else G.nextEffects[offer.attackerId] = { ...(G.nextEffects[offer.attackerId] || {}), frozen: true };
+      } else if (offer.type === 'cut') {
+        if (offer.immediate) G.effects[offer.attackerId] = { ...(G.effects[offer.attackerId] || {}), cut: true };
+        else G.nextEffects[offer.attackerId] = { ...(G.nextEffects[offer.attackerId] || {}), cut: true };
+      } else if (offer.type === 'hole') {
+        G.effects[socket.id] = { ...(G.effects[socket.id] || {}), holeTarget: offer.attackerId };
+      }
+      notify(offer.attackerId, 'attack-reflected', `${p.name} عكس هجومك!`);
+      notify(socket.id, 'reverse-fired', '🔄 درع الانعكاس انطلق!');
+      io.to(socket.id).emit('ability:result', { type: 'reverse', status: 'active' });
+      io.emit('game:players-update', publicPlayers());
+    } else {
+      // Player declined — apply attack normally
+      applyAttack(offer.attackerId, offer.type, socket.id, offer.immediate, true);
+    }
+  });
+
   socket.on('host:reset', () => {
     clearInterval(G.timerRef);
+    Object.values(G.reverseOffers).forEach(o => clearTimeout(o.timeout));
     G = newState();
     io.emit('game:reset');
   });
@@ -524,6 +571,10 @@ io.on('connection', socket => {
 
   socket.on('disconnect', () => {
     if (G.players[socket.id]) {
+      if (G.reverseOffers[socket.id]) {
+        clearTimeout(G.reverseOffers[socket.id].timeout);
+        delete G.reverseOffers[socket.id];
+      }
       delete G.players[socket.id];
       delete G.effects[socket.id];
       io.emit('game:players-update', publicPlayers());
