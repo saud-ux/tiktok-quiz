@@ -115,12 +115,16 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 
 /* ── PRE-QUESTION MODAL ── */
 .pre-q-sheet{background:var(--card);border-radius:20px 20px 0 0;padding:24px 20px;width:100%}
-.pre-q-icon{font-size:48px;text-align:center;margin-bottom:10px}
-.pre-q-title{font-size:18px;font-weight:900;text-align:center;margin-bottom:6px}
-.pre-q-desc{font-size:13px;color:var(--muted);text-align:center;margin-bottom:14px;line-height:1.6}
-.pre-q-countdown{text-align:center;font-size:13px;color:var(--muted);margin-bottom:16px}
+.pre-q-title{font-size:17px;font-weight:900;text-align:center;margin-bottom:4px}
+.pre-q-subtitle{font-size:13px;color:var(--muted);text-align:center;margin-bottom:14px}
+.pre-q-countdown{text-align:center;font-size:13px;color:var(--muted);margin-bottom:14px}
 .pre-q-countdown span{font-weight:900;color:var(--gold);font-size:16px}
-.btn-yes{width:100%;padding:14px;border-radius:12px;border:none;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;margin-bottom:10px;box-shadow:0 4px 16px #16a34a40}
+.pre-q-abilities-list{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+.pre-q-ability-btn{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:14px;border:2px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;cursor:pointer;text-align:right;transition:.2s;width:100%}
+.pre-q-ability-btn:hover{border-color:var(--green);background:#16a34a15}
+.pre-q-ab-icon{font-size:32px;flex-shrink:0}
+.pre-q-ab-name{font-size:16px;font-weight:800;margin-bottom:2px}
+.pre-q-ab-desc{font-size:12px;color:var(--muted);line-height:1.4}
 .btn-skip{width:100%;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--muted);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer}
 
 /* ── TARGET MODAL ── */
@@ -275,12 +279,11 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 <!-- ════ PRE-QUESTION MODAL ════ -->
 <div class="modal-overlay" id="pre-q-modal">
   <div class="pre-q-sheet">
-    <div class="pre-q-icon" id="pre-q-icon"></div>
-    <div class="pre-q-title" id="pre-q-title"></div>
-    <div class="pre-q-desc" id="pre-q-desc"></div>
-    <div class="pre-q-countdown">سيتم التخطي بعد <span id="pre-q-timer">8</span> ثوانٍ</div>
-    <button class="btn-yes" id="pre-q-yes-btn"></button>
-    <button class="btn-skip" onclick="skipPreQuestion()">تخطّ</button>
+    <div class="pre-q-title">هل تستخدم خاصية قبل السؤال؟</div>
+    <div class="pre-q-subtitle">يمكنك استخدام خاصية واحدة فقط</div>
+    <div class="pre-q-countdown">سيتم التخطي بعد <span id="pre-q-timer">4</span> ثوانٍ</div>
+    <div class="pre-q-abilities-list" id="pre-q-abilities-list"></div>
+    <button class="btn-skip" onclick="skipPreQuestion()">تخطّ — لا أريد استخدام أي خاصية</button>
   </div>
 </div>
 
@@ -560,38 +563,23 @@ function closeTargetModal() {
 
 // ─── PRE-QUESTION MODAL ───────────────────────────────────────
 let preQTimer = null;
-let preQCat   = null;
-let preQType  = null;
 
-function showPreQuestionModal(cat, type) {
-  preQCat  = cat;
-  preQType = type;
-  const a  = ABILITIES[cat].find(x => x.type === type);
-
-  document.getElementById('pre-q-icon').textContent  = a.icon;
-  document.getElementById('pre-q-title').textContent = `هل تستخدم "${a.name}" الآن؟`;
-  document.getElementById('pre-q-desc').textContent  = a.desc;
-
-  const yesBtn = document.getElementById('pre-q-yes-btn');
-
-  if (type === 'immunity') {
-    yesBtn.textContent = 'نعم، فعّل الحصانة';
-    yesBtn.onclick = () => {
-      clearPreQTimer();
-      socket.emit('player:pre-question-decision', { use: true });
-      abilitiesState[cat] = true;
-      closePreQModal();
-    };
-  } else {
-    // freeze or cut → need target selection
-    yesBtn.textContent = 'نعم، اختر الهدف';
-    yesBtn.onclick = () => {
-      clearPreQTimer();
-      closePreQModal();
-      // show target picker; on confirm → send decision with targetId
-      showPreQTargetPicker(cat, type, a.name);
-    };
-  }
+function showPreQuestionModal(abilities) {
+  const list = document.getElementById('pre-q-abilities-list');
+  list.innerHTML = abilities.map(({ category, type }) => {
+    const a = ABILITIES[category].find(x => x.type === type);
+    const onclick = type === 'immunity'
+      ? `usePreQAbility('${category}','${type}',null)`
+      : `pickPreQTarget('${category}','${type}','${a.name}')`;
+    return `
+      <button class="pre-q-ability-btn" onclick="${onclick}">
+        <span class="pre-q-ab-icon">${a.icon}</span>
+        <div>
+          <div class="pre-q-ab-name">${a.name}</div>
+          <div class="pre-q-ab-desc">${a.desc}</div>
+        </div>
+      </button>`;
+  }).join('');
 
   document.getElementById('pre-q-modal').classList.add('open');
 
@@ -605,14 +593,27 @@ function showPreQuestionModal(cat, type) {
   }, 1000);
 }
 
-function showPreQTargetPicker(cat, type, name) {
+function usePreQAbility(category, type, targetId) {
+  clearPreQTimer();
+  closePreQModal();
+  abilitiesState[category] = true;
+  socket.emit('player:pre-question-decision', { use: true, category, type, targetId });
+}
+
+function pickPreQTarget(category, type, name) {
+  clearPreQTimer();
+  closePreQModal();
+  showPreQTargetPicker(category, type, name);
+}
+
+function showPreQTargetPicker(category, type, name) {
   const others = Object.values(allPlayers).filter(p => p.id !== myId);
   if (!others.length) { socket.emit('player:pre-question-decision', { use: false }); return; }
 
   const iconMap = { freeze:'❄️', cut:'✂️' };
   document.getElementById('target-modal-title').textContent = `${iconMap[type]||''} اختر هدف — ${name}`;
   document.getElementById('target-list').innerHTML = others.map(p => `
-    <div class="target-item" onclick="confirmPreQAttack('${cat}','${p.id}')">
+    <div class="target-item" onclick="confirmPreQAttack('${category}','${type}','${p.id}')">
       ${renderAvatar(p.avatar, 44)}
       <span class="target-name">${p.name}</span>
       <span class="target-pts">${p.points.toLocaleString()} نقطة</span>
@@ -621,10 +622,10 @@ function showPreQTargetPicker(cat, type, name) {
   document.getElementById('target-modal').classList.add('open');
 }
 
-function confirmPreQAttack(cat, targetId) {
+function confirmPreQAttack(category, type, targetId) {
   closeTargetModal();
-  abilitiesState[cat] = true;
-  socket.emit('player:pre-question-decision', { use: true, targetId });
+  abilitiesState[category] = true;
+  socket.emit('player:pre-question-decision', { use: true, category, type, targetId });
 }
 
 function clearPreQTimer() {
@@ -716,9 +717,8 @@ socket.on('game:question-start', ({ question }) => {
   renderQuestion(question);
 });
 
-socket.on('game:pre-question', ({ category, type }) => {
-  // Server is asking ME to decide before the question starts
-  showPreQuestionModal(category, type);
+socket.on('game:pre-question', ({ abilities }) => {
+  showPreQuestionModal(abilities);
 });
 
 socket.on('game:waiting-pre-question', () => {

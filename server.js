@@ -303,14 +303,16 @@ io.on('connection', socket => {
     G.preQEligible = new Set(eligible.map(p => p.id));
     G.preQResponded = new Set();
 
-    // Notify eligible players
+    // Notify eligible players — send all their eligible abilities in one event
     eligible.forEach(p => {
+      const abils = [];
       ['attack','defense'].forEach(cat => {
         const ab = p.abilities[cat];
         if (ab && preTypes.includes(ab.type) && !ab.used) {
-          io.to(p.id).emit('game:pre-question', { category: cat, type: ab.type });
+          abils.push({ category: cat, type: ab.type });
         }
       });
+      if (abils.length) io.to(p.id).emit('game:pre-question', { abilities: abils });
     });
 
     // Notify non-eligible players to wait
@@ -331,19 +333,16 @@ io.on('connection', socket => {
 
   socket.on('host:end-question', () => endQuestion());
 
-  socket.on('player:pre-question-decision', ({ use, targetId }) => {
+  socket.on('player:pre-question-decision', ({ use, category, type, targetId }) => {
     if (!G.preQ || !G.preQEligible.has(socket.id)) return;
     if (G.preQResponded.has(socket.id)) return;
     G.preQResponded.add(socket.id);
 
-    if (use) {
+    if (use && category && type) {
       const p = G.players[socket.id];
       if (p) {
-        ['attack','defense'].forEach(cat => {
-          const ab = p.abilities[cat];
-          if (!ab || ab.used) return;
-          if (!['freeze','cut','immunity'].includes(ab.type)) return;
-
+        const ab = p.abilities[category];
+        if (ab && !ab.used && ab.type === type && ['freeze','cut','immunity'].includes(ab.type)) {
           if (ab.type === 'immunity') {
             ab.used = true;
             if (!G.effects[socket.id]) G.effects[socket.id] = {};
@@ -358,8 +357,8 @@ io.on('connection', socket => {
               io.to(socket.id).emit('ability:result', { type: ab.type, status: st, target: G.players[targetId]?.name });
             }
           }
-        });
-        io.emit('game:players-update', publicPlayers());
+          io.emit('game:players-update', publicPlayers());
+        }
       }
     }
 
