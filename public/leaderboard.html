@@ -152,15 +152,21 @@ body{display:flex;flex-direction:column}
 const socket = io();
 let lb = [];
 
+function renderAvatar(avatar, size = 60) {
+  if (avatar && avatar.startsWith('data:')) {
+    return `<img src="${avatar}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;border:3px solid var(--border)">`;
+  }
+  return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:${Math.floor(size*0.45)}px">👤</div>`;
+}
+
 function setPodium(rank, p) {
   const slot = document.getElementById('pod-' + rank);
   if (!p) { slot.style.display = 'none'; return; }
   slot.style.display = 'flex';
-  document.getElementById('pod-' + rank + '-emoji').textContent = p.emoji;
-  document.getElementById('pod-' + rank + '-name').textContent  = p.name;
-  document.getElementById('pod-' + rank + '-pts').textContent   = p.points.toLocaleString() + ' نقطة';
-  const strEl = document.getElementById('pod-' + rank + '-streak');
-  strEl.textContent = p.streak >= 3 ? '🔥 ستريك ' + p.streak : '';
+  document.getElementById('pod-' + rank + '-emoji').innerHTML = renderAvatar(p.avatar, rank === 1 ? 72 : 58);
+  document.getElementById('pod-' + rank + '-name').textContent = p.name;
+  document.getElementById('pod-' + rank + '-pts').textContent  = p.points.toLocaleString() + ' نقطة';
+  document.getElementById('pod-' + rank + '-streak').textContent = p.streak >= 3 ? '🔥 ستريك ' + p.streak : '';
 }
 
 function renderLeaderboard(data) {
@@ -181,7 +187,7 @@ function renderLeaderboard(data) {
   list.innerHTML = rest.map(p => `
     <div class="lb-row">
       <div class="lb-rank">#${p.rank}</div>
-      <div class="lb-emoji-big">${p.emoji}</div>
+      ${renderAvatar(p.avatar, 48)}
       <div class="lb-info">
         <div class="lb-name">${p.name}</div>
         <div class="lb-meta">المركز ${p.rank}</div>

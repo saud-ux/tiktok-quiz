@@ -39,12 +39,12 @@ function newState() {
 function leaderboard() {
   return Object.values(G.players)
     .sort((a, b) => b.points - a.points)
-    .map((p, i) => ({ rank: i + 1, id: p.id, name: p.name, emoji: p.emoji, points: p.points, streak: p.streak }));
+    .map((p, i) => ({ rank: i + 1, id: p.id, name: p.name, avatar: p.avatar, points: p.points, streak: p.streak }));
 }
 
 function publicPlayers() {
   return Object.values(G.players).map(p => ({
-    id: p.id, name: p.name, emoji: p.emoji, points: p.points, streak: p.streak,
+    id: p.id, name: p.name, avatar: p.avatar, points: p.points, streak: p.streak,
   }));
 }
 
@@ -254,13 +254,13 @@ io.on('connection', socket => {
   });
 
   // ── PLAYER ─────────────────────────────────────────────────
-  socket.on('player:join', ({ name, emoji, abilities }) => {
+  socket.on('player:join', ({ name, avatar, abilities }) => {
     if (G.players[socket.id]) return;
 
     G.players[socket.id] = {
       id:         socket.id,
       name:       String(name).trim().slice(0, 20),
-      emoji,
+      avatar,
       points:     0,
       streak:     0,
       lastStreak: 0,
