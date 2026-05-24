@@ -59,7 +59,7 @@ function notify(targetId, type, msg) {
 // ─────────────────────────────────────────────────────────────
 // APPLY ATTACK (with reverse/immunity checks)
 // ─────────────────────────────────────────────────────────────
-function applyAttack(attackerId, type, targetId) {
+function applyAttack(attackerId, type, targetId, immediate = false) {
   const attacker = G.players[attackerId];
   const target   = G.players[targetId];
   if (!target || !attacker) return { ok: false };
@@ -68,30 +68,45 @@ function applyAttack(attackerId, type, targetId) {
 
   if (tEff.reverse) {
     tEff.reverse = false;
-    if (type === 'freeze') G.nextEffects[attackerId] = { ...(G.nextEffects[attackerId] || {}), frozen: true };
-    if (type === 'cut')    G.nextEffects[attackerId] = { ...(G.nextEffects[attackerId] || {}), cut: true };
-    if (type === 'hole')   G.effects[targetId] = { ...(G.effects[targetId] || {}), holeTarget: attackerId };
-    notify(attackerId, 'attack-reflected', `${target.emoji} ${target.name} عكس هجومك!`);
+    if (immediate) {
+      if (type === 'freeze') G.effects[attackerId] = { ...(G.effects[attackerId] || {}), frozen: true };
+      if (type === 'cut')    G.effects[attackerId] = { ...(G.effects[attackerId] || {}), cut: true };
+    } else {
+      if (type === 'freeze') G.nextEffects[attackerId] = { ...(G.nextEffects[attackerId] || {}), frozen: true };
+      if (type === 'cut')    G.nextEffects[attackerId] = { ...(G.nextEffects[attackerId] || {}), cut: true };
+    }
+    if (type === 'hole') G.effects[targetId] = { ...(G.effects[targetId] || {}), holeTarget: attackerId };
+    notify(attackerId, 'attack-reflected', `${target.name} عكس هجومك!`);
     notify(targetId,   'reverse-fired',    '🔄 درع الانعكاس انطلق!');
     return { ok: true, reflected: true };
   }
 
   if (tEff.immunity) {
     tEff.immunity = false;
-    notify(attackerId, 'attack-blocked', `${target.emoji} ${target.name} محصن!`);
+    notify(attackerId, 'attack-blocked', `${target.name} محصن!`);
     notify(targetId,   'immunity-saved',  '🛡️ الحصانة أنقذتك!');
     return { ok: true, blocked: true };
   }
 
   if (type === 'hole') {
     G.effects[attackerId] = { ...(G.effects[attackerId] || {}), holeTarget: targetId };
-    notify(targetId, 'hole-incoming', `⚠️ ${attacker.emoji} ${attacker.name} فتح ثقباً! سيسرق نقاطك`);
+    notify(targetId, 'hole-incoming', `⚠️ ${attacker.name} فتح ثقباً! سيسرق نقاطك`);
   } else if (type === 'freeze') {
-    G.nextEffects[targetId] = { ...(G.nextEffects[targetId] || {}), frozen: true };
-    notify(targetId, 'frozen-incoming', `❄️ ${attacker.emoji} ${attacker.name} جمّدك! لا خصائص في السؤال القادم`);
+    if (immediate) {
+      G.effects[targetId] = { ...(G.effects[targetId] || {}), frozen: true };
+      notify(targetId, 'frozen-incoming', `❄️ ${attacker.name} جمّدك! لا خصائص في هذا السؤال`);
+    } else {
+      G.nextEffects[targetId] = { ...(G.nextEffects[targetId] || {}), frozen: true };
+      notify(targetId, 'frozen-incoming', `❄️ ${attacker.name} جمّدك! لا خصائص في السؤال القادم`);
+    }
   } else if (type === 'cut') {
-    G.nextEffects[targetId] = { ...(G.nextEffects[targetId] || {}), cut: true };
-    notify(targetId, 'cut-incoming', `✂️ ${attacker.emoji} ${attacker.name} قطعك! لا إجابة في السؤال القادم`);
+    if (immediate) {
+      G.effects[targetId] = { ...(G.effects[targetId] || {}), cut: true };
+      notify(targetId, 'cut-incoming', `✂️ ${attacker.name} قطعك! لا إجابة في هذا السؤال`);
+    } else {
+      G.nextEffects[targetId] = { ...(G.nextEffects[targetId] || {}), cut: true };
+      notify(targetId, 'cut-incoming', `✂️ ${attacker.name} قطعك! لا إجابة في السؤال القادم`);
+    }
   }
 
   return { ok: true, success: true };
@@ -336,7 +351,7 @@ io.on('connection', socket => {
             io.to(socket.id).emit('ability:result', { type: 'immunity', status: 'active' });
             notify(socket.id, 'shield-active', '🛡️ الحصانة مفعّلة!');
           } else if (targetId && G.players[targetId] && targetId !== socket.id) {
-            const res = applyAttack(socket.id, ab.type, targetId);
+            const res = applyAttack(socket.id, ab.type, targetId, true);
             if (res.ok) {
               ab.used = true;
               const st = res.reflected ? 'reflected' : res.blocked ? 'blocked' : 'success';
