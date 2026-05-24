@@ -671,9 +671,8 @@ function closePreQModal() {
 let reverseOfferTimer = null;
 
 socket.on('game:reverse-offer', ({ attackerName, type }) => {
-  const typeNames = { freeze:'تجميد', cut:'قطع', hole:'ثقب' };
   document.getElementById('reverse-offer-msg').textContent =
-    `⚔️ ${attackerName} يهاجمك بـ ${typeNames[type] || type}!`;
+    `⚔️ ${attackerName} استخدم خاصية ضدك!`;
   let secs = 5;
   document.getElementById('reverse-offer-secs').textContent = secs;
   document.getElementById('reverse-offer-notif').classList.add('show');
