@@ -333,6 +333,7 @@ let myPoints = 0, myStreak = 0;
 let allPlayers = {}, currentQ = null;
 let hasAnswered = false, myAnswer = null;
 let abilitiesState = { attack: false, defense: false, general: false };
+let questionActive = false;
 const socket = io();
 
 // ─── SCREEN NAV ──────────────────────────────────────────────
@@ -495,18 +496,20 @@ function renderAbilitiesBar() {
     const isAttack   = cat === 'attack';
     const isUsed     = abilitiesState[cat];
     const isReactive = (a.type === 'retry' || a.type === 'revival');
-    // after answering: only hole & retry allowed
+    const preQOnly = (a.type === 'freeze' || a.type === 'cut' || a.type === 'immunity');
+    const lockedByQuestion = questionActive && preQOnly;
     const allowedAfterAnswer = (a.type === 'hole' || a.type === 'retry' || a.type === 'revival');
     const lockedByAnswer = hasAnswered && !allowedAfterAnswer;
-    const isDisabled = isUsed || isReactive || lockedByAnswer;
+    const isDisabled = isUsed || isReactive || lockedByAnswer || lockedByQuestion;
+    const isLocked = lockedByAnswer || lockedByQuestion;
     return `
-      <button class="abil-btn ${isAttack ? 'attack' : ''} ${isUsed ? 'used' : ''} ${lockedByAnswer ? 'used' : ''}"
+      <button class="abil-btn ${isAttack ? 'attack' : ''} ${isUsed ? 'used' : ''} ${isLocked ? 'used' : ''}"
         id="abil-btn-${cat}"
         onclick="${isDisabled ? '' : isAttack ? `pickTarget('${cat}','${a.type}','${a.name}')` : `useAbility('${cat}')`}"
         ${isDisabled ? 'disabled' : ''}
-        title="${lockedByAnswer ? 'لا يمكن الاستخدام بعد الإجابة' : ''}">
+        title="${lockedByQuestion ? 'تُستخدم قبل السؤال فقط' : lockedByAnswer ? 'لا يمكن الاستخدام بعد الإجابة' : ''}">
         <span class="abil-icon">${a.icon}</span>${a.name}
-        ${lockedByAnswer ? '<div style="font-size:9px;margin-top:2px;opacity:.7">مقفّل</div>' : ''}
+        ${isLocked ? '<div style="font-size:9px;margin-top:2px;opacity:.7">مقفّل</div>' : ''}
       </button>
     `;
   }).join('');
@@ -707,6 +710,7 @@ socket.on('game:leaderboard', lb => {
 });
 
 socket.on('game:question-start', ({ question }) => {
+  questionActive = true;
   closePreQModal();
   hideWaitingOverlay();
   renderQuestion(question);
@@ -756,6 +760,7 @@ socket.on('game:revival-available', () => {
 });
 
 socket.on('game:question-end', data => {
+  questionActive = false;
   if (data.leaderboard) {
     data.leaderboard.forEach(p => { if(allPlayers[p.id]){allPlayers[p.id].points=p.points;allPlayers[p.id].streak=p.streak;} });
     if (myId && allPlayers[myId]) { myPoints = allPlayers[myId].points; myStreak = allPlayers[myId].streak; }
@@ -789,7 +794,7 @@ socket.on('game:hint', ({ hint }) => {
 
 socket.on('game:reset', () => {
   myId = null; myPlayer = null; myPoints = 0; myStreak = 0;
-  allPlayers = {}; abilitiesState = { attack:false, defense:false, general:false };
+  allPlayers = {}; abilitiesState = { attack:false, defense:false, general:false }; questionActive = false;
   showScreen('join');
   notify('', 'gold');
 });
