@@ -113,6 +113,16 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 .result-pts.loss{color:var(--red)}
 .streak-display{margin-top:8px;font-size:14px;color:var(--gold);font-weight:700}
 
+/* ── PRE-QUESTION MODAL ── */
+.pre-q-sheet{background:var(--card);border-radius:20px 20px 0 0;padding:24px 20px;width:100%}
+.pre-q-icon{font-size:48px;text-align:center;margin-bottom:10px}
+.pre-q-title{font-size:18px;font-weight:900;text-align:center;margin-bottom:6px}
+.pre-q-desc{font-size:13px;color:var(--muted);text-align:center;margin-bottom:14px;line-height:1.6}
+.pre-q-countdown{text-align:center;font-size:13px;color:var(--muted);margin-bottom:16px}
+.pre-q-countdown span{font-weight:900;color:var(--gold);font-size:16px}
+.btn-yes{width:100%;padding:14px;border-radius:12px;border:none;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;margin-bottom:10px;box-shadow:0 4px 16px #16a34a40}
+.btn-skip{width:100%;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--muted);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer}
+
 /* ── TARGET MODAL ── */
 .modal-overlay{position:fixed;inset:0;background:#00000090;z-index:100;display:none;align-items:flex-end}
 .modal-overlay.open{display:flex}
@@ -256,6 +266,18 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
   <div style="text-align:center;color:var(--muted);font-size:14px;padding:10px">في انتظار السؤال التالي...</div>
 </div>
 
+<!-- ════ PRE-QUESTION MODAL ════ -->
+<div class="modal-overlay" id="pre-q-modal">
+  <div class="pre-q-sheet">
+    <div class="pre-q-icon" id="pre-q-icon"></div>
+    <div class="pre-q-title" id="pre-q-title"></div>
+    <div class="pre-q-desc" id="pre-q-desc"></div>
+    <div class="pre-q-countdown">سيتم التخطي بعد <span id="pre-q-timer">8</span> ثوانٍ</div>
+    <button class="btn-yes" id="pre-q-yes-btn"></button>
+    <button class="btn-skip" onclick="skipPreQuestion()">تخطّ</button>
+  </div>
+</div>
+
 <!-- ════ TARGET MODAL ════ -->
 <div class="modal-overlay" id="target-modal">
   <div class="modal-sheet">
@@ -283,7 +305,7 @@ const ABILITIES = {
   ],
   general: [
     { type:'revival',    icon:'✨', name:'إنعاش',      desc:'استرجع ستريك خسرته عند الخطأ' },
-    { type:'doubleRisk', icon:'×2', name:'مضاعف خطر', desc:'صح=ضعف النقاط، غلط=خسارة' },
+    { type:'doubleRisk', icon:'×2', name:'مضاعف خطر', desc:'صح=دبل النقاط، غلط=خسارة' },
     { type:'hint',       icon:'💡', name:'تلميح',      desc:'اكشف تلميحاً للسؤال' },
   ],
 };
@@ -461,12 +483,18 @@ function renderAbilitiesBar() {
     const isAttack   = cat === 'attack';
     const isUsed     = abilitiesState[cat];
     const isReactive = (a.type === 'retry' || a.type === 'revival');
+    // after answering: only hole & retry allowed
+    const allowedAfterAnswer = (a.type === 'hole' || a.type === 'retry' || a.type === 'revival');
+    const lockedByAnswer = hasAnswered && !allowedAfterAnswer;
+    const isDisabled = isUsed || isReactive || lockedByAnswer;
     return `
-      <button class="abil-btn ${isAttack ? 'attack' : ''} ${isUsed ? 'used' : ''}"
+      <button class="abil-btn ${isAttack ? 'attack' : ''} ${isUsed ? 'used' : ''} ${lockedByAnswer ? 'used' : ''}"
         id="abil-btn-${cat}"
-        onclick="${isReactive ? '' : isAttack ? `pickTarget('${cat}','${a.type}','${a.name}')` : `useAbility('${cat}')`}"
-        ${isUsed || isReactive ? 'disabled' : ''}>
+        onclick="${isDisabled ? '' : isAttack ? `pickTarget('${cat}','${a.type}','${a.name}')` : `useAbility('${cat}')`}"
+        ${isDisabled ? 'disabled' : ''}
+        title="${lockedByAnswer ? 'لا يمكن الاستخدام بعد الإجابة' : ''}">
         <span class="abil-icon">${a.icon}</span>${a.name}
+        ${lockedByAnswer ? '<div style="font-size:9px;margin-top:2px;opacity:.7">مقفّل</div>' : ''}
       </button>
     `;
   }).join('');
@@ -482,6 +510,7 @@ function submitAnswer(choice) {
     if (i !== choice) b.style.opacity = '0.4';
   });
   document.getElementById('ans-' + choice).classList.add('selected');
+  renderAbilitiesBar(); // lock abilities except hole & retry
 }
 
 function useAbility(cat) {
@@ -514,6 +543,66 @@ function closeTargetModal() {
   document.getElementById('target-modal').classList.remove('open');
 }
 
+// ─── PRE-QUESTION MODAL ───────────────────────────────────────
+let preQTimer = null;
+let pendingQuestion = null;
+
+function showPreQuestionModal(cat, type, question) {
+  pendingQuestion = question;
+  const a = ABILITIES[cat].find(x => x.type === type);
+
+  document.getElementById('pre-q-icon').textContent  = a.icon;
+  document.getElementById('pre-q-title').textContent = `هل تستخدم "${a.name}" الآن؟`;
+  document.getElementById('pre-q-desc').textContent  = a.desc;
+
+  const yesBtn = document.getElementById('pre-q-yes-btn');
+
+  if (type === 'immunity') {
+    yesBtn.textContent = 'نعم، فعّل الحصانة';
+    yesBtn.onclick = () => {
+      clearPreQTimer();
+      socket.emit('player:use-ability', { category: cat });
+      abilitiesState[cat] = true;
+      closePreQModal();
+      renderQuestion(pendingQuestion);
+    };
+  } else {
+    // freeze or cut → need target picker after question renders
+    yesBtn.textContent = 'نعم، اختر الهدف';
+    yesBtn.onclick = () => {
+      clearPreQTimer();
+      closePreQModal();
+      renderQuestion(pendingQuestion);
+      setTimeout(() => pickTarget(cat, type, a.name), 150);
+    };
+  }
+
+  document.getElementById('pre-q-modal').classList.add('open');
+
+  let count = 8;
+  document.getElementById('pre-q-timer').textContent = count;
+  preQTimer = setInterval(() => {
+    count--;
+    const el = document.getElementById('pre-q-timer');
+    if (el) el.textContent = count;
+    if (count <= 0) skipPreQuestion();
+  }, 1000);
+}
+
+function clearPreQTimer() {
+  if (preQTimer) { clearInterval(preQTimer); preQTimer = null; }
+}
+
+function skipPreQuestion() {
+  clearPreQTimer();
+  closePreQModal();
+  if (pendingQuestion) renderQuestion(pendingQuestion);
+}
+
+function closePreQModal() {
+  document.getElementById('pre-q-modal').classList.remove('open');
+}
+
 // ─── RESULTS ─────────────────────────────────────────────────
 function showResults(data) {
   const myResult  = data.results[myId] || {};
@@ -523,8 +612,8 @@ function showResults(data) {
 
   const banner = document.getElementById('result-banner');
   banner.className = 'result-banner ' + (isCorrect ? 'correct' : 'wrong');
-  document.getElementById('result-icon').textContent  = isCorrect ? '🎉' : '😢';
-  document.getElementById('result-title').textContent = isCorrect ? 'إجابة صحيحة!' : (myResult.choice === null ? 'لم تجب!' : 'إجابة خاطئة');
+  document.getElementById('result-icon').textContent  = isCorrect ? '🎉' : '😔';
+  document.getElementById('result-title').textContent = isCorrect ? 'إجابة صحيحة!' : (myResult.choice === null ? '!' : 'إجابة خاطئة');
   const sign = delta > 0 ? '+' : '';
   const ptsEl = document.getElementById('result-pts');
   ptsEl.textContent = sign + delta.toLocaleString() + ' نقطة' + (myResult.holed ? ' (تم سرق نقاطك! 💀)' : '');
@@ -574,7 +663,15 @@ socket.on('game:leaderboard', lb => {
   lb.forEach(p => { if (allPlayers[p.id]) { allPlayers[p.id].points = p.points; allPlayers[p.id].streak = p.streak; } });
 });
 
-socket.on('game:question-start', ({ question }) => renderQuestion(question));
+socket.on('game:question-start', ({ question }) => {
+  const preTypes = ['freeze','cut','immunity'];
+  let preCat = null;
+  ['attack','defense'].forEach(cat => {
+    if (!preCat && preTypes.includes(myAbilities[cat]) && !abilitiesState[cat]) preCat = cat;
+  });
+  if (preCat) showPreQuestionModal(preCat, myAbilities[preCat], question);
+  else renderQuestion(question);
+});
 
 socket.on('game:timer', t => {
   document.getElementById('timer-bar').style.width = (t / 30 * 100) + '%';
@@ -646,7 +743,7 @@ socket.on('game:reset', () => {
   myId = null; myPlayer = null; myPoints = 0; myStreak = 0;
   allPlayers = {}; abilitiesState = { attack:false, defense:false, general:false };
   showScreen('join');
-  notify('🔄 تم إعادة تشغيل اللعبة', 'gold');
+  notify('', 'gold');
 });
 </script>
 </body>
