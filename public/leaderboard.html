@@ -9,22 +9,23 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --bg:#0d0d1a;--surface:#12122a;--card:#1a1a35;--border:#2a2a4a;
-  --purple:#7c3aed;--purple-light:#a78bfa;--cyan:#06b6d4;
-  --green:#10b981;--red:#ef4444;--gold:#f59e0b;--text:#e2e8f0;--muted:#94a3b8;
+  --bg:#050e05;--surface:#081408;--card:#0c1c0c;--border:#1a3d1a;
+  --purple:#16a34a;--purple-light:#4ade80;--cyan:#22c55e;
+  --green:#4ade80;--red:#ef4444;--gold:#f59e0b;--text:#f0fdf4;--muted:#86efac;
 }
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,#1a3d1a18 1px,transparent 1px);background-size:28px 28px;pointer-events:none;z-index:0}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Tajawal',sans-serif;overflow:hidden}
 body{display:flex;flex-direction:column}
 
 /* Background particles */
 .bg-glow{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
-.glow-1{position:absolute;width:600px;height:600px;background:radial-gradient(circle,#7c3aed18 0%,transparent 70%);top:-200px;right:-200px;animation:drift 8s ease-in-out infinite alternate}
-.glow-2{position:absolute;width:500px;height:500px;background:radial-gradient(circle,#06b6d418 0%,transparent 70%);bottom:-150px;left:-150px;animation:drift 10s ease-in-out infinite alternate-reverse}
+.glow-1{position:absolute;width:600px;height:600px;background:radial-gradient(circle,#16a34a18 0%,transparent 70%);top:-200px;right:-200px;animation:drift 8s ease-in-out infinite alternate}
+.glow-2{position:absolute;width:500px;height:500px;background:radial-gradient(circle,#22c55e15 0%,transparent 70%);bottom:-150px;left:-150px;animation:drift 10s ease-in-out infinite alternate-reverse}
 @keyframes drift{from{transform:translate(0,0)}to{transform:translate(40px,30px)}}
 
 /* Header */
 .header{position:relative;z-index:1;text-align:center;padding:28px 20px 16px}
-.logo{font-size:28px;font-weight:900;background:linear-gradient(135deg,var(--purple),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px}
+.logo{font-size:28px;font-weight:900;color:var(--green);text-shadow:0 0 24px #4ade8070,0 0 48px #16a34a50;margin-bottom:4px}
 .live-tag{display:inline-flex;align-items:center;gap:6px;background:#ef444420;border:1px solid var(--red);border-radius:20px;padding:4px 14px;font-size:13px;font-weight:700;color:var(--red)}
 .live-dot{width:8px;height:8px;background:var(--red);border-radius:50%;animation:blink .8s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
