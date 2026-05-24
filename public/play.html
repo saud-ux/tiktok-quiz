@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>العب الآن — كويز لايف</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0d0d1a;--surface:#12122a;--card:#1a1a35;--border:#2a2a4a;
+  --purple:#7c3aed;--purple-light:#a78bfa;--cyan:#06b6d4;
+  --green:#10b981;--red:#ef4444;--gold:#f59e0b;--text:#e2e8f0;--muted:#94a3b8;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Tajawal',sans-serif;overflow-x:hidden}
+body{display:flex;flex-direction:column;min-height:100vh}
+
+/* ── SCREENS ── */
+.screen{display:none;flex-direction:column;flex:1;padding:20px;gap:16px;min-height:100vh}
+.screen.active{display:flex}
+
+/* ── COMMON ── */
+.logo{text-align:center;font-size:26px;font-weight:900;background:linear-gradient(135deg,var(--purple),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px}
+.subtitle{text-align:center;color:var(--muted);font-size:14px;margin-bottom:8px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px}
+.section-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+input[type=text]{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;color:var(--text);font-family:inherit;font-size:16px;transition:.2s}
+input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 3px rgba(124,58,237,.2)}
+.btn{width:100%;padding:16px;border-radius:14px;border:none;font-family:inherit;font-size:17px;font-weight:700;cursor:pointer;transition:.2s;letter-spacing:.3px}
+.btn-primary{background:linear-gradient(135deg,var(--purple),var(--cyan));color:#fff}
+.btn-primary:hover:not(:disabled){filter:brightness(1.1);transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed}
+.btn-secondary{background:var(--surface);border:1px solid var(--border);color:var(--text)}
+
+/* ── JOIN SCREEN ── */
+.emoji-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.emoji-btn{background:var(--surface);border:2px solid var(--border);border-radius:10px;padding:10px;font-size:22px;cursor:pointer;transition:.2s;text-align:center}
+.emoji-btn.selected{border-color:var(--purple);background:#7c3aed20;transform:scale(1.1)}
+.selected-preview{text-align:center;font-size:48px;margin:8px 0}
+
+/* ── ABILITY SCREEN ── */
+.ability-category{margin-bottom:16px}
+.cat-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.cat-icon{font-size:20px}
+.cat-name{font-size:15px;font-weight:800}
+.ability-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.ability-card{background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:10px 8px;cursor:pointer;transition:.2s;text-align:center;position:relative}
+.ability-card:hover{border-color:var(--purple-light)}
+.ability-card.selected{border-color:var(--purple);background:#7c3aed20}
+.ability-card.selected::after{content:'✓';position:absolute;top:4px;left:6px;font-size:11px;color:var(--purple-light);font-weight:900}
+.ability-icon{font-size:24px;margin-bottom:4px}
+.ability-name{font-size:12px;font-weight:700;margin-bottom:3px}
+.ability-desc{font-size:10px;color:var(--muted);line-height:1.4}
+
+/* ── LOBBY SCREEN ── */
+.player-list{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto}
+.player-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border-radius:10px;border:1px solid var(--border)}
+.player-emoji{font-size:24px}
+.player-name{font-size:15px;font-weight:600;flex:1}
+.player-pts{font-size:13px;color:var(--purple-light);font-weight:700}
+.waiting-anim{text-align:center;padding:30px 0}
+.waiting-dots{font-size:30px;animation:bounce .8s infinite alternate}
+@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-8px)}}
+
+/* ── GAME SCREEN ── */
+.game-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.my-points{font-size:13px;color:var(--muted);font-weight:600}
+.my-pts-num{color:var(--purple-light);font-weight:900}
+.streak-badge{background:var(--gold);color:#000;font-size:12px;font-weight:900;padding:3px 10px;border-radius:20px}
+
+/* Timer */
+.timer-bar-wrap{height:8px;background:var(--surface);border-radius:4px;overflow:hidden;margin-bottom:16px}
+.timer-bar{height:100%;background:linear-gradient(90deg,var(--cyan),var(--purple));border-radius:4px;transition:width 1s linear}
+
+/* Question */
+.q-number{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px}
+.q-text{font-size:18px;font-weight:800;line-height:1.6;margin-bottom:16px}
+
+/* Answer buttons */
+.answer-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.ans-btn{padding:16px 12px;border-radius:14px;border:2px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:.2s;text-align:center;line-height:1.4}
+.ans-btn:hover:not(:disabled){transform:translateY(-2px);border-color:var(--purple-light)}
+.ans-btn:disabled{cursor:not-allowed}
+.ans-btn.selected{border-color:var(--purple);background:#7c3aed25}
+.ans-btn.correct{border-color:var(--green)!important;background:#10b98125!important;color:var(--green)!important;animation:pop .4s}
+.ans-btn.wrong{border-color:var(--red)!important;background:#ef444425!important;color:#f87171!important}
+.ans-btn.reveal-correct{border-color:var(--green)!important;background:#10b98125!important;color:var(--green)!important}
+@keyframes pop{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+
+.ans-letter{display:block;font-size:11px;opacity:.7;margin-bottom:3px}
+.cut-overlay{background:#ef444415;border:2px solid var(--red);border-radius:14px;padding:20px;text-align:center;color:#f87171;font-size:16px;font-weight:700;margin-bottom:16px}
+
+/* Abilities bar */
+.abilities-bar{display:flex;gap:8px}
+.abil-btn{flex:1;padding:10px 6px;border-radius:12px;border:2px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;transition:.2s;text-align:center;line-height:1.5}
+.abil-btn:hover:not(:disabled){border-color:var(--purple-light)}
+.abil-btn:disabled{opacity:.35;cursor:not-allowed}
+.abil-btn.used{opacity:.25;cursor:not-allowed}
+.abil-btn.active{border-color:var(--cyan);background:#06b6d420;color:var(--cyan)}
+.abil-btn.attack{border-color:#ef444430}
+.abil-btn.attack:hover:not(:disabled){border-color:var(--red)}
+.abil-icon{font-size:20px;display:block;margin-bottom:2px}
+
+/* Hint box */
+.hint-box{background:#f59e0b15;border:1px solid #f59e0b40;border-radius:12px;padding:12px 14px;font-size:14px;font-weight:600;color:var(--gold);margin-bottom:12px;display:none}
+
+/* Reactive ability offers */
+.reactive-offers{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.offer-btn{padding:12px;border-radius:12px;border:none;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:.2s}
+.offer-retry{background:#7c3aed20;border:1px solid var(--purple);color:var(--purple-light)}
+.offer-revival{background:#10b98120;border:1px solid var(--green);color:var(--green)}
+.offer-btn:hover{filter:brightness(1.1)}
+
+/* Result screen */
+.result-banner{text-align:center;padding:24px;border-radius:16px;margin-bottom:16px}
+.result-banner.correct{background:linear-gradient(135deg,#10b98120,#10b98140);border:2px solid var(--green)}
+.result-banner.wrong{background:linear-gradient(135deg,#ef444420,#ef444440);border:2px solid var(--red)}
+.result-icon{font-size:56px;margin-bottom:8px}
+.result-title{font-size:22px;font-weight:900}
+.result-pts{font-size:30px;font-weight:900;margin-top:4px}
+.result-pts.gain{color:var(--green)}
+.result-pts.loss{color:var(--red)}
+.streak-display{margin-top:8px;font-size:14px;color:var(--gold);font-weight:700}
+
+/* Target picker modal */
+.modal-overlay{position:fixed;inset:0;background:#00000090;z-index:100;display:none;align-items:flex-end}
+.modal-overlay.open{display:flex}
+.modal-sheet{background:var(--card);border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:70vh;overflow-y:auto}
+.modal-title{font-size:16px;font-weight:800;margin-bottom:14px;text-align:center}
+.target-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;border:1px solid var(--border);margin-bottom:8px;cursor:pointer;transition:.2s;background:var(--surface)}
+.target-item:hover{border-color:var(--purple-light);background:#7c3aed15}
+.target-emoji{font-size:26px}
+.target-name{font-size:15px;font-weight:700;flex:1}
+.target-pts{font-size:13px;color:var(--muted)}
+.modal-cancel{width:100%;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--muted);font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px}
+
+/* Notification toast */
+#notif{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#1e1e3a;border:1px solid var(--purple);color:var(--text);padding:12px 20px;border-radius:14px;font-size:14px;font-weight:700;z-index:200;max-width:90vw;text-align:center;opacity:0;transition:.3s;pointer-events:none}
+#notif.show{opacity:1}
+#notif.green{border-color:var(--green)}
+#notif.red{border-color:var(--red)}
+#notif.gold{border-color:var(--gold)}
+
+/* Lobby mini-leaderboard */
+.lb-mini-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface);border-radius:10px;border:1px solid var(--border);margin-bottom:6px}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════
+     SCREEN 1: JOIN
+════════════════════════════════════ -->
+<div class="screen active" id="screen-join">
+  <div class="logo">🎮 كويز لايف</div>
+  <div class="subtitle">أدخل بياناتك للمشاركة في البث المباشر</div>
+
+  <div class="card">
+    <div class="section-title">اسمك</div>
+    <input type="text" id="player-name" placeholder="أدخل اسمك هنا..." maxlength="20">
+  </div>
+
+  <div class="card">
+    <div class="section-title">اختر أيقونتك</div>
+    <div class="selected-preview" id="emoji-preview">🦁</div>
+    <div class="emoji-grid" id="emoji-grid"></div>
+  </div>
+
+  <button class="btn btn-primary" id="btn-next-join" onclick="goToAbilities()">التالي — اختر خصائصك ←</button>
+</div>
+
+<!-- ════════════════════════════════════
+     SCREEN 2: ABILITIES
+════════════════════════════════════ -->
+<div class="screen" id="screen-abilities">
+  <div class="logo">⚡ خصائصك</div>
+  <div class="subtitle">اختر خاصية واحدة من كل فئة</div>
+
+  <!-- ATTACK -->
+  <div class="card">
+    <div class="cat-header"><span class="cat-icon">⚔️</span><span class="cat-name">هجوم</span></div>
+    <div class="ability-cards" id="attack-cards"></div>
+  </div>
+
+  <!-- DEFENSE -->
+  <div class="card">
+    <div class="cat-header"><span class="cat-icon">🛡️</span><span class="cat-name">دفاع</span></div>
+    <div class="ability-cards" id="defense-cards"></div>
+  </div>
+
+  <!-- GENERAL -->
+  <div class="card">
+    <div class="cat-header"><span class="cat-icon">⚙️</span><span class="cat-name">عام</span></div>
+    <div class="ability-cards" id="general-cards"></div>
+  </div>
+
+  <div style="display:flex;gap:10px">
+    <button class="btn btn-secondary" style="flex:0 0 80px" onclick="goToJoin()">← رجوع</button>
+    <button class="btn btn-primary" id="btn-join" onclick="joinGame()">انضم للعبة 🎮</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     SCREEN 3: LOBBY
+════════════════════════════════════ -->
+<div class="screen" id="screen-lobby">
+  <div class="logo">🎮 كويز لايف</div>
+
+  <div class="card" style="text-align:center">
+    <div class="selected-preview" id="lobby-emoji"></div>
+    <div style="font-size:20px;font-weight:800" id="lobby-name"></div>
+    <div style="margin-top:6px;font-size:13px;color:var(--muted)">انتظر حتى يبدأ المضيف السؤال</div>
+    <div class="waiting-anim"><span class="waiting-dots">⏳</span></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">خصائصك</div>
+    <div id="lobby-abilities" style="display:flex;gap:10px;flex-wrap:wrap"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">اللاعبون (<span id="lobby-count">0</span>)</div>
+    <div id="lobby-players"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     SCREEN 4: GAME (QUESTION)
+════════════════════════════════════ -->
+<div class="screen" id="screen-game">
+  <div class="game-header">
+    <div class="my-points">نقاطي: <span class="my-pts-num" id="my-pts">0</span></div>
+    <div id="streak-badge" class="streak-badge" style="display:none">🔥0</div>
+    <div style="font-size:13px;color:var(--muted)" id="q-counter">سؤال #1</div>
+  </div>
+
+  <div class="timer-bar-wrap"><div class="timer-bar" id="timer-bar"></div></div>
+
+  <div class="card">
+    <div class="q-number" id="q-num-label"></div>
+    <div class="q-text" id="q-text"></div>
+
+    <!-- CUT notice -->
+    <div class="cut-overlay" id="cut-overlay" style="display:none">
+      ✂️ أنت مقطوع! لا يمكنك الإجابة على هذا السؤال
+    </div>
+
+    <!-- Hint box -->
+    <div class="hint-box" id="hint-box"></div>
+
+    <!-- Answer buttons -->
+    <div class="answer-grid" id="answer-grid"></div>
+
+    <!-- Reactive offers (retry / revival) -->
+    <div class="reactive-offers" id="reactive-offers"></div>
+  </div>
+
+  <!-- Abilities bar -->
+  <div class="card">
+    <div class="section-title">خصائصك</div>
+    <div class="abilities-bar" id="abilities-bar"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     SCREEN 5: QUESTION RESULT
+════════════════════════════════════ -->
+<div class="screen" id="screen-result">
+  <div class="result-banner" id="result-banner">
+    <div class="result-icon" id="result-icon"></div>
+    <div class="result-title" id="result-title"></div>
+    <div class="result-pts" id="result-pts"></div>
+    <div class="streak-display" id="streak-display"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">الإجابة الصحيحة</div>
+    <div id="correct-ans-display"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">🏆 الترتيب الحالي</div>
+    <div id="result-leaderboard"></div>
+  </div>
+
+  <div style="text-align:center;color:var(--muted);font-size:14px;padding:10px" id="waiting-next">
+    ⏳ في انتظار السؤال التالي...
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     TARGET PICKER MODAL
+════════════════════════════════════ -->
+<div class="modal-overlay" id="target-modal">
+  <div class="modal-sheet">
+    <div class="modal-title" id="target-modal-title">اختر هدفك</div>
+    <div id="target-list"></div>
+    <button class="modal-cancel" onclick="closeTargetModal()">إلغاء</button>
+  </div>
+</div>
+
+<div id="notif"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+// ─────────────────────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────────────────────
+const EMOJIS = ['🦁','🐯','🦊','🐺','🐸','🐻','🦝','🐼','🐬','🐙','🦋','🦅','🦄','🐉','🤖','👾','🎭','🔥','⚡','🌟','💎','🎯','🚀','⚔️','🛡️','💀','🌙','☀️','🍀','🎪'];
+
+const ABILITIES = {
+  attack: [
+    { type:'hole',   icon:'🕳️', name:'ثقب',   desc:'احذف نقاط السؤال من لاعب تختاره' },
+    { type:'freeze', icon:'❄️', name:'تجميد', desc:'امنع لاعب من خصائصه السؤال القادم' },
+    { type:'cut',    icon:'✂️', name:'قطع',    desc:'امنع لاعب من الإجابة السؤال القادم' },
+  ],
+  defense: [
+    { type:'reverse',  icon:'🔄', name:'عكس',    desc:'يرجع أي هجوم لصاحبه تلقائياً' },
+    { type:'immunity', icon:'🛡️', name:'حصانة',  desc:'حماية كاملة من أي هجوم لسؤال' },
+    { type:'retry',    icon:'↩️', name:'إعادة',  desc:'لو غلطت تقدر تجاوب مرة ثانية' },
+  ],
+  general: [
+    { type:'revival',    icon:'✨', name:'إنعاش',       desc:'استرجع ستريك خسرته عند الخطأ' },
+    { type:'doubleRisk', icon:'⚡', name:'مضاعف خطر',  desc:'صح=ضعف النقاط، غلط=خسارة النقاط' },
+    { type:'hint',       icon:'💡', name:'تلميح',       desc:'اكشف تلميحاً للسؤال' },
+  ],
+};
+
+const LETTERS = ['أ','ب','ج','د'];
+const OPT_COLORS = [
+  {border:'#7c3aed',bg:'#7c3aed20',hover:'#7c3aed40'},
+  {border:'#06b6d4',bg:'#06b6d420',hover:'#06b6d440'},
+  {border:'#10b981',bg:'#10b98120',hover:'#10b98140'},
+  {border:'#f59e0b',bg:'#f59e0b20',hover:'#f59e0b40'},
+];
+
+// ─────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────
+let myId        = null;
+let myName      = '';
+let myEmoji     = EMOJIS[0];
+let myAbilities = { attack: null, defense: null, general: null };
+let myPoints    = 0;
+let myStreak    = 0;
+let myPlayer    = null;
+let allPlayers  = {};
+let currentQ    = null;
+let hasAnswered = false;
+let myAnswer    = null;
+let pendingAbilityCategory = null;
+let abilitiesState = { attack: false, defense: false, general: false }; // used?
+
+const socket = io();
+
+// ─────────────────────────────────────────────────────────────
+// SCREEN NAV
+// ─────────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ─────────────────────────────────────────────────────────────
+// NOTIFICATIONS
+// ─────────────────────────────────────────────────────────────
+function notify(msg, color = '', dur = 3500) {
+  const el = document.getElementById('notif');
+  el.textContent = msg;
+  el.className = 'show' + (color ? ' ' + color : '');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), dur);
+}
+
+// ─────────────────────────────────────────────────────────────
+// BUILD JOIN SCREEN
+// ─────────────────────────────────────────────────────────────
+function buildEmojiGrid() {
+  const grid = document.getElementById('emoji-grid');
+  grid.innerHTML = EMOJIS.map((e, i) => `
+    <button class="emoji-btn ${i === 0 ? 'selected' : ''}" onclick="selectEmoji('${e}', this)">${e}</button>
+  `).join('');
+}
+
+function selectEmoji(e, btn) {
+  myEmoji = e;
+  document.getElementById('emoji-preview').textContent = e;
+  document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function buildAbilityCards() {
+  ['attack','defense','general'].forEach(cat => {
+    const container = document.getElementById(cat + '-cards');
+    container.innerHTML = ABILITIES[cat].map(a => `
+      <div class="ability-card" id="acard-${cat}-${a.type}" onclick="selectAbility('${cat}','${a.type}',this)">
+        <div class="ability-icon">${a.icon}</div>
+        <div class="ability-name">${a.name}</div>
+        <div class="ability-desc">${a.desc}</div>
+      </div>
+    `).join('');
+  });
+}
+
+function selectAbility(cat, type, el) {
+  myAbilities[cat] = type;
+  document.querySelectorAll(`#${cat}-cards .ability-card`).forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function goToJoin() { showScreen('join'); }
+
+function goToAbilities() {
+  const name = document.getElementById('player-name').value.trim();
+  if (!name) { notify('⚠️ أدخل اسمك أولاً', 'red'); return; }
+  myName = name;
+  buildAbilityCards();
+  showScreen('abilities');
+}
+
+function joinGame() {
+  if (!myAbilities.attack)  { notify('⚠️ اختر خاصية هجومية', 'red'); return; }
+  if (!myAbilities.defense) { notify('⚠️ اختر خاصية دفاعية', 'red'); return; }
+  if (!myAbilities.general) { notify('⚠️ اختر خاصية عامة', 'red'); return; }
+
+  socket.emit('player:join', {
+    name: myName,
+    emoji: myEmoji,
+    abilities: myAbilities,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// LOBBY
+// ─────────────────────────────────────────────────────────────
+function showLobby() {
+  document.getElementById('lobby-emoji').textContent = myEmoji;
+  document.getElementById('lobby-name').textContent  = myName;
+
+  // Show selected abilities
+  const el = document.getElementById('lobby-abilities');
+  el.innerHTML = ['attack','defense','general'].map(cat => {
+    const type = myAbilities[cat];
+    const a = ABILITIES[cat].find(x => x.type === type);
+    return a ? `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700">${a.icon} ${a.name}</div>` : '';
+  }).join('');
+
+  showScreen('lobby');
+}
+
+function renderLobbyPlayers() {
+  const ps = Object.values(allPlayers);
+  document.getElementById('lobby-count').textContent = ps.length;
+  document.getElementById('lobby-players').innerHTML = ps.map(p => `
+    <div class="lb-mini-item">
+      <span style="font-size:22px">${p.emoji}</span>
+      <span style="flex:1;font-size:15px;font-weight:600">${p.name}</span>
+      <span style="font-size:13px;color:var(--muted)">${p.points} نقطة</span>
+    </div>
+  `).join('') || '<div style="color:var(--muted);font-size:14px">أنت أول اللاعبين!</div>';
+}
+
+// ─────────────────────────────────────────────────────────────
+// GAME SCREEN
+// ─────────────────────────────────────────────────────────────
+function renderQuestion(q) {
+  currentQ    = q;
+  hasAnswered = false;
+  myAnswer    = null;
+
+  document.getElementById('q-counter').textContent  = `سؤال #${q.number}`;
+  document.getElementById('q-num-label').textContent = `السؤال ${q.number}`;
+  document.getElementById('q-text').textContent      = q.text;
+  document.getElementById('timer-bar').style.width   = '100%';
+  document.getElementById('hint-box').style.display  = 'none';
+  document.getElementById('hint-box').textContent    = '';
+  document.getElementById('reactive-offers').innerHTML = '';
+  document.getElementById('cut-overlay').style.display = 'none';
+
+  // Update header stats
+  document.getElementById('my-pts').textContent = myPoints.toLocaleString();
+  const sb = document.getElementById('streak-badge');
+  if (myStreak >= 3) { sb.style.display = 'inline'; sb.textContent = `🔥${myStreak}`; }
+  else sb.style.display = 'none';
+
+  // Check if cut
+  const isCut = myPlayer?.abilities?.defense?.type === 'cut' || false; // server will notify anyway
+
+  // Build answer grid
+  const grid = document.getElementById('answer-grid');
+  grid.innerHTML = q.options.map((opt, i) => `
+    <button class="ans-btn" id="ans-${i}"
+      style="border-color:${OPT_COLORS[i].border}40"
+      onclick="submitAnswer(${i})">
+      <span class="ans-letter">${LETTERS[i]}</span>${opt}
+    </button>
+  `).join('');
+
+  renderAbilitiesBar();
+  showScreen('game');
+}
+
+function renderAbilitiesBar() {
+  const bar = document.getElementById('abilities-bar');
+  const cats = ['attack','defense','general'];
+  bar.innerHTML = cats.map(cat => {
+    const type = myAbilities[cat];
+    const a = ABILITIES[cat].find(x => x.type === type);
+    if (!a) return '';
+    const isAttack  = cat === 'attack';
+    const isUsed    = abilitiesState[cat];
+    const isReactive = (a.type === 'retry' || a.type === 'revival');
+    return `
+      <button class="abil-btn ${isAttack ? 'attack' : ''} ${isUsed ? 'used' : ''}"
+        id="abil-btn-${cat}"
+        onclick="${isReactive ? '' : isAttack ? `pickTarget('${cat}','${a.type}','${a.name}')` : `useAbility('${cat}')`}"
+        ${isUsed || isReactive ? 'disabled' : ''}>
+        <span class="abil-icon">${a.icon}</span>${a.name}
+      </button>
+    `;
+  }).join('');
+}
+
+function submitAnswer(choice) {
+  if (hasAnswered) return;
+  socket.emit('player:answer', { choice });
+  hasAnswered = true;
+
+  // Dim all, highlight chosen
+  [0,1,2,3].forEach(i => {
+    const b = document.getElementById('ans-' + i);
+    b.disabled = true;
+    if (i !== choice) b.style.opacity = '0.4';
+  });
+  document.getElementById('ans-' + choice).classList.add('selected');
+}
+
+function useAbility(cat) {
+  const type = myAbilities[cat];
+  if (!type || abilitiesState[cat]) return;
+  socket.emit('player:use-ability', { category: cat });
+}
+
+function pickTarget(cat, type, name) {
+  if (abilitiesState[cat]) return;
+  const others = Object.values(allPlayers).filter(p => p.id !== myId);
+  if (!others.length) { notify('⚠️ لا يوجد لاعبون آخرون', 'red'); return; }
+
+  const iconMap = { hole: '🕳️', freeze: '❄️', cut: '✂️' };
+  document.getElementById('target-modal-title').textContent = `${iconMap[type] || '⚔️'} اختر هدف — ${name}`;
+  document.getElementById('target-list').innerHTML = others.map(p => `
+    <div class="target-item" onclick="confirmAttack('${cat}','${p.id}')">
+      <span class="target-emoji">${p.emoji}</span>
+      <span class="target-name">${p.name}</span>
+      <span class="target-pts">${p.points.toLocaleString()} نقطة</span>
+    </div>
+  `).join('');
+
+  pendingAbilityCategory = cat;
+  document.getElementById('target-modal').classList.add('open');
+}
+
+function confirmAttack(cat, targetId) {
+  closeTargetModal();
+  socket.emit('player:use-ability', { category: cat, targetId });
+}
+
+function closeTargetModal() {
+  document.getElementById('target-modal').classList.remove('open');
+  pendingAbilityCategory = null;
+}
+
+// ─────────────────────────────────────────────────────────────
+// RESULTS SCREEN
+// ─────────────────────────────────────────────────────────────
+function showResults(data) {
+  const myResult = data.results[myId] || {};
+  const isCorrect = myResult.isCorrect;
+  const delta = myResult.delta || 0;
+
+  // Update my stats
+  if (myPlayer) {
+    myPoints = allPlayers[myId]?.points || myPoints + delta;
+    myStreak = myResult.streak ?? myStreak;
+  }
+
+  const banner = document.getElementById('result-banner');
+  banner.className = 'result-banner ' + (isCorrect ? 'correct' : 'wrong');
+  document.getElementById('result-icon').textContent = isCorrect ? '🎉' : '😢';
+  document.getElementById('result-title').textContent = isCorrect ? 'إجابة صحيحة!' : (myResult.choice === null ? 'لم تجب!' : 'إجابة خاطئة');
+
+  const sign = delta > 0 ? '+' : '';
+  const ptsEl = document.getElementById('result-pts');
+  ptsEl.textContent = sign + delta.toLocaleString() + ' نقطة';
+  ptsEl.className = 'result-pts ' + (delta >= 0 ? 'gain' : 'loss');
+
+  if (myResult.holed) {
+    ptsEl.textContent += ' (تم سرق نقاطك! 💀)';
+  }
+
+  const streakEl = document.getElementById('streak-display');
+  if (myStreak >= 3) streakEl.textContent = `🔥 ستريك ${myStreak}x!`;
+  else streakEl.textContent = '';
+
+  // Correct answer reveal
+  const opts = currentQ?.options || [];
+  document.getElementById('correct-ans-display').innerHTML = `
+    <div style="background:#10b98120;border:1px solid #10b98140;border-radius:10px;padding:12px">
+      <strong style="color:var(--green)">${LETTERS[data.correctAnswer]}. ${opts[data.correctAnswer] || ''}</strong>
+    </div>
+  `;
+
+  // Mini leaderboard
+  const lb = data.leaderboard || [];
+  document.getElementById('result-leaderboard').innerHTML = lb.slice(0, 7).map(p => `
+    <div class="lb-mini-item" style="${p.id === myId ? 'border-color:var(--purple);background:#7c3aed15' : ''}">
+      <span style="font-size:14px;font-weight:900;color:${p.rank<=3?'var(--gold)':'var(--muted)'};width:24px">${p.rank<=3?['🥇','🥈','🥉'][p.rank-1]:'#'+p.rank}</span>
+      <span style="font-size:22px">${p.emoji}</span>
+      <span style="flex:1;font-size:14px;font-weight:700">${p.name}${p.id===myId?' (أنت)':''}</span>
+      ${p.streak >= 3 ? `<span style="color:var(--gold);font-size:12px">🔥${p.streak}</span>` : ''}
+      <span style="font-size:14px;font-weight:900;color:var(--purple-light)">${p.points.toLocaleString()}</span>
+    </div>
+  `).join('');
+
+  document.getElementById('reactive-offers').innerHTML = '';
+  showScreen('result');
+}
+
+// ─────────────────────────────────────────────────────────────
+// SOCKET EVENTS
+// ─────────────────────────────────────────────────────────────
+socket.on('game:state', data => {
+  allPlayers = {};
+  data.players.forEach(p => allPlayers[p.id] = p);
+  // If we already joined, update lobby
+  if (myId && document.getElementById('screen-lobby').classList.contains('active')) {
+    renderLobbyPlayers();
+  }
+});
+
+socket.on('player:joined', ({ id, player }) => {
+  myId     = id;
+  myPlayer = player;
+  abilitiesState = { attack: false, defense: false, general: false };
+  showLobby();
+});
+
+socket.on('game:players-update', ps => {
+  allPlayers = {};
+  ps.forEach(p => allPlayers[p.id] = p);
+  if (myId && allPlayers[myId]) {
+    myPoints = allPlayers[myId].points;
+    myStreak = allPlayers[myId].streak;
+  }
+  renderLobbyPlayers();
+});
+
+socket.on('game:leaderboard', lb => {
+  // Update allPlayers from leaderboard
+  lb.forEach(p => { if (allPlayers[p.id]) { allPlayers[p.id].points = p.points; allPlayers[p.id].streak = p.streak; } });
+});
+
+socket.on('game:question-start', ({ question, timeLeft }) => {
+  renderQuestion(question);
+});
+
+socket.on('game:timer', t => {
+  document.getElementById('timer-bar').style.width = (t / 30 * 100) + '%';
+  const bar = document.getElementById('timer-bar');
+  if (t <= 5)       bar.style.background = 'var(--red)';
+  else if (t <= 10) bar.style.background = 'var(--gold)';
+  else              bar.style.background = 'linear-gradient(90deg,var(--cyan),var(--purple))';
+});
+
+socket.on('player:answer-accepted', ({ choice, correct, isRetry }) => {
+  // Color the button immediately
+  [0,1,2,3].forEach(i => {
+    const b = document.getElementById('ans-' + i);
+    if (!b) return;
+    b.disabled = true;
+  });
+  const btn = document.getElementById('ans-' + choice);
+  if (btn) {
+    btn.classList.remove('selected');
+    btn.classList.add(correct ? 'correct' : 'wrong');
+  }
+  if (!isRetry) notify(correct ? '✅ إجابة صحيحة!' : '❌ إجابة خاطئة', correct ? 'green' : 'red');
+});
+
+socket.on('game:retry-available', () => {
+  const offers = document.getElementById('reactive-offers');
+  const offerEl = document.createElement('button');
+  offerEl.className = 'offer-btn offer-retry';
+  offerEl.textContent = '↩️ استخدم الإعادة — جاوب مرة ثانية';
+  offerEl.onclick = () => {
+    offerEl.remove();
+    hasAnswered = false;
+    // Re-enable answer buttons
+    [0,1,2,3].forEach(i => {
+      const b = document.getElementById('ans-' + i);
+      if (b) { b.disabled = false; b.style.opacity = '1'; b.classList.remove('wrong','correct','selected'); }
+    });
+    abilitiesState.defense = true;
+    renderAbilitiesBar();
+    notify('↩️ اختر إجابتك الصحيحة!', 'gold');
+  };
+  offers.appendChild(offerEl);
+});
+
+socket.on('game:revival-available', () => {
+  const offers = document.getElementById('reactive-offers');
+  const offerEl = document.createElement('button');
+  offerEl.className = 'offer-btn offer-revival';
+  offerEl.textContent = '✨ استخدم الإنعاش — احتفظ بستريكك';
+  offerEl.onclick = () => {
+    offerEl.remove();
+    socket.emit('player:use-revival');
+    abilitiesState.general = true;
+    renderAbilitiesBar();
+  };
+  offers.appendChild(offerEl);
+});
+
+socket.on('game:question-end', data => {
+  // Update local state from leaderboard
+  if (data.leaderboard) {
+    data.leaderboard.forEach(p => {
+      if (allPlayers[p.id]) { allPlayers[p.id].points = p.points; allPlayers[p.id].streak = p.streak; }
+    });
+    if (myId && allPlayers[myId]) {
+      myPoints = allPlayers[myId].points;
+      myStreak = allPlayers[myId].streak;
+    }
+  }
+  showResults(data);
+});
+
+socket.on('game:notify', ({ type, msg }) => {
+  const colorMap = {
+    'shield-active':'green','ability-active':'gold','revival-active':'green',
+    'holed':'red','attack-reflected':'gold','reverse-fired':'green',
+    'immunity-saved':'green','cut-active':'red','frozen-active':'red',
+    'hole-incoming':'red','frozen-incoming':'red','cut-incoming':'red',
+    'error':'red',
+  };
+  notify(msg, colorMap[type] || '');
+
+  if (type === 'cut-active') {
+    document.getElementById('cut-overlay').style.display = 'block';
+    document.querySelectorAll('.ans-btn').forEach(b => b.disabled = true);
+  }
+  if (type === 'frozen-active') {
+    document.querySelectorAll('.abil-btn').forEach(b => b.disabled = true);
+  }
+});
+
+socket.on('ability:result', ({ type, status, target }) => {
+  // Determine category for this ability type
+  const catMap = { hole:'attack', freeze:'attack', cut:'attack', reverse:'defense', immunity:'defense', retry:'defense', doubleRisk:'general', hint:'general', revival:'general' };
+  const cat = catMap[type];
+  if (cat && status !== 'reflected' && status !== 'blocked') {
+    abilitiesState[cat] = true;
+  }
+  renderAbilitiesBar();
+
+  // Mark ability button as active if defensive/general
+  if (['reverse','immunity','retry','doubleRisk','revival'].includes(type) && status === 'active') {
+    const btn = document.getElementById('abil-btn-' + cat);
+    if (btn) { btn.classList.add('active'); btn.disabled = false; }
+  }
+});
+
+socket.on('game:hint', ({ hint }) => {
+  const hb = document.getElementById('hint-box');
+  hb.textContent = '💡 تلميح: ' + hint;
+  hb.style.display = 'block';
+});
+
+socket.on('game:reset', () => {
+  myId = null; myPlayer = null; myPoints = 0; myStreak = 0;
+  allPlayers = {};
+  abilitiesState = { attack: false, defense: false, general: false };
+  showScreen('join');
+  notify('🔄 تم إعادة تشغيل اللعبة', 'gold');
+});
+
+// ─────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────
+buildEmojiGrid();
+</script>
+</body>
+</html>

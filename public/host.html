@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة المضيف — كويز لايف</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0d0d1a;--surface:#12122a;--card:#1a1a35;--border:#2a2a4a;
+  --purple:#7c3aed;--purple-light:#a78bfa;--cyan:#06b6d4;--cyan-dark:#0891b2;
+  --green:#10b981;--red:#ef4444;--gold:#f59e0b;--text:#e2e8f0;--muted:#94a3b8;
+}
+body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.layout{display:grid;grid-template-columns:1fr 380px;gap:0;height:100vh;overflow:hidden}
+.main{padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:16px}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:16px}
+
+/* Header */
+.header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:var(--surface);border-bottom:1px solid var(--border);grid-column:1/-1}
+.logo{font-size:22px;font-weight:900;background:linear-gradient(135deg,var(--purple),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.badge{background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.btn-reset{background:transparent;border:1px solid var(--red);color:var(--red);padding:8px 16px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;transition:.2s}
+.btn-reset:hover{background:var(--red);color:#fff}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px}
+.card-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px}
+
+/* Form */
+label{display:block;font-size:14px;font-weight:600;margin-bottom:6px;color:var(--text)}
+input[type=text],textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:inherit;font-size:15px;transition:.2s;resize:vertical}
+input[type=text]:focus,textarea:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 3px rgba(124,58,237,.2)}
+textarea{min-height:70px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.option-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.option-letter{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-weight:700;font-size:13px;flex-shrink:0}
+.opt-a{background:#7c3aed22;color:#a78bfa}
+.opt-b{background:#06b6d422;color:#67e8f9}
+.opt-c{background:#10b98122;color:#6ee7b7}
+.opt-d{background:#f59e0b22;color:#fcd34d}
+.correct-radio{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.correct-radio label{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:600;padding:6px 12px;border-radius:8px;border:1px solid var(--border);transition:.2s}
+.correct-radio input[type=radio]{display:none}
+.correct-radio input[type=radio]:checked+span{color:var(--green)}
+.correct-radio label:has(input:checked){border-color:var(--green);background:#10b98115}
+
+/* Buttons */
+.btn{width:100%;padding:14px;border-radius:12px;border:none;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;transition:.2s}
+.btn-start{background:linear-gradient(135deg,var(--purple),var(--cyan));color:#fff}
+.btn-start:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.btn-start:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-end{background:var(--red);color:#fff}
+.btn-end:hover{filter:brightness(1.1)}
+.btn-end:disabled{opacity:.4;cursor:not-allowed}
+
+/* Timer */
+.timer-display{text-align:center}
+.timer-ring{position:relative;width:120px;height:120px;margin:0 auto 10px}
+.timer-ring svg{transform:rotate(-90deg)}
+.timer-ring circle.bg{fill:none;stroke:var(--border);stroke-width:8}
+.timer-ring circle.prog{fill:none;stroke:var(--cyan);stroke-width:8;stroke-linecap:round;stroke-dasharray:326;stroke-dashoffset:0;transition:stroke-dashoffset 1s linear,stroke .5s}
+.timer-ring .num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:900}
+.timer-label{font-size:13px;color:var(--muted);font-weight:600}
+
+/* Stats */
+.stats-row{display:flex;gap:12px}
+.stat-box{flex:1;text-align:center;background:var(--surface);border-radius:10px;padding:12px;border:1px solid var(--border)}
+.stat-num{font-size:28px;font-weight:900;color:var(--purple-light)}
+.stat-lbl{font-size:12px;color:var(--muted);font-weight:600}
+
+/* Q display */
+.q-display{background:linear-gradient(135deg,#1e1b4b,#0d0d1a);border:1px solid var(--purple);border-radius:14px;padding:20px;margin-bottom:12px}
+.q-num{font-size:12px;color:var(--purple-light);font-weight:700;margin-bottom:6px}
+.q-text{font-size:18px;font-weight:700;line-height:1.5}
+.q-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.q-opt{padding:10px 14px;border-radius:10px;font-size:14px;font-weight:600;background:var(--surface);border:1px solid var(--border)}
+.q-opt.correct{background:#10b98120;border-color:var(--green);color:var(--green)}
+
+/* Leaderboard */
+.lb-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--surface);margin-bottom:8px;transition:.3s}
+.lb-rank{width:28px;text-align:center;font-size:14px;font-weight:900}
+.lb-rank.r1{color:var(--gold)}
+.lb-rank.r2{color:#94a3b8}
+.lb-rank.r3{color:#cd7f32}
+.lb-emoji{font-size:22px}
+.lb-name{flex:1;font-size:15px;font-weight:700}
+.lb-pts{font-size:16px;font-weight:900;color:var(--purple-light)}
+.lb-streak{font-size:12px;color:var(--gold);background:#f59e0b15;padding:2px 8px;border-radius:20px}
+
+/* Results panel */
+.result-list{max-height:200px;overflow-y:auto}
+.result-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;margin-bottom:6px;font-size:14px;font-weight:600}
+.result-item.correct{background:#10b98115;border:1px solid #10b98140;color:var(--green)}
+.result-item.wrong{background:#ef444415;border:1px solid #ef444440;color:#f87171}
+.result-icon{font-size:16px}
+
+/* Players waiting */
+.player-grid{display:flex;flex-wrap:wrap;gap:8px}
+.player-chip{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+
+/* Notify toast */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e1e3a;border:1px solid var(--purple);color:var(--text);padding:12px 24px;border-radius:12px;font-size:14px;font-weight:600;z-index:999;opacity:0;transition:.3s;pointer-events:none}
+#toast.show{opacity:1}
+
+/* State panels */
+.panel{display:none}
+.panel.active{display:block}
+#panel-active .card{margin-bottom:12px}
+</style>
+</head>
+<body>
+
+<div style="display:grid;grid-template-rows:auto 1fr">
+  <div class="header">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="logo">🎮 كويز لايف</div>
+      <span class="badge" id="live-badge" style="display:none">● LIVE</span>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <span id="player-count" style="color:var(--muted);font-size:14px">0 لاعب</span>
+      <button class="btn-reset" onclick="resetGame()">🔄 إعادة تشغيل</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- MAIN -->
+    <div class="main">
+
+      <!-- SETUP PANEL -->
+      <div class="panel active" id="panel-setup">
+        <div class="card">
+          <div class="card-title">✏️ السؤال</div>
+          <div style="margin-bottom:14px">
+            <label>نص السؤال</label>
+            <textarea id="q-text" placeholder="اكتب سؤالك هنا..."></textarea>
+          </div>
+          <div class="card-title" style="margin-bottom:10px">الخيارات</div>
+          <div class="option-row"><div class="option-letter opt-a">أ</div><input type="text" id="opt-0" placeholder="الخيار الأول"></div>
+          <div class="option-row"><div class="option-letter opt-b">ب</div><input type="text" id="opt-1" placeholder="الخيار الثاني"></div>
+          <div class="option-row"><div class="option-letter opt-c">ج</div><input type="text" id="opt-2" placeholder="الخيار الثالث"></div>
+          <div class="option-row"><div class="option-letter opt-d">د</div><input type="text" id="opt-3" placeholder="الخيار الرابع"></div>
+
+          <div style="margin-top:14px;margin-bottom:14px">
+            <label style="margin-bottom:8px">الإجابة الصحيحة</label>
+            <div class="correct-radio">
+              <label><input type="radio" name="correct" value="0"><span>أ</span></label>
+              <label><input type="radio" name="correct" value="1"><span>ب</span></label>
+              <label><input type="radio" name="correct" value="2"><span>ج</span></label>
+              <label><input type="radio" name="correct" value="3"><span>د</span></label>
+            </div>
+          </div>
+
+          <div style="margin-bottom:16px">
+            <label>تلميح (اختياري)</label>
+            <input type="text" id="q-hint" placeholder="أضف تلميحاً للاعبين الذين يملكون خاصية التلميح">
+          </div>
+
+          <button class="btn btn-start" id="btn-start" onclick="startQuestion()">▶ ابدأ السؤال</button>
+        </div>
+
+        <!-- Waiting players -->
+        <div class="card">
+          <div class="card-title">👥 اللاعبون المنتظرون</div>
+          <div class="player-grid" id="waiting-players">
+            <div style="color:var(--muted);font-size:14px">في انتظار انضمام اللاعبين...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIVE PANEL -->
+      <div class="panel" id="panel-active">
+        <div class="card">
+          <div class="q-display" id="active-q-display"></div>
+          <div class="timer-display">
+            <div class="timer-ring">
+              <svg width="120" height="120" viewBox="0 0 120 120">
+                <circle class="bg" cx="60" cy="60" r="52"/>
+                <circle class="prog" id="timer-circle" cx="60" cy="60" r="52"/>
+              </svg>
+              <div class="num" id="timer-num">30</div>
+            </div>
+            <div class="timer-label">ثانية متبقية</div>
+          </div>
+          <div class="stats-row" style="margin-top:16px">
+            <div class="stat-box"><div class="stat-num" id="stat-answered">0</div><div class="stat-lbl">أجابوا</div></div>
+            <div class="stat-box"><div class="stat-num" id="stat-total">0</div><div class="stat-lbl">إجمالي</div></div>
+          </div>
+          <button class="btn btn-end" style="margin-top:16px" id="btn-end" onclick="endQuestion()">⏹ أنهِ السؤال</button>
+        </div>
+      </div>
+
+      <!-- RESULTS PANEL -->
+      <div class="panel" id="panel-results">
+        <div class="card">
+          <div class="card-title">✅ نتائج السؤال</div>
+          <div id="correct-answer-display" style="margin-bottom:14px"></div>
+          <div class="result-list" id="result-list"></div>
+          <button class="btn btn-start" style="margin-top:16px" onclick="showSetup()">➕ سؤال جديد</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="card-title" style="font-size:16px;color:var(--text)">🏆 الليدربورد</div>
+      <div id="leaderboard-list">
+        <div style="color:var(--muted);font-size:14px;text-align:center;padding:20px">لا يوجد لاعبون بعد</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+let players = {};
+let currentQuestion = null;
+let qNum = 0;
+
+// ── HELPERS ──────────────────────────────────────────────────
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+}
+
+function toast(msg, dur = 3000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), dur);
+}
+
+function updateTimerCircle(t) {
+  const circle = document.getElementById('timer-circle');
+  const num = document.getElementById('timer-num');
+  const circumference = 326;
+  const offset = circumference - (t / 30) * circumference;
+  circle.style.strokeDashoffset = offset;
+  circle.style.stroke = t > 10 ? 'var(--cyan)' : t > 5 ? 'var(--gold)' : 'var(--red)';
+  num.textContent = t;
+  num.style.color = t > 10 ? 'var(--text)' : t > 5 ? 'var(--gold)' : 'var(--red)';
+}
+
+const LETTERS = ['أ','ب','ج','د'];
+const COLORS  = ['opt-a','opt-b','opt-c','opt-d'];
+
+// ── ACTIONS ──────────────────────────────────────────────────
+function startQuestion() {
+  const text = document.getElementById('q-text').value.trim();
+  if (!text) { toast('⚠️ أدخل نص السؤال'); return; }
+
+  const options = [0,1,2,3].map(i => document.getElementById('opt-' + i).value.trim());
+  if (options.some(o => !o)) { toast('⚠️ أدخل جميع الخيارات'); return; }
+
+  const correctEl = document.querySelector('input[name="correct"]:checked');
+  if (!correctEl) { toast('⚠️ اختر الإجابة الصحيحة'); return; }
+
+  const hint = document.getElementById('q-hint').value.trim();
+
+  currentQuestion = { text, options, correctAnswer: parseInt(correctEl.value), hint: hint || null };
+  socket.emit('host:start-question', currentQuestion);
+}
+
+function endQuestion() {
+  socket.emit('host:end-question');
+}
+
+function resetGame() {
+  if (!confirm('هل أنت متأكد من إعادة تشغيل اللعبة؟ سيتم حذف جميع النقاط والإحصائيات.')) return;
+  socket.emit('host:reset');
+}
+
+function showSetup() {
+  showPanel('setup');
+  // Clear form
+  document.getElementById('q-text').value = '';
+  [0,1,2,3].forEach(i => document.getElementById('opt-' + i).value = '');
+  document.getElementById('q-hint').value = '';
+  document.querySelectorAll('input[name="correct"]').forEach(r => r.checked = false);
+}
+
+// ── RENDER ───────────────────────────────────────────────────
+function renderLeaderboard(lb) {
+  const el = document.getElementById('leaderboard-list');
+  if (!lb.length) { el.innerHTML = '<div style="color:var(--muted);font-size:14px;text-align:center;padding:20px">لا يوجد لاعبون بعد</div>'; return; }
+  el.innerHTML = lb.map(p => `
+    <div class="lb-item">
+      <div class="lb-rank ${p.rank <= 3 ? 'r' + p.rank : ''}">${p.rank <= 3 ? ['🥇','🥈','🥉'][p.rank-1] : '#' + p.rank}</div>
+      <div class="lb-emoji">${p.emoji}</div>
+      <div class="lb-name">${p.name}</div>
+      ${p.streak >= 3 ? `<div class="lb-streak">🔥${p.streak}</div>` : ''}
+      <div class="lb-pts">${p.points.toLocaleString()}</div>
+    </div>
+  `).join('');
+}
+
+function renderWaitingPlayers() {
+  const el = document.getElementById('waiting-players');
+  const ps = Object.values(players);
+  if (!ps.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:14px">في انتظار انضمام اللاعبين...</div>';
+    return;
+  }
+  el.innerHTML = ps.map(p => `<div class="player-chip">${p.emoji} ${p.name}</div>`).join('');
+  document.getElementById('player-count').textContent = ps.length + ' لاعب';
+}
+
+function renderActiveQuestion(q) {
+  const el = document.getElementById('active-q-display');
+  el.innerHTML = `
+    <div class="q-num">سؤال #${q.number || qNum}</div>
+    <div class="q-text">${q.text}</div>
+    <div class="q-options">
+      ${q.options.map((o, i) => `
+        <div class="q-opt ${currentQuestion && i === currentQuestion.correctAnswer ? 'correct' : ''}">
+          <strong>${LETTERS[i]}.</strong> ${o}
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+// ── SOCKET EVENTS ────────────────────────────────────────────
+socket.on('game:state', data => {
+  players = {};
+  data.players.forEach(p => players[p.id] = p);
+  renderWaitingPlayers();
+  renderLeaderboard(data.leaderboard);
+  qNum = data.qNum;
+});
+
+socket.on('game:players-update', ps => {
+  players = {};
+  ps.forEach(p => players[p.id] = p);
+  renderWaitingPlayers();
+  document.getElementById('player-count').textContent = ps.length + ' لاعب';
+  document.getElementById('stat-total').textContent = ps.length;
+});
+
+socket.on('game:leaderboard', renderLeaderboard);
+
+socket.on('host:question-confirmed', ({ question, number }) => {
+  qNum = number;
+  document.getElementById('live-badge').style.display = 'inline';
+  document.getElementById('btn-start').disabled = true;
+  document.getElementById('stat-total').textContent = Object.keys(players).length;
+  document.getElementById('stat-answered').textContent = '0';
+  renderActiveQuestion({ ...question, number });
+  updateTimerCircle(30);
+  showPanel('active');
+  toast('▶️ السؤال بدأ!');
+});
+
+socket.on('game:timer', t => updateTimerCircle(t));
+
+socket.on('host:answer-stats', ({ answered, total }) => {
+  document.getElementById('stat-answered').textContent = answered;
+  document.getElementById('stat-total').textContent = total;
+});
+
+socket.on('game:question-end', ({ correctAnswer, results, leaderboard: lb }) => {
+  document.getElementById('live-badge').style.display = 'none';
+  document.getElementById('btn-start').disabled = false;
+  renderLeaderboard(lb);
+
+  // Build results display
+  const opts = currentQuestion?.options || [];
+  document.getElementById('correct-answer-display').innerHTML = `
+    <div style="background:#10b98120;border:1px solid var(--green);border-radius:10px;padding:12px;margin-bottom:12px">
+      <div style="font-size:12px;color:var(--green);font-weight:700;margin-bottom:4px">✅ الإجابة الصحيحة</div>
+      <div style="font-size:16px;font-weight:700">${LETTERS[correctAnswer]}. ${opts[correctAnswer] || ''}</div>
+    </div>
+  `;
+
+  const resultHtml = Object.entries(results).map(([id, r]) => {
+    const p = players[id];
+    if (!p) return '';
+    const sign = r.delta >= 0 ? '+' : '';
+    return `
+      <div class="result-item ${r.isCorrect ? 'correct' : 'wrong'}">
+        <span class="result-icon">${r.isCorrect ? '✅' : '❌'}</span>
+        <span>${p.emoji} ${p.name}</span>
+        ${r.holed ? '<span style="font-size:11px">(ثقب!)</span>' : ''}
+        <span style="margin-right:auto;font-weight:900">${sign}${r.delta}</span>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('result-list').innerHTML = resultHtml || '<div style="color:var(--muted)">لم يجب أحد</div>';
+  showPanel('results');
+  toast('⏹️ انتهى السؤال');
+});
+
+socket.on('game:reset', () => {
+  players = {};
+  qNum = 0;
+  currentQuestion = null;
+  renderWaitingPlayers();
+  renderLeaderboard([]);
+  document.getElementById('live-badge').style.display = 'none';
+  document.getElementById('btn-start').disabled = false;
+  showSetup();
+  toast('🔄 تم إعادة تشغيل اللعبة');
+});
+</script>
+</body>
+</html>
