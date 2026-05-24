@@ -79,7 +79,8 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 .answer-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
 .ans-btn{padding:16px 12px;border-radius:14px;border:2px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:.2s;text-align:center;line-height:1.4}
 .ans-btn:hover:not(:disabled){transform:translateY(-2px);border-color:var(--purple-light)}
-.ans-btn:disabled{cursor:not-allowed}
+.ans-btn:disabled{cursor:not-allowed;opacity:.35;pointer-events:none}
+.answer-grid.cut-locked .ans-btn{opacity:.25;pointer-events:none;cursor:not-allowed;filter:grayscale(1)}
 .ans-btn.selected{border-color:var(--purple);background:#7c3aed25}
 .ans-btn.correct{border-color:var(--green)!important;background:#10b98125!important;color:var(--green)!important;animation:pop .4s}
 .ans-btn.wrong{border-color:var(--red)!important;background:#ef444425!important;color:#f87171!important}
@@ -334,7 +335,7 @@ let myId = null, myName = '', myAvatar = null, myPlayer = null;
 let myAbilities = { attack: null, defense: null, general: null };
 let myPoints = 0, myStreak = 0;
 let allPlayers = {}, currentQ = null;
-let hasAnswered = false, myAnswer = null;
+let hasAnswered = false, myAnswer = null, isCut = false;
 let abilitiesState = { attack: false, defense: false, general: false };
 let questionActive = false;
 const socket = io();
@@ -465,7 +466,7 @@ function renderLobbyPlayers() {
 
 // ─── GAME SCREEN ─────────────────────────────────────────────
 function renderQuestion(q) {
-  currentQ = q; hasAnswered = false; myAnswer = null;
+  currentQ = q; hasAnswered = false; myAnswer = null; isCut = false;
   document.getElementById('q-counter').textContent  = `سؤال #${q.number}`;
   document.getElementById('q-num-label').textContent = `السؤال ${q.number}`;
   document.getElementById('q-text').textContent     = q.text;
@@ -519,7 +520,7 @@ function renderAbilitiesBar() {
 }
 
 function submitAnswer(choice) {
-  if (hasAnswered) return;
+  if (hasAnswered || isCut) return;
   socket.emit('player:answer', { choice });
   hasAnswered = true;
   [0,1,2,3].forEach(i => {
@@ -771,7 +772,13 @@ socket.on('game:question-end', data => {
 socket.on('game:notify', ({ type, msg }) => {
   const colorMap = { 'shield-active':'green','ability-active':'gold','revival-active':'green','holed':'red','attack-reflected':'gold','reverse-fired':'green','immunity-saved':'green','cut-active':'red','frozen-active':'red','hole-incoming':'red','frozen-incoming':'red','cut-incoming':'red','error':'red' };
   notify(msg, colorMap[type] || '');
-  if (type === 'cut-active') { document.getElementById('cut-overlay').style.display = 'block'; document.querySelectorAll('.ans-btn').forEach(b => b.disabled = true); }
+  if (type === 'cut-active') {
+    isCut = true;
+    document.getElementById('cut-overlay').style.display = 'block';
+    const grid = document.getElementById('answer-grid');
+    if (grid) grid.classList.add('cut-locked');
+    document.querySelectorAll('.ans-btn').forEach(b => { b.disabled = true; b.onclick = null; });
+  }
   if (type === 'frozen-active') { document.querySelectorAll('.abil-btn').forEach(b => b.disabled = true); }
 });
 
