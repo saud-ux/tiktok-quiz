@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>العب الآن — كويز لايف</title>
+<title>تحدي الأسئلة</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -138,16 +138,16 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 
 <!-- ════ SCREEN 1: JOIN ════ -->
 <div class="screen active" id="screen-join">
-  <div class="logo">🎮 كويز لايف</div>
-  <div class="subtitle">أدخل بياناتك للمشاركة في البث المباشر</div>
+  <div class="logo">تحدي الأسئلة</div>
+  <div class="subtitle">اكتب اسمك وأضف صورة</div>
 
   <div class="card">
     <div class="section-title">اسمك</div>
-    <input type="text" id="player-name" placeholder="أدخل اسمك هنا..." maxlength="20">
+    <input type="text" id="player-name" placeholder="اكتب اسمك" maxlength="20">
   </div>
 
   <div class="card">
-    <div class="section-title">صورتك الشخصية</div>
+    <div class="section-title">صورة العرض</div>
     <div class="avatar-area">
       <div class="avatar-circle" id="avatar-circle" onclick="document.getElementById('file-gallery').click()">
         <span class="avatar-placeholder-icon" id="avatar-placeholder">👤</span>
@@ -155,10 +155,10 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
       </div>
       <div class="avatar-btns">
         <button class="avatar-btn" onclick="document.getElementById('file-gallery').click()">
-          <span class="avatar-btn-icon">🖼️</span> من المعرض
+          من الصور
         </button>
         <button class="avatar-btn" onclick="document.getElementById('file-camera').click()">
-          <span class="avatar-btn-icon">📸</span> التقط صورة
+          الكاميرا
         </button>
       </div>
     </div>
@@ -167,7 +167,7 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
     <input type="file" id="file-camera" accept="image/*" capture="user" style="display:none" onchange="handleFile(this)">
   </div>
 
-  <button class="btn btn-primary" onclick="goToAbilities()">التالي — اختر خصائصك ←</button>
+  <button class="btn btn-primary" onclick="goToAbilities()">التالي ( اختيار الخصائص )</button>
 </div>
 
 <!-- ════ SCREEN 2: ABILITIES ════ -->
@@ -190,20 +190,20 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 
   <div style="display:flex;gap:10px">
     <button class="btn btn-secondary" style="flex:0 0 80px" onclick="showScreen('join')">← رجوع</button>
-    <button class="btn btn-primary" onclick="joinGame()">انضم للعبة 🎮</button>
+    <button class="btn btn-primary" onclick="joinGame()">انضمام</button>
   </div>
 </div>
 
 <!-- ════ SCREEN 3: LOBBY ════ -->
 <div class="screen" id="screen-lobby">
-  <div class="logo">🎮 كويز لايف</div>
+  <div class="logo">تحدي الأسئلة</div>
   <div class="card" style="text-align:center">
     <div style="margin:0 auto 10px;width:90px;height:90px;border-radius:50%;overflow:hidden;border:3px solid var(--purple)">
       <img id="lobby-avatar" src="" style="width:100%;height:100%;object-fit:cover">
     </div>
     <div style="font-size:20px;font-weight:800" id="lobby-name"></div>
-    <div style="margin-top:6px;font-size:13px;color:var(--muted)">انتظر حتى يبدأ المضيف السؤال</div>
-    <div class="waiting-anim"><span class="waiting-dots">⏳</span></div>
+    <div style="margin-top:6px;font-size:13px;color:var(--muted)">انتظر الهوست</div>
+    <div class="waiting-anim"><span class="waiting-dots">...</span></div>
   </div>
   <div class="card">
     <div class="section-title">خصائصك</div>
@@ -253,7 +253,7 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
     <div class="section-title">🏆 الترتيب الحالي</div>
     <div id="result-leaderboard"></div>
   </div>
-  <div style="text-align:center;color:var(--muted);font-size:14px;padding:10px">⏳ في انتظار السؤال التالي...</div>
+  <div style="text-align:center;color:var(--muted);font-size:14px;padding:10px">في انتظار السؤال التالي...</div>
 </div>
 
 <!-- ════ TARGET MODAL ════ -->
@@ -283,7 +283,7 @@ const ABILITIES = {
   ],
   general: [
     { type:'revival',    icon:'✨', name:'إنعاش',      desc:'استرجع ستريك خسرته عند الخطأ' },
-    { type:'doubleRisk', icon:'⚡', name:'مضاعف خطر', desc:'صح=ضعف النقاط، غلط=خسارة' },
+    { type:'doubleRisk', icon:'×2', name:'مضاعف خطر', desc:'صح=ضعف النقاط، غلط=خسارة' },
     { type:'hint',       icon:'💡', name:'تلميح',      desc:'اكشف تلميحاً للسؤال' },
   ],
 };
