@@ -30,6 +30,10 @@ function newState() {
     nextEffects: {},   // id → {cut?,frozen?}
     retryPending: {},  // id → true
     revivalPending: {},// id → true
+    preQ: false,
+    preQEligible: new Set(),
+    preQResponded: new Set(),
+    preQTimeout: null,
   };
 }
 
@@ -187,6 +191,55 @@ function endQuestion() {
 }
 
 // ─────────────────────────────────────────────────────────────
+// START ACTUAL QUESTION (called after pre-Q phase or immediately)
+// ─────────────────────────────────────────────────────────────
+function startActualQuestion() {
+  clearTimeout(G.preQTimeout);
+  G.preQ = false;
+  G.active   = true;
+  G.timeLeft = 30;
+  G.answers  = {};
+  G.retryPending   = {};
+  G.revivalPending = {};
+
+  Object.keys(G.players).forEach(pid => {
+    G.effects[pid] = {
+      cut:       G.effects[pid]?.cut    || false,
+      frozen:    G.effects[pid]?.frozen || false,
+      immunity:  G.effects[pid]?.immunity || false, // keep if set during preQ
+      reverse:   G.effects[pid]?.reverse  || false,
+      doubleRisk:false,
+      revival:   false,
+      retry:     false,
+      holeTarget:null,
+    };
+  });
+
+  const playerQ = { text: G.question.text, options: G.question.options, number: G.qNum };
+  io.emit('game:question-start', { question: playerQ, timeLeft: 30 });
+
+  Object.entries(G.effects).forEach(([pid, eff]) => {
+    if (eff.cut)    io.to(pid).emit('game:notify', { type: 'cut-active',    msg: '✂️ أنت مقطوع! لا يمكنك الإجابة' });
+    if (eff.frozen) io.to(pid).emit('game:notify', { type: 'frozen-active', msg: '❄️ أنت مجمد! لا يمكنك استخدام الخصائص' });
+  });
+
+  G.timerRef = setInterval(() => {
+    G.timeLeft--;
+    io.emit('game:timer', G.timeLeft);
+    if (G.timeLeft <= 0) endQuestion();
+  }, 1000);
+}
+
+function checkAllPreQResponded() {
+  if (!G.preQ) return;
+  if (G.preQResponded.size >= G.preQEligible.size) {
+    clearTimeout(G.preQTimeout);
+    G.preQ = false;
+    startActualQuestion();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
 // SOCKET.IO
 // ─────────────────────────────────────────────────────────────
 io.on('connection', socket => {
@@ -202,50 +255,101 @@ io.on('connection', socket => {
 
   // ── HOST ───────────────────────────────────────────────────
   socket.on('host:start-question', qData => {
-    if (G.active) return;
+    if (G.active || G.preQ) return;
     clearInterval(G.timerRef);
 
     G.question = qData;
     G.qNum++;
-    G.active   = true;
-    G.timeLeft = 30;
-    G.answers  = {};
-    G.retryPending   = {};
-    G.revivalPending = {};
 
-    // Reset per-question transient effects (keep cut/frozen from previous)
+    // Reset effects skeleton (will be fully reset in startActualQuestion)
     Object.keys(G.players).forEach(pid => {
-      G.effects[pid] = {
-        cut:       G.effects[pid]?.cut    || false,
-        frozen:    G.effects[pid]?.frozen || false,
-        immunity:  false,
-        reverse:   false,
-        doubleRisk:false,
-        revival:   false,
-        retry:     false,
-        holeTarget:null,
-      };
+      if (!G.effects[pid]) G.effects[pid] = {};
     });
 
-    const playerQ = { text: qData.text, options: qData.options, number: G.qNum };
-    io.emit('game:question-start', { question: playerQ, timeLeft: 30 });
-
-    // Notify restricted players
-    Object.entries(G.effects).forEach(([pid, eff]) => {
-      if (eff.cut)    io.to(pid).emit('game:notify', { type: 'cut-active',    msg: '✂️ أنت مقطوع! لا يمكنك الإجابة على هذا السؤال' });
-      if (eff.frozen) io.to(pid).emit('game:notify', { type: 'frozen-active', msg: '❄️ أنت مجمد! لا يمكنك استخدام الخصائص' });
-    });
-
+    // Tell host the question is confirmed
     socket.emit('host:question-confirmed', { question: qData, number: G.qNum });
 
-    G.timerRef = setInterval(() => {
-      G.timeLeft--;
-      io.emit('game:timer', G.timeLeft);
-      if (G.timeLeft <= 0) endQuestion();
-    }, 1000);
+    // Find players with unused freeze / cut / immunity
+    const preTypes = ['freeze','cut','immunity'];
+    const eligible = Object.values(G.players).filter(p => {
+      return ['attack','defense'].some(cat => {
+        const ab = p.abilities[cat];
+        return ab && preTypes.includes(ab.type) && !ab.used;
+      });
+    });
+
+    if (eligible.length === 0) {
+      startActualQuestion();
+      return;
+    }
+
+    // ── Pre-question phase ──────────────────────────────────────
+    G.preQ = true;
+    G.preQEligible = new Set(eligible.map(p => p.id));
+    G.preQResponded = new Set();
+
+    // Notify eligible players
+    eligible.forEach(p => {
+      ['attack','defense'].forEach(cat => {
+        const ab = p.abilities[cat];
+        if (ab && preTypes.includes(ab.type) && !ab.used) {
+          io.to(p.id).emit('game:pre-question', { category: cat, type: ab.type });
+        }
+      });
+    });
+
+    // Notify non-eligible players to wait
+    Object.keys(G.players).forEach(pid => {
+      if (!G.preQEligible.has(pid)) {
+        io.to(pid).emit('game:waiting-pre-question');
+      }
+    });
+
+    // 4-second fallback
+    G.preQTimeout = setTimeout(() => {
+      if (G.preQ) {
+        G.preQ = false;
+        startActualQuestion();
+      }
+    }, 4000);
   });
 
   socket.on('host:end-question', () => endQuestion());
+
+  socket.on('player:pre-question-decision', ({ use, targetId }) => {
+    if (!G.preQ || !G.preQEligible.has(socket.id)) return;
+    if (G.preQResponded.has(socket.id)) return;
+    G.preQResponded.add(socket.id);
+
+    if (use) {
+      const p = G.players[socket.id];
+      if (p) {
+        ['attack','defense'].forEach(cat => {
+          const ab = p.abilities[cat];
+          if (!ab || ab.used) return;
+          if (!['freeze','cut','immunity'].includes(ab.type)) return;
+
+          if (ab.type === 'immunity') {
+            ab.used = true;
+            if (!G.effects[socket.id]) G.effects[socket.id] = {};
+            G.effects[socket.id].immunity = true;
+            io.to(socket.id).emit('ability:result', { type: 'immunity', status: 'active' });
+            notify(socket.id, 'shield-active', '🛡️ الحصانة مفعّلة!');
+          } else if (targetId && G.players[targetId] && targetId !== socket.id) {
+            const res = applyAttack(socket.id, ab.type, targetId);
+            if (res.ok) {
+              ab.used = true;
+              const st = res.reflected ? 'reflected' : res.blocked ? 'blocked' : 'success';
+              io.to(socket.id).emit('ability:result', { type: ab.type, status: st, target: G.players[targetId]?.name });
+            }
+          }
+        });
+        io.emit('game:players-update', publicPlayers());
+      }
+    }
+
+    checkAllPreQResponded();
+  });
 
   socket.on('host:reset', () => {
     clearInterval(G.timerRef);

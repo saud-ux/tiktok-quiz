@@ -134,6 +134,12 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 .target-pts{font-size:13px;color:var(--muted)}
 .modal-cancel{width:100%;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--muted);font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px}
 
+/* ── WAITING OVERLAY ── */
+#waiting-overlay{position:fixed;inset:0;background:#00000095;z-index:90;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.waiting-spinner{width:52px;height:52px;border:4px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.waiting-text{font-size:16px;font-weight:700;color:var(--muted)}
+
 /* ── TOAST ── */
 #notif{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#1e1e3a;border:1px solid var(--purple);color:var(--text);padding:12px 20px;border-radius:14px;font-size:14px;font-weight:700;z-index:200;max-width:90vw;text-align:center;opacity:0;transition:.3s;pointer-events:none}
 #notif.show{opacity:1}
@@ -285,6 +291,12 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
     <div id="target-list"></div>
     <button class="modal-cancel" onclick="closeTargetModal()">إلغاء</button>
   </div>
+</div>
+
+<!-- ════ WAITING OVERLAY ════ -->
+<div id="waiting-overlay">
+  <div class="waiting-spinner"></div>
+  <div class="waiting-text">جاري اختيار الخصائص...</div>
 </div>
 
 <div id="notif"></div>
@@ -545,11 +557,13 @@ function closeTargetModal() {
 
 // ─── PRE-QUESTION MODAL ───────────────────────────────────────
 let preQTimer = null;
-let pendingQuestion = null;
+let preQCat   = null;
+let preQType  = null;
 
-function showPreQuestionModal(cat, type, question) {
-  pendingQuestion = question;
-  const a = ABILITIES[cat].find(x => x.type === type);
+function showPreQuestionModal(cat, type) {
+  preQCat  = cat;
+  preQType = type;
+  const a  = ABILITIES[cat].find(x => x.type === type);
 
   document.getElementById('pre-q-icon').textContent  = a.icon;
   document.getElementById('pre-q-title').textContent = `هل تستخدم "${a.name}" الآن؟`;
@@ -561,25 +575,24 @@ function showPreQuestionModal(cat, type, question) {
     yesBtn.textContent = 'نعم، فعّل الحصانة';
     yesBtn.onclick = () => {
       clearPreQTimer();
-      socket.emit('player:use-ability', { category: cat });
+      socket.emit('player:pre-question-decision', { use: true });
       abilitiesState[cat] = true;
       closePreQModal();
-      renderQuestion(pendingQuestion);
     };
   } else {
-    // freeze or cut → need target picker after question renders
+    // freeze or cut → need target selection
     yesBtn.textContent = 'نعم، اختر الهدف';
     yesBtn.onclick = () => {
       clearPreQTimer();
       closePreQModal();
-      renderQuestion(pendingQuestion);
-      setTimeout(() => pickTarget(cat, type, a.name), 150);
+      // show target picker; on confirm → send decision with targetId
+      showPreQTargetPicker(cat, type, a.name);
     };
   }
 
   document.getElementById('pre-q-modal').classList.add('open');
 
-  let count = 8;
+  let count = 4;
   document.getElementById('pre-q-timer').textContent = count;
   preQTimer = setInterval(() => {
     count--;
@@ -589,6 +602,28 @@ function showPreQuestionModal(cat, type, question) {
   }, 1000);
 }
 
+function showPreQTargetPicker(cat, type, name) {
+  const others = Object.values(allPlayers).filter(p => p.id !== myId);
+  if (!others.length) { socket.emit('player:pre-question-decision', { use: false }); return; }
+
+  const iconMap = { freeze:'❄️', cut:'✂️' };
+  document.getElementById('target-modal-title').textContent = `${iconMap[type]||''} اختر هدف — ${name}`;
+  document.getElementById('target-list').innerHTML = others.map(p => `
+    <div class="target-item" onclick="confirmPreQAttack('${cat}','${p.id}')">
+      ${renderAvatar(p.avatar, 44)}
+      <span class="target-name">${p.name}</span>
+      <span class="target-pts">${p.points.toLocaleString()} نقطة</span>
+    </div>
+  `).join('');
+  document.getElementById('target-modal').classList.add('open');
+}
+
+function confirmPreQAttack(cat, targetId) {
+  closeTargetModal();
+  abilitiesState[cat] = true;
+  socket.emit('player:pre-question-decision', { use: true, targetId });
+}
+
 function clearPreQTimer() {
   if (preQTimer) { clearInterval(preQTimer); preQTimer = null; }
 }
@@ -596,11 +631,19 @@ function clearPreQTimer() {
 function skipPreQuestion() {
   clearPreQTimer();
   closePreQModal();
-  if (pendingQuestion) renderQuestion(pendingQuestion);
+  socket.emit('player:pre-question-decision', { use: false });
 }
 
 function closePreQModal() {
   document.getElementById('pre-q-modal').classList.remove('open');
+}
+
+// ─── WAITING OVERLAY ─────────────────────────────────────────
+function showWaitingOverlay() {
+  document.getElementById('waiting-overlay').style.display = 'flex';
+}
+function hideWaitingOverlay() {
+  document.getElementById('waiting-overlay').style.display = 'none';
 }
 
 // ─── RESULTS ─────────────────────────────────────────────────
@@ -664,13 +707,18 @@ socket.on('game:leaderboard', lb => {
 });
 
 socket.on('game:question-start', ({ question }) => {
-  const preTypes = ['freeze','cut','immunity'];
-  let preCat = null;
-  ['attack','defense'].forEach(cat => {
-    if (!preCat && preTypes.includes(myAbilities[cat]) && !abilitiesState[cat]) preCat = cat;
-  });
-  if (preCat) showPreQuestionModal(preCat, myAbilities[preCat], question);
-  else renderQuestion(question);
+  closePreQModal();
+  hideWaitingOverlay();
+  renderQuestion(question);
+});
+
+socket.on('game:pre-question', ({ category, type }) => {
+  // Server is asking ME to decide before the question starts
+  showPreQuestionModal(category, type);
+});
+
+socket.on('game:waiting-pre-question', () => {
+  showWaitingOverlay();
 });
 
 socket.on('game:timer', t => {
