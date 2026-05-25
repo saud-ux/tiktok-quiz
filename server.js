@@ -573,7 +573,8 @@ io.on('connection', socket => {
   socket.on('player:answer', ({ choice }) => {
     if (!G.active) return;
     const eff = G.effects[socket.id] || {};
-    if (eff.cut) { socket.emit('game:notify', { type: 'cut-active', msg: '✂️ لا يمكنك الإجابة!' }); return; }
+    if (eff.cut)    { socket.emit('game:notify', { type: 'cut-active',    msg: '✂️ لا يمكنك الإجابة!' }); return; }
+    if (eff.frozen) { socket.emit('game:notify', { type: 'frozen-active', msg: '❄️ أنت مجمد! لا يمكنك الإجابة أو استخدام الخصائص' }); return; }
 
     const existing = G.answers[socket.id];
 

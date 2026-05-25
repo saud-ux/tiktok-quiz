@@ -1211,16 +1211,28 @@ socket.on('game:notify', ({ type, msg }) => {
     showAttackHit('💀', msg);
   }
 
-  if (type === 'cut-active' || type === 'escaped-active') {
+  if (type === 'cut-active' || type === 'escaped-active' || type === 'frozen-active') {
     isCut = true;
     const cutEl = document.getElementById('cut-overlay');
-    if (type === 'escaped-active') cutEl.textContent = '🚫 غادرت الشاشة أثناء السؤال!';
+    if (type === 'escaped-active') {
+      cutEl.textContent = '🚫 غادرت الشاشة أثناء السؤال!';
+    } else if (type === 'frozen-active') {
+      cutEl.innerHTML = '❄️ أنت مجمد! لا يمكنك الإجابة أو استخدام الخصائص';
+      cutEl.style.borderColor = '#06b6d4';
+      cutEl.style.color = '#67e8f9';
+      cutEl.style.background = '#06b6d415';
+    } else {
+      cutEl.textContent = '✂️ أنت مقطوع! لا يمكنك الإجابة على هذا السؤال';
+      cutEl.style.borderColor = '';
+      cutEl.style.color = '';
+      cutEl.style.background = '';
+    }
     cutEl.style.display = 'block';
     const grid = document.getElementById('answer-grid');
     if (grid) grid.classList.add('cut-locked');
-    document.querySelectorAll('.ans-btn').forEach(b => { b.disabled=true; b.onclick=null; });
+    document.querySelectorAll('.ans-btn').forEach(b => { b.disabled = true; b.onclick = null; });
+    document.querySelectorAll('.abil-btn').forEach(b => b.disabled = true);
   }
-  if (type === 'frozen-active') { document.querySelectorAll('.abil-btn').forEach(b => b.disabled=true); }
 });
 
 socket.on('ability:result', ({ type, status }) => {
