@@ -15,28 +15,31 @@ app.get('/leaderboard', (_, res) => res.sendFile(path.join(__dirname, 'public', 
 // ─────────────────────────────────────────────────────────────
 // GAME STATE
 // ─────────────────────────────────────────────────────────────
+const QUESTION_TIME = 20; // ← تم تغييره من 30 إلى 20
+
 let G = newState();
 
 function newState() {
   return {
-    players: {},       // id → {id,name,emoji,points,streak,lastStreak,abilities}
-    question: null,    // {text, options:[4], correctAnswer:0-3, hint?}
+    players: {},
+    question: null,
     qNum: 0,
     active: false,
-    timeLeft: 30,
+    timeLeft: QUESTION_TIME,
     timerRef: null,
-    answers: {},       // id → {choice, timeLeft, isRetry?}
-    effects: {},       // id → {cut,frozen,immunity,reverse,doubleRisk,revival,retry,holeTarget}
-    nextEffects: {},   // id → {cut?,frozen?}
-    retryPending: {},  // id → true
-    revivalPending: {},// id → true
-    reverseOffers: {}, // targetId → { attackerId, type, immediate, timeout }
-    disconnectTimers: {}, // persistentId → setTimeout handle
-    escapedPlayers: new Set(), // persistentIds who left during active question
+    answers: {},
+    effects: {},
+    nextEffects: {},
+    retryPending: {},
+    revivalPending: {},
+    reverseOffers: {},
+    disconnectTimers: {},
+    escapedPlayers: new Set(),
     preQ: false,
     preQEligible: new Set(),
     preQResponded: new Set(),
     preQTimeout: null,
+    isLastQuestion: false, // ← جديد: السؤال الأخير
   };
 }
 
@@ -63,7 +66,7 @@ function notify(targetId, type, msg) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// APPLY ATTACK (with reverse/immunity checks)
+// APPLY ATTACK
 // ─────────────────────────────────────────────────────────────
 function applyAttack(attackerId, type, targetId, immediate = false, skipReverseOffer = false) {
   const attacker = G.players[attackerId];
@@ -72,7 +75,6 @@ function applyAttack(attackerId, type, targetId, immediate = false, skipReverseO
 
   const tEff = G.effects[targetId] || {};
 
-  // Reactive reverse: if target has unused reverse ability, pause and offer them 5s to decide
   if (!skipReverseOffer && !G.reverseOffers[targetId]) {
     const defAb = target.abilities?.defense;
     if (defAb && defAb.type === 'reverse' && !defAb.used) {
@@ -147,7 +149,7 @@ function endQuestion() {
   const q = G.question;
   const results = {};
 
-  // Phase 1 – calculate per-player deltas
+  // Phase 1 – حساب النقاط لكل لاعب
   Object.values(G.players).forEach(p => {
     const ans  = G.answers[p.id];
     const eff  = G.effects[p.id] || {};
@@ -156,7 +158,7 @@ function endQuestion() {
 
     if (correct) {
       const base  = 100;
-      const speed = ans ? Math.floor((ans.timeLeft / 30) * 50) : 0;
+      const speed = ans ? Math.floor((ans.timeLeft / QUESTION_TIME) * 50) : 0;
       let pts = base + speed;
       if (p.streak >= 5)      pts = Math.floor(pts * 2);
       else if (p.streak >= 3) pts = Math.floor(pts * 1.5);
@@ -170,10 +172,10 @@ function endQuestion() {
       if (!eff.revival) p.streak = 0;
     }
 
-    results[p.id] = { isCorrect: correct, delta, choice: ans?.choice ?? null, streak: p.streak, timeTaken: ans ? (30 - ans.timeLeft) : null };
+    results[p.id] = { isCorrect: correct, delta, choice: ans?.choice ?? null, streak: p.streak, timeTaken: ans ? (QUESTION_TIME - ans.timeLeft) : null };
   });
 
-  // Phase 2 – process hole attacks
+  // Phase 2 – معالجة هجمات الثقب
   Object.entries(G.effects).forEach(([attackerId, eff]) => {
     if (!eff.holeTarget) return;
     const tid     = eff.holeTarget;
@@ -189,28 +191,38 @@ function endQuestion() {
       tEff.reverse = false;
       const lost = Math.max(0, aResult.delta);
       results[attackerId] = { ...aResult, delta: -lost, reflected: true };
-      notify(attackerId, 'attack-reflected', `${target.emoji} ${target.name} عكس الثقب!`);
+      notify(attackerId, 'attack-reflected', `${target.name} عكس الثقب!`);
       notify(tid,        'reverse-fired',    '🔄 درع الانعكاس انطلق!');
     } else if (tEff.immunity) {
       tEff.immunity = false;
-      notify(attackerId, 'attack-blocked', `${target.emoji} ${target.name} محصن!`);
+      notify(attackerId, 'attack-blocked', `${target.name} محصن!`);
       notify(tid,        'immunity-saved',  '🛡️ الحصانة أنقذتك!');
     } else {
       const stolen = Math.max(0, tResult.delta);
       if (stolen > 0) {
         results[tid] = { ...tResult, delta: -stolen, holed: true };
-        notify(tid, 'holed', `💀 ${attacker.emoji} ${attacker.name} سرق نقاطك!`);
+        notify(tid, 'holed', `💀 ${attacker.name} سرق نقاطك!`);
       }
     }
   });
 
-  // Phase 3 – apply deltas
+  // Phase 2.5 – مضاعفة النقاط للسؤال الأخير ×2
+  if (G.isLastQuestion) {
+    Object.keys(results).forEach(pid => {
+      if (results[pid].delta > 0) {
+        results[pid].delta *= 2;
+        results[pid].doubled = true;
+      }
+    });
+  }
+
+  // Phase 3 – تطبيق النقاط
   Object.values(G.players).forEach(p => {
     const r = results[p.id] || { delta: 0 };
     p.points = Math.max(0, p.points + r.delta);
   });
 
-  // Phase 4 – set next-question effects
+  // Phase 4 – تحضير تأثيرات السؤال القادم
   const newEff = {};
   Object.keys(G.players).forEach(pid => {
     newEff[pid] = { cut: G.nextEffects[pid]?.cut || false, frozen: G.nextEffects[pid]?.frozen || false };
@@ -223,20 +235,40 @@ function endQuestion() {
     results,
     leaderboard: leaderboard(),
     qNum: G.qNum,
+    wasLastQuestion: G.isLastQuestion,
   });
   io.emit('game:leaderboard', leaderboard());
+
+  // Phase 5 – الفرصة الأخيرة: كل سؤالين يحصل الأخير على خاصية مجانية
+  if (G.qNum % 2 === 0 && !G.isLastQuestion) {
+    const sorted = Object.values(G.players).sort((a, b) => a.points - b.points);
+    if (sorted.length >= 2) {
+      const lastPlace = sorted[0];
+      const bonusPool = ['retry', 'immunity', 'hint'];
+      const bonusType = bonusPool[Math.floor(Math.random() * bonusPool.length)];
+      const info = {
+        retry:    { icon: '↩️', name: 'إعادة',  desc: 'فرصة ثانية إذا أخطأت' },
+        immunity: { icon: '🛡️', name: 'حصانة', desc: 'حماية من هجوم واحد' },
+        hint:     { icon: '💡', name: 'تلميح',  desc: 'تلميح للسؤال القادم' },
+      }[bonusType];
+      lastPlace.bonusAbility = { type: bonusType, used: false };
+      io.to(lastPlace.id).emit('game:bonus-ability', { ...info, type: bonusType });
+    }
+  }
+
+  G.isLastQuestion = false;
 }
 
 // ─────────────────────────────────────────────────────────────
-// START ACTUAL QUESTION (called after pre-Q phase or immediately)
+// START ACTUAL QUESTION
 // ─────────────────────────────────────────────────────────────
 function startActualQuestion() {
   clearTimeout(G.preQTimeout);
   G.preQ = false;
-  G.active   = true;
+  G.active    = true;
   G.escapedPlayers = new Set();
-  G.timeLeft = 30;
-  G.answers  = {};
+  G.timeLeft  = QUESTION_TIME;
+  G.answers   = {};
   G.retryPending   = {};
   G.revivalPending = {};
 
@@ -244,7 +276,7 @@ function startActualQuestion() {
     G.effects[pid] = {
       cut:       G.effects[pid]?.cut    || false,
       frozen:    G.effects[pid]?.frozen || false,
-      immunity:  G.effects[pid]?.immunity || false, // keep if set during preQ
+      immunity:  G.effects[pid]?.immunity || false,
       reverse:   G.effects[pid]?.reverse  || false,
       doubleRisk:false,
       revival:   false,
@@ -254,7 +286,11 @@ function startActualQuestion() {
   });
 
   const playerQ = { text: G.question.text, options: G.question.options, number: G.qNum };
-  io.emit('game:question-start', { question: playerQ, timeLeft: 30 });
+  io.emit('game:question-start', {
+    question: playerQ,
+    timeLeft: QUESTION_TIME,
+    isLastQuestion: G.isLastQuestion,
+  });
 
   Object.entries(G.effects).forEach(([pid, eff]) => {
     if (eff.cut)    io.to(pid).emit('game:notify', { type: 'cut-active',    msg: '✂️ أنت مقطوع! لا يمكنك الإجابة' });
@@ -281,7 +317,6 @@ function checkAllPreQResponded() {
 // SOCKET.IO
 // ─────────────────────────────────────────────────────────────
 io.on('connection', socket => {
-  // Send snapshot to newcomer
   socket.emit('game:state', {
     players:    publicPlayers(),
     active:     G.active,
@@ -298,16 +333,14 @@ io.on('connection', socket => {
 
     G.question = qData;
     G.qNum++;
+    G.isLastQuestion = qData.isLastQuestion || false;
 
-    // Reset effects skeleton (will be fully reset in startActualQuestion)
     Object.keys(G.players).forEach(pid => {
       if (!G.effects[pid]) G.effects[pid] = {};
     });
 
-    // Tell host the question is confirmed
     socket.emit('host:question-confirmed', { question: qData, number: G.qNum });
 
-    // Find players with unused freeze / cut / immunity
     const preTypes = ['freeze','cut','immunity'];
     const eligible = Object.values(G.players).filter(p => {
       return ['attack','defense'].some(cat => {
@@ -321,12 +354,10 @@ io.on('connection', socket => {
       return;
     }
 
-    // ── Pre-question phase ──────────────────────────────────────
     G.preQ = true;
     G.preQEligible = new Set(eligible.map(p => p.id));
     G.preQResponded = new Set();
 
-    // Notify eligible players — send all their eligible abilities in one event
     eligible.forEach(p => {
       const abils = [];
       ['attack','defense'].forEach(cat => {
@@ -338,14 +369,12 @@ io.on('connection', socket => {
       if (abils.length) io.to(p.id).emit('game:pre-question', { abilities: abils });
     });
 
-    // Notify non-eligible players to wait
     Object.keys(G.players).forEach(pid => {
       if (!G.preQEligible.has(pid)) {
         io.to(pid).emit('game:waiting-pre-question');
       }
     });
 
-    // 4-second fallback
     G.preQTimeout = setTimeout(() => {
       if (G.preQ) {
         G.preQ = false;
@@ -397,7 +426,6 @@ io.on('connection', socket => {
     const p = G.players[socket.id];
     if (use && p) {
       p.abilities.defense.used = true;
-      // Reflect the attack back onto the attacker
       if (offer.type === 'freeze') {
         if (offer.immediate) G.effects[offer.attackerId] = { ...(G.effects[offer.attackerId] || {}), frozen: true };
         else G.nextEffects[offer.attackerId] = { ...(G.nextEffects[offer.attackerId] || {}), frozen: true };
@@ -412,7 +440,6 @@ io.on('connection', socket => {
       io.to(socket.id).emit('ability:result', { type: 'reverse', status: 'active' });
       io.emit('game:players-update', publicPlayers());
     } else {
-      // Player declined — apply attack normally
       applyAttack(offer.attackerId, offer.type, socket.id, offer.immediate, true);
     }
   });
@@ -435,18 +462,15 @@ io.on('connection', socket => {
 
   // ── PLAYER ─────────────────────────────────────────────────
   socket.on('player:join', ({ name, avatar, abilities, persistentId }) => {
-    // ── Reconnecting player ────────────────────────────────────
     const existing = persistentId ? findByPid(persistentId) : null;
     if (existing) {
       const oldId = existing.id;
 
-      // Cancel pending removal timer
       if (G.disconnectTimers[persistentId]) {
         clearTimeout(G.disconnectTimers[persistentId]);
         delete G.disconnectTimers[persistentId];
       }
 
-      // Remap all state from old socket id → new socket id
       existing.id      = socket.id;
       existing.offline = false;
       G.players[socket.id] = existing;
@@ -466,17 +490,15 @@ io.on('connection', socket => {
         timeLeft: G.timeLeft,
       });
 
-      // If they escaped during the active question, cut and freeze them
       if (G.active && G.escapedPlayers.has(existing.persistentId)) {
         G.effects[socket.id] = { ...(G.effects[socket.id] || {}), cut: true, frozen: true };
-        io.to(socket.id).emit('game:notify', { type: 'escaped-active', msg: '🚫 غادرت الشاشة أثناء السؤال! لا يمكنك المشاركة' });
+        io.to(socket.id).emit('game:notify', { type: 'escaped-active', msg: '🚫 غادرت الشاشة أثناء السؤال!' });
       }
 
       io.emit('game:players-update', publicPlayers());
       return;
     }
 
-    // ── New player ─────────────────────────────────────────────
     if (G.players[socket.id]) return;
 
     G.players[socket.id] = {
@@ -488,6 +510,7 @@ io.on('connection', socket => {
       streak:       0,
       lastStreak:   0,
       offline:      false,
+      bonusAbility: null,
       abilities: {
         attack:  { type: abilities.attack,  used: false },
         defense: { type: abilities.defense, used: false },
@@ -505,12 +528,12 @@ io.on('connection', socket => {
     if (!G.active) return;
     const p = G.players[socket.id];
     if (!p) return;
-    if (G.escapedPlayers.has(p.persistentId)) return; // already marked
+    if (G.escapedPlayers.has(p.persistentId)) return;
     G.escapedPlayers.add(p.persistentId);
     if (!G.effects[socket.id]) G.effects[socket.id] = {};
     G.effects[socket.id].cut    = true;
     G.effects[socket.id].frozen = true;
-    socket.emit('game:notify', { type: 'escaped-active', msg: '🚫 غادرت الشاشة أثناء السؤال! لا يمكنك المشاركة' });
+    socket.emit('game:notify', { type: 'escaped-active', msg: '🚫 غادرت الشاشة أثناء السؤال!' });
   });
 
   socket.on('player:answer', ({ choice }) => {
@@ -520,7 +543,6 @@ io.on('connection', socket => {
 
     const existing = G.answers[socket.id];
 
-    // Retry flow
     if (existing) {
       if (G.retryPending[socket.id]) {
         G.answers[socket.id] = { choice, timeLeft: G.timeLeft, isRetry: true };
@@ -537,7 +559,6 @@ io.on('connection', socket => {
     const correct = choice === G.question.correctAnswer;
     socket.emit('player:answer-accepted', { choice, correct });
 
-    // Offer retry / revival if wrong
     if (!correct) {
       const p = G.players[socket.id];
       if (p) {
@@ -549,12 +570,19 @@ io.on('connection', socket => {
           G.revivalPending[socket.id] = true;
           socket.emit('game:revival-available');
         }
+        // بونص الإعادة للأخير
+        if (p.bonusAbility && p.bonusAbility.type === 'retry' && !p.bonusAbility.used && !eff.frozen) {
+          G.retryPending[socket.id] = true;
+          socket.emit('game:retry-available');
+        }
       }
     }
 
     const answered = Object.keys(G.answers).length;
     const total    = Object.keys(G.players).length;
     io.emit('host:answer-stats', { answered, total });
+    // ← جديد: إرسال التقدم لكل اللاعبين
+    io.emit('game:answer-progress', { answered, total, lb: leaderboard() });
   });
 
   socket.on('player:use-revival', () => {
@@ -565,7 +593,7 @@ io.on('connection', socket => {
     G.effects[socket.id].revival = true;
     delete G.revivalPending[socket.id];
     socket.emit('ability:result', { type: 'revival', status: 'used' });
-    notify(socket.id, 'revival-active', '✨ الإنعاش فعّال! ستحتفظ بستريكك');
+    notify(socket.id, 'revival-active', '✨ الإنعاش فعّال!');
   });
 
   socket.on('player:use-ability', ({ category, targetId }) => {
@@ -573,14 +601,21 @@ io.on('connection', socket => {
     const p = G.players[socket.id];
     if (!p) return;
 
-    const ability = p.abilities[category];
+    // ← جديد: التحقق من الخاصية البونص
+    let ability = p.abilities[category];
+    let isBonusAbility = false;
+    if (category === 'bonus' && p.bonusAbility && !p.bonusAbility.used) {
+      ability = { type: p.bonusAbility.type, used: false };
+      isBonusAbility = true;
+    }
+
     if (!ability || ability.used) {
-      socket.emit('game:notify', { type: 'error', msg: '⚠️ لقد استخدمت هذه الخاصية مسبقاً!' }); return;
+      socket.emit('game:notify', { type: 'error', msg: '⚠️ استخدمتها مسبقاً!' }); return;
     }
 
     const eff = G.effects[socket.id] || {};
     if (eff.frozen) {
-      socket.emit('game:notify', { type: 'error', msg: '❄️ أنت مجمد! لا يمكنك استخدام الخصائص' }); return;
+      socket.emit('game:notify', { type: 'error', msg: '❄️ أنت مجمد!' }); return;
     }
 
     let used = false;
@@ -588,14 +623,13 @@ io.on('connection', socket => {
     switch (ability.type) {
       case 'hole': case 'freeze': case 'cut': {
         if (!targetId || !G.players[targetId] || targetId === socket.id) {
-          socket.emit('game:notify', { type: 'error', msg: '⚠️ اختر لاعباً هدفاً!' }); return;
+          socket.emit('game:notify', { type: 'error', msg: '⚠️ اختر لاعباً!' }); return;
         }
         const res = applyAttack(socket.id, ability.type, targetId);
         if (res.ok) {
           used = true;
-          if (res.reflected) socket.emit('ability:result', { type: ability.type, status: 'reflected' });
-          else if (res.blocked) socket.emit('ability:result', { type: ability.type, status: 'blocked' });
-          else socket.emit('ability:result', { type: ability.type, status: 'success', target: G.players[targetId]?.name });
+          const st = res.reflected ? 'reflected' : res.blocked ? 'blocked' : 'success';
+          socket.emit('ability:result', { type: ability.type, status: st, target: G.players[targetId]?.name });
         }
         break;
       }
@@ -615,16 +649,16 @@ io.on('connection', socket => {
         G.effects[socket.id].retry = true;
         used = true;
         socket.emit('ability:result', { type: 'retry', status: 'active' });
-        notify(socket.id, 'ability-active', '↩️ الإعادة جاهزة! ستحصل على فرصة ثانية إذا أخطأت');
+        notify(socket.id, 'ability-active', '↩️ الإعادة جاهزة!');
         break;
       case 'doubleRisk':
         G.effects[socket.id].doubleRisk = true;
         used = true;
         socket.emit('ability:result', { type: 'doubleRisk', status: 'active' });
-        notify(socket.id, 'ability-active', '⚡ مضاعف الخطر! صح = ضعف، غلط = خسارة');
+        notify(socket.id, 'ability-active', '⚡ مضاعف الخطر!');
         break;
       case 'hint':
-        socket.emit('game:hint', { hint: G.question?.hint || 'لا يوجد تلميح لهذا السؤال' });
+        socket.emit('game:hint', { hint: G.question?.hint || 'لا يوجد تلميح' });
         used = true;
         socket.emit('ability:result', { type: 'hint', status: 'used' });
         break;
@@ -632,11 +666,14 @@ io.on('connection', socket => {
         G.effects[socket.id].revival = true;
         used = true;
         socket.emit('ability:result', { type: 'revival', status: 'active' });
-        notify(socket.id, 'ability-active', '✨ الإنعاش جاهز! ستحتفظ بستريكك إذا أخطأت');
+        notify(socket.id, 'ability-active', '✨ الإنعاش جاهز!');
         break;
     }
 
-    if (used) ability.used = true;
+    if (used) {
+      if (isBonusAbility) p.bonusAbility.used = true;
+      else ability.used = true;
+    }
     io.emit('game:players-update', publicPlayers());
   });
 
@@ -644,21 +681,17 @@ io.on('connection', socket => {
     const p = G.players[socket.id];
     if (!p) return;
 
-    // Clear any reverse offer for this player
     if (G.reverseOffers[socket.id]) {
       clearTimeout(G.reverseOffers[socket.id].timeout);
       delete G.reverseOffers[socket.id];
     }
 
-    // Mark as escaped if they disconnected during an active question
     if (G.active) G.escapedPlayers.add(p.persistentId);
 
-    // Mark offline — keep points/state intact for reconnect
     p.offline = true;
     io.emit('game:players-update', publicPlayers());
     io.emit('game:leaderboard', leaderboard());
 
-    // Remove after 5 minutes if they don't come back
     G.disconnectTimers[p.persistentId] = setTimeout(() => {
       const player = findByPid(p.persistentId);
       if (player && player.offline) {

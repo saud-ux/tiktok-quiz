@@ -17,10 +17,8 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 .screen{position:relative;z-index:1}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Tajawal',sans-serif;overflow-x:hidden}
 body{display:flex;flex-direction:column;min-height:100vh}
-
 .screen{display:none;flex-direction:column;flex:1;padding:20px;gap:16px;min-height:100vh}
 .screen.active{display:flex}
-
 .logo{text-align:center;font-size:26px;font-weight:900;color:var(--green);text-shadow:0 0 20px #4ade8060,0 0 40px #16a34a40;margin-bottom:4px}
 .subtitle{text-align:center;color:var(--muted);font-size:14px;margin-bottom:8px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px}
@@ -33,7 +31,7 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 .btn-primary:disabled{opacity:.4;cursor:not-allowed}
 .btn-secondary{background:var(--surface);border:1px solid var(--border);color:var(--text)}
 
-/* ── AVATAR UPLOAD ── */
+/* ── AVATAR ── */
 .avatar-area{display:flex;flex-direction:column;align-items:center;gap:16px}
 .avatar-circle{width:110px;height:110px;border-radius:50%;border:3px dashed var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;transition:.3s;position:relative}
 .avatar-circle:hover{border-color:var(--purple)}
@@ -43,13 +41,11 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 .avatar-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
 .avatar-btn{padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px}
 .avatar-btn:hover{border-color:var(--purple-light);background:#7c3aed15}
-.avatar-btn-icon{font-size:20px}
 
-/* ── ABILITY SCREEN ── */
+/* ── ABILITIES ── */
 .ability-category{margin-bottom:16px}
 .cat-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.cat-icon{font-size:20px}
-.cat-name{font-size:15px;font-weight:800}
+.cat-icon{font-size:20px}.cat-name{font-size:15px;font-weight:800}
 .ability-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .ability-card{background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:10px 8px;cursor:pointer;transition:.2s;text-align:center;position:relative}
 .ability-card:hover{border-color:var(--purple-light)}
@@ -60,9 +56,7 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 .ability-desc{font-size:10px;color:var(--muted);line-height:1.4}
 
 /* ── LOBBY ── */
-.player-avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--border);flex-shrink:0}
-.player-avatar-sm{width:32px;height:32px;border-radius:50%;object-fit:cover}
-.avatar-fallback{width:40px;height:40px;border-radius:50%;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.lb-mini-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface);border-radius:10px;border:1px solid var(--border);margin-bottom:6px}
 .waiting-anim{text-align:center;padding:20px 0}
 .waiting-dots{font-size:30px;animation:bounce .8s infinite alternate}
 @keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-8px)}}
@@ -96,12 +90,24 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 .abil-btn.active{border-color:var(--cyan);background:#06b6d420;color:var(--cyan)}
 .abil-btn.attack{border-color:#ef444430}
 .abil-btn.attack:hover:not(:disabled){border-color:var(--red)}
+.abil-btn.bonus-ability{border-color:var(--gold)!important;background:#f59e0b15;color:var(--gold)!important;animation:goldPulse 1.5s ease-in-out infinite alternate}
+@keyframes goldPulse{from{box-shadow:0 0 0 var(--gold)}to{box-shadow:0 0 12px #f59e0b60}}
 .abil-icon{font-size:20px;display:block;margin-bottom:2px}
 .reactive-offers{display:flex;flex-direction:column;gap:8px;margin-top:8px}
 .offer-btn{padding:12px;border-radius:12px;border:none;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:.2s}
 .offer-retry{background:#7c3aed20;border:1px solid var(--purple);color:var(--purple-light)}
 .offer-revival{background:#10b98120;border:1px solid var(--green);color:var(--green)}
 .offer-btn:hover{filter:brightness(1.1)}
+
+/* ── LIVE ANSWER COUNTER ── */
+.live-counter{display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;color:var(--muted);font-weight:600;margin-bottom:8px;padding:6px 12px;background:var(--surface);border-radius:10px;border:1px solid var(--border)}
+.live-counter .count-fill{height:4px;background:linear-gradient(90deg,var(--cyan),var(--green));border-radius:2px;transition:width .4s ease}
+.live-counter-bar{height:4px;background:var(--border);border-radius:2px;flex:1;overflow:hidden}
+
+/* ── LAST QUESTION BANNER ── */
+.last-q-banner{display:none;background:linear-gradient(135deg,#f59e0b30,#f59e0b10);border:2px solid var(--gold);border-radius:14px;padding:12px 16px;text-align:center;font-size:16px;font-weight:900;color:var(--gold);margin-bottom:12px;animation:goldGlow 1s ease-in-out infinite alternate}
+.last-q-banner.show{display:block}
+@keyframes goldGlow{from{box-shadow:0 0 10px #f59e0b40}to{box-shadow:0 0 25px #f59e0b80}}
 
 /* ── RESULTS ── */
 .result-banner{text-align:center;padding:24px;border-radius:16px;margin-bottom:16px}
@@ -110,11 +116,10 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 .result-icon{font-size:56px;margin-bottom:8px}
 .result-title{font-size:22px;font-weight:900}
 .result-pts{font-size:30px;font-weight:900;margin-top:4px}
-.result-pts.gain{color:var(--green)}
-.result-pts.loss{color:var(--red)}
+.result-pts.gain{color:var(--green)}.result-pts.loss{color:var(--red)}
 .streak-display{margin-top:8px;font-size:14px;color:var(--gold);font-weight:700}
 
-/* ── PRE-QUESTION MODAL ── */
+/* ── PRE-Q MODAL ── */
 .pre-q-sheet{background:var(--card);border-radius:20px 20px 0 0;padding:24px 20px;width:100%}
 .pre-q-title{font-size:17px;font-weight:900;text-align:center;margin-bottom:4px}
 .pre-q-subtitle{font-size:13px;color:var(--muted);text-align:center;margin-bottom:14px}
@@ -137,9 +142,10 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 .target-item:hover{border-color:var(--purple-light);background:#7c3aed15}
 .target-name{font-size:15px;font-weight:700;flex:1}
 .target-pts{font-size:13px;color:var(--muted)}
+.target-streak{font-size:12px;color:var(--gold);background:#f59e0b15;padding:2px 6px;border-radius:10px}
 .modal-cancel{width:100%;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--muted);font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px}
 
-/* ── REVERSE OFFER NOTIFICATION ── */
+/* ── REVERSE OFFER ── */
 #reverse-offer-notif{position:fixed;bottom:0;left:0;right:0;z-index:250;padding:14px 16px;background:var(--card);border-top:2px solid var(--green);display:flex;align-items:center;gap:12px;transform:translateY(100%);transition:transform .3s ease}
 #reverse-offer-notif.show{transform:translateY(0)}
 .rev-offer-icon{font-size:30px;flex-shrink:0}
@@ -149,6 +155,21 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 .rev-offer-btns{display:flex;gap:8px;flex-shrink:0}
 .rev-btn-yes{padding:10px 14px;border-radius:10px;border:none;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff}
 .rev-btn-no{padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;color:var(--muted)}
+
+/* ── BONUS ABILITY NOTIFICATION ── */
+#bonus-notif{position:fixed;top:0;left:0;right:0;z-index:260;padding:14px 16px;background:var(--card);border-bottom:3px solid var(--gold);display:flex;align-items:center;gap:12px;transform:translateY(-100%);transition:transform .4s ease}
+#bonus-notif.show{transform:translateY(0)}
+.bonus-icon{font-size:36px;flex-shrink:0}
+.bonus-info{flex:1}
+.bonus-title{font-size:15px;font-weight:900;color:var(--gold)}
+.bonus-desc{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* ── ATTACK HIT OVERLAY ── */
+#attack-hit{position:fixed;inset:0;z-index:200;pointer-events:none;display:none;align-items:center;justify-content:center;flex-direction:column;gap:8px}
+#attack-hit.show{display:flex}
+.attack-hit-icon{font-size:80px;animation:hitPop .5s ease}
+.attack-hit-msg{font-size:20px;font-weight:900;color:var(--red);text-align:center;text-shadow:0 0 20px #ef4444;animation:hitPop .5s ease .1s both}
+@keyframes hitPop{0%{transform:scale(3);opacity:0}50%{opacity:1}100%{transform:scale(1);opacity:1}}
 
 /* ── WAITING OVERLAY ── */
 #waiting-overlay{position:fixed;inset:0;background:#00000095;z-index:90;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px}
@@ -160,17 +181,14 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 #notif{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#1e1e3a;border:1px solid var(--purple);color:var(--text);padding:12px 20px;border-radius:14px;font-size:14px;font-weight:700;z-index:200;max-width:90vw;text-align:center;opacity:0;transition:.3s;pointer-events:none}
 #notif.show{opacity:1}
 #notif.green{border-color:var(--green)}
-#notif.red{border-color:var(--red)}
-#notif.gold{border-color:var(--gold)}
-
-.lb-mini-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface);border-radius:10px;border:1px solid var(--border);margin-bottom:6px}
+#notif.red{border-color:var(--red);background:#1a0a0a}
+#notif.gold{border-color:var(--gold);background:#1a1500}
 
 /* ── PODIUM ── */
 .podium-wrap{display:flex;align-items:flex-end;justify-content:center;gap:10px;padding:10px 0 0}
 .podium-place{display:flex;flex-direction:column;align-items:center;gap:8px;animation:riseUp .7s ease forwards;opacity:0}
 .podium-place.p1{animation-delay:.1s}.podium-place.p2{animation-delay:.35s}.podium-place.p3{animation-delay:.55s}
 @keyframes riseUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
-.podium-avatar{border-radius:50%;object-fit:cover;border:3px solid}
 .podium-name{font-size:13px;font-weight:800;text-align:center;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .podium-pts{font-size:12px;font-weight:700;color:var(--muted)}
 .podium-block{border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;width:95px}
@@ -180,21 +198,18 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 .p1 .podium-avatar{width:74px;height:74px;border-color:#f59e0b}
 .p2 .podium-avatar{width:60px;height:60px;border-color:#94a3b8}
 .p3 .podium-avatar{width:54px;height:54px;border-color:#cd7f32}
+.podium-avatar{border-radius:50%;object-fit:cover;border:3px solid}
 
 /* ── BIG COUNTDOWN ── */
 #big-countdown{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:60;pointer-events:none}
 #big-cnt-num{font-size:140px;font-weight:900;color:var(--red);text-shadow:0 0 80px #ef444490,0 0 30px #ef4444;line-height:1;animation:bigPop .85s ease forwards}
 @keyframes bigPop{0%{transform:scale(2.8);opacity:0}20%{opacity:1}55%{transform:scale(1.05);opacity:1}85%{transform:scale(1);opacity:.9}100%{transform:scale(.5);opacity:0}}
 
-/* ── TIMER DANGER ── */
+/* ── ANIMATIONS ── */
 .timer-bar-wrap.danger{animation:pulseBar .45s infinite alternate}
 @keyframes pulseBar{from{box-shadow:none}to{box-shadow:0 0 18px #ef444450}}
-
-/* ── SCREEN SHAKE ── */
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
 .shaking{animation:shake .4s ease}
-
-/* ── REVEAL GLOW ── */
 @keyframes revealGlow{0%,100%{transform:scale(1)}40%{transform:scale(1.06);box-shadow:0 0 40px #4ade8070}}
 .ans-btn.reveal-correct{animation:revealGlow .7s ease}
 </style>
@@ -205,12 +220,10 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 <div class="screen active" id="screen-join">
   <div class="logo">تحدي الأسئلة</div>
   <div class="subtitle">اكتب اسمك وأضف صورة</div>
-
   <div class="card">
     <div class="section-title">اسمك</div>
     <input type="text" id="player-name" placeholder="اكتب اسمك" maxlength="20">
   </div>
-
   <div class="card">
     <div class="section-title">صورة العرض</div>
     <div class="avatar-area">
@@ -219,19 +232,13 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
         <img id="avatar-img" style="display:none;width:100%;height:100%;object-fit:cover">
       </div>
       <div class="avatar-btns">
-        <button class="avatar-btn" onclick="document.getElementById('file-gallery').click()">
-          من الصور
-        </button>
-        <button class="avatar-btn" onclick="document.getElementById('file-camera').click()">
-          الكاميرا
-        </button>
+        <button class="avatar-btn" onclick="document.getElementById('file-gallery').click()">من الصور</button>
+        <button class="avatar-btn" onclick="document.getElementById('file-camera').click()">الكاميرا</button>
       </div>
     </div>
-    <!-- hidden file inputs -->
     <input type="file" id="file-gallery" accept="image/*" style="display:none" onchange="handleFile(this)">
     <input type="file" id="file-camera" accept="image/*" capture="user" style="display:none" onchange="handleFile(this)">
   </div>
-
   <button class="btn btn-primary" onclick="goToAbilities()">التالي ( اختيار الخصائص )</button>
 </div>
 
@@ -239,7 +246,6 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 <div class="screen" id="screen-abilities">
   <div class="logo">⚡ خصائصك</div>
   <div class="subtitle">اختر خاصية واحدة من كل فئة</div>
-
   <div class="card">
     <div class="cat-header"><span class="cat-icon">⚔️</span><span class="cat-name">هجوم</span></div>
     <div class="ability-cards" id="attack-cards"></div>
@@ -252,7 +258,6 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
     <div class="cat-header"><span class="cat-icon">⚙️</span><span class="cat-name">عام</span></div>
     <div class="ability-cards" id="general-cards"></div>
   </div>
-
   <div style="display:flex;gap:10px">
     <button class="btn btn-secondary" style="flex:0 0 80px" onclick="showScreen('join')">← رجوع</button>
     <button class="btn btn-primary" onclick="joinGame()">انضمام</button>
@@ -288,6 +293,16 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
     <div style="font-size:13px;color:var(--muted)" id="q-counter">سؤال #1</div>
   </div>
   <div class="timer-bar-wrap"><div class="timer-bar" id="timer-bar"></div></div>
+
+  <!-- بانر السؤال الأخير -->
+  <div class="last-q-banner" id="last-q-banner">🔥 السؤال الأخير! النقاط مضاعفة ×2 — استغل خصائصك الآن!</div>
+
+  <!-- عداد الإجابات المباشر -->
+  <div class="live-counter" id="live-counter" style="display:none">
+    <span id="live-count-text">في انتظار الإجابات...</span>
+    <div class="live-counter-bar"><div class="count-fill" id="count-fill" style="width:0%"></div></div>
+  </div>
+
   <div class="card">
     <div class="q-number" id="q-num-label"></div>
     <div class="q-text" id="q-text"></div>
@@ -322,7 +337,7 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
   <div style="text-align:center;color:var(--muted);font-size:14px;padding:10px">في انتظار السؤال التالي...</div>
 </div>
 
-<!-- ════ SCREEN 6: FINAL PODIUM ════ -->
+<!-- ════ SCREEN 6: FINAL ════ -->
 <div class="screen" id="screen-final">
   <div style="text-align:center;padding:20px 0 10px">
     <div style="font-size:52px;margin-bottom:6px">🏆</div>
@@ -336,7 +351,7 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
   </div>
 </div>
 
-<!-- ════ PRE-QUESTION MODAL ════ -->
+<!-- ════ PRE-Q MODAL ════ -->
 <div class="modal-overlay" id="pre-q-modal">
   <div class="pre-q-sheet">
     <div class="pre-q-title">هل تستخدم خاصية قبل السؤال؟</div>
@@ -356,7 +371,7 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
   </div>
 </div>
 
-<!-- ════ REVERSE OFFER NOTIFICATION ════ -->
+<!-- ════ REVERSE OFFER ════ -->
 <div id="reverse-offer-notif">
   <div class="rev-offer-icon">🔄</div>
   <div class="rev-offer-info">
@@ -367,6 +382,21 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
     <button class="rev-btn-yes" onclick="sendReverseDecision(true)">اعكس! 🔄</button>
     <button class="rev-btn-no" onclick="sendReverseDecision(false)">تجاهل</button>
   </div>
+</div>
+
+<!-- ════ BONUS ABILITY NOTIFICATION ════ -->
+<div id="bonus-notif">
+  <div class="bonus-icon" id="bonus-icon">🎁</div>
+  <div class="bonus-info">
+    <div class="bonus-title" id="bonus-title">حصلت على خاصية مجانية!</div>
+    <div class="bonus-desc" id="bonus-desc"></div>
+  </div>
+</div>
+
+<!-- ════ ATTACK HIT OVERLAY ════ -->
+<div id="attack-hit">
+  <div class="attack-hit-icon" id="attack-hit-icon"></div>
+  <div class="attack-hit-msg" id="attack-hit-msg"></div>
 </div>
 
 <!-- ════ BIG COUNTDOWN ════ -->
@@ -382,6 +412,8 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
+const QUESTION_TIME = 20;
+
 // ─── ABILITIES DATA ───────────────────────────────────────────
 const ABILITIES = {
   attack: [
@@ -414,11 +446,11 @@ function _ac() {
 }
 document.addEventListener('click', () => _ac(), { once: true });
 
-function playTick() {
+function playTick(freq = 900) {
   const c = _ac(); if (!c) return;
   const o = c.createOscillator(), g = c.createGain();
   o.connect(g); g.connect(c.destination);
-  o.frequency.value = 900;
+  o.frequency.value = freq;
   g.gain.setValueAtTime(0.18, c.currentTime);
   g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.07);
   o.start(); o.stop(c.currentTime + 0.07);
@@ -447,6 +479,33 @@ function playReveal() {
   });
 }
 
+function playAttackHit() {
+  const c = _ac(); if (!c) return;
+  // نغمة تهديد
+  [220, 196, 165].forEach((f, i) => {
+    const o = c.createOscillator(), g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    o.type = 'square'; o.frequency.value = f;
+    const t = c.currentTime + i * 0.1;
+    g.gain.setValueAtTime(0.25, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    o.start(t); o.stop(t + 0.2);
+  });
+}
+
+function playBonusChime() {
+  const c = _ac(); if (!c) return;
+  [783, 1047, 1318].forEach((f, i) => {
+    const o = c.createOscillator(), g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    o.frequency.value = f;
+    const t = c.currentTime + i * 0.12;
+    g.gain.setValueAtTime(0.2, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+    o.start(t); o.stop(t + 0.3);
+  });
+}
+
 // ─── BIG COUNTDOWN ───────────────────────────────────────────
 function showBigCountdown(n) {
   const wrap = document.getElementById('big-countdown');
@@ -454,10 +513,29 @@ function showBigCountdown(n) {
   wrap.style.display = 'flex';
   num.textContent = n;
   num.style.animation = 'none';
-  num.offsetHeight; // reflow
+  num.offsetHeight;
   num.style.animation = 'bigPop .85s ease forwards';
   clearTimeout(wrap._t);
   wrap._t = setTimeout(() => { wrap.style.display = 'none'; }, 900);
+}
+
+// ─── ATTACK HIT DRAMA ────────────────────────────────────────
+function showAttackHit(icon, msg) {
+  const el   = document.getElementById('attack-hit');
+  const iEl  = document.getElementById('attack-hit-icon');
+  const mEl  = document.getElementById('attack-hit-msg');
+  iEl.textContent = icon;
+  mEl.textContent = msg;
+  el.style.background = 'rgba(239,68,68,0.25)';
+  el.classList.add('show');
+  playAttackHit();
+  // Screen shake
+  const gameEl = document.getElementById('screen-game');
+  if (gameEl && gameEl.classList.contains('active')) {
+    gameEl.classList.add('shaking');
+    setTimeout(() => gameEl.classList.remove('shaking'), 420);
+  }
+  setTimeout(() => el.classList.remove('show'), 1800);
 }
 
 // ─── DRAMATIC REVEAL ─────────────────────────────────────────
@@ -466,7 +544,6 @@ function dramaticReveal(data) {
   const gameEl = document.getElementById('screen-game');
   gameEl.classList.add('shaking');
   setTimeout(() => gameEl.classList.remove('shaking'), 420);
-
   setTimeout(() => {
     playReveal();
     const ci = data.correctAnswer;
@@ -482,11 +559,10 @@ function dramaticReveal(data) {
       }
     });
   }, 500);
-
   setTimeout(() => showResults(data), 2800);
 }
 
-// ─── PERSISTENT ID (survives refresh) ────────────────────────
+// ─── PERSISTENT ID ────────────────────────────────────────────
 function getOrCreatePid() {
   let pid = localStorage.getItem('quiz_pid');
   if (!pid) { pid = 'p' + Math.random().toString(36).substr(2,9) + Date.now().toString(36); localStorage.setItem('quiz_pid', pid); }
@@ -500,6 +576,7 @@ let myPoints = 0, myStreak = 0;
 let allPlayers = {}, currentQ = null;
 let hasAnswered = false, myAnswer = null, isCut = false;
 let abilitiesState = { attack: false, defense: false, general: false };
+let myBonusAbility = null; // ← جديد: الخاصية المجانية
 let questionActive = false;
 const socket = io();
 
@@ -521,25 +598,21 @@ function notify(msg, color = '', dur = 3500) {
 
 // ─── AVATAR HELPERS ──────────────────────────────────────────
 function renderAvatar(avatar, size = 36) {
-  if (avatar && avatar.startsWith('data:')) {
+  if (avatar && avatar.startsWith('data:'))
     return `<img src="${avatar}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid var(--border)">`;
-  }
-  return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:${Math.floor(size*0.45)}px;flex-shrink:0">👤</div>`;
+  return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:${Math.floor(size*.45)}px;flex-shrink:0">👤</div>`;
 }
 
 // ─── PHOTO UPLOAD ─────────────────────────────────────────────
 function handleFile(input) {
-  const file = input.files[0];
-  if (!file) return;
+  const file = input.files[0]; if (!file) return;
   compressImage(file, dataUrl => {
     myAvatar = dataUrl;
-    const img  = document.getElementById('avatar-img');
-    const ph   = document.getElementById('avatar-placeholder');
-    const circ = document.getElementById('avatar-circle');
-    img.src = dataUrl;
-    img.style.display = 'block';
-    ph.style.display  = 'none';
-    circ.classList.add('has-photo');
+    const img = document.getElementById('avatar-img');
+    const ph  = document.getElementById('avatar-placeholder');
+    const circ= document.getElementById('avatar-circle');
+    img.src = dataUrl; img.style.display = 'block';
+    ph.style.display = 'none'; circ.classList.add('has-photo');
     notify('✅ تم اختيار الصورة', 'green');
   });
   input.value = '';
@@ -550,14 +623,11 @@ function compressImage(file, cb) {
   reader.onload = e => {
     const image = new Image();
     image.onload = () => {
-      const size = 100;
-      const canvas = document.createElement('canvas');
+      const size = 100, canvas = document.createElement('canvas');
       canvas.width = canvas.height = size;
       const ctx = canvas.getContext('2d');
-      // crop center square
       const min = Math.min(image.width, image.height);
-      const sx  = (image.width  - min) / 2;
-      const sy  = (image.height - min) / 2;
+      const sx = (image.width - min) / 2, sy = (image.height - min) / 2;
       ctx.drawImage(image, sx, sy, min, min, 0, 0, size, size);
       cb(canvas.toDataURL('image/jpeg', 0.55));
     };
@@ -575,8 +645,7 @@ function buildAbilityCards() {
         <div class="ability-icon">${a.icon}</div>
         <div class="ability-name">${a.name}</div>
         <div class="ability-desc">${a.desc}</div>
-      </div>
-    `).join('');
+      </div>`).join('');
   });
 }
 
@@ -598,7 +667,7 @@ function goToAbilities() {
 function joinGame() {
   if (!myAbilities.attack)  { notify('⚠️ اختر خاصية هجومية', 'red'); return; }
   if (!myAbilities.defense) { notify('⚠️ اختر خاصية دفاعية', 'red'); return; }
-  if (!myAbilities.general) { notify('⚠️ اختر خاصية عامة',   'red'); return; }
+  if (!myAbilities.general) { notify('⚠️ اختر خاصية عامة', 'red'); return; }
   socket.emit('player:join', { name: myName, avatar: myAvatar, abilities: myAbilities, persistentId: getOrCreatePid() });
 }
 
@@ -622,9 +691,9 @@ function renderLobbyPlayers() {
     <div class="lb-mini-item">
       ${renderAvatar(p.avatar, 38)}
       <span style="flex:1;font-size:15px;font-weight:600">${p.name}</span>
+      ${p.streak >= 3 ? `<span style="color:var(--gold);font-size:12px">🔥${p.streak}</span>` : ''}
       <span style="font-size:13px;color:var(--muted)">${p.points} نقطة</span>
-    </div>
-  `).join('') || '<div style="color:var(--muted);font-size:14px">أنت أول اللاعبين!</div>';
+    </div>`).join('') || '<div style="color:var(--muted);font-size:14px">أنت أول اللاعبين!</div>';
 }
 
 // ─── GAME SCREEN ─────────────────────────────────────────────
@@ -637,20 +706,20 @@ function renderQuestion(q) {
   document.getElementById('hint-box').style.display = 'none';
   document.getElementById('reactive-offers').innerHTML = '';
   document.getElementById('cut-overlay').style.display = 'none';
-  document.getElementById('cut-overlay').textContent = '✂️ أنت مقطوع! لا يمكنك الإجابة على هذا السؤال';
   document.getElementById('answer-grid').classList.remove('cut-locked');
   document.getElementById('my-pts').textContent = myPoints.toLocaleString();
+  // عداد مباشر
+  document.getElementById('live-counter').style.display = 'flex';
+  document.getElementById('live-count-text').textContent = 'في انتظار الإجابات...';
+  document.getElementById('count-fill').style.width = '0%';
   const sb = document.getElementById('streak-badge');
-  if (myStreak >= 3) { sb.style.display = 'inline'; sb.textContent = `🔥${myStreak}`; }
+  if (myStreak >= 3) { sb.style.display='inline'; sb.textContent=`🔥${myStreak}`; }
   else sb.style.display = 'none';
-
   const grid = document.getElementById('answer-grid');
   grid.innerHTML = q.options.map((opt, i) => `
     <button class="ans-btn" id="ans-${i}" style="border-color:${OPT_COLORS[i].border}40" onclick="submitAnswer(${i})">
       <span class="ans-letter">${LETTERS[i]}</span>${opt}
-    </button>
-  `).join('');
-
+    </button>`).join('');
   renderAbilitiesBar();
   showScreen('game');
 }
@@ -658,30 +727,44 @@ function renderQuestion(q) {
 function renderAbilitiesBar() {
   const bar = document.getElementById('abilities-bar');
   const cats = ['attack','defense','general'];
-  bar.innerHTML = cats.map(cat => {
+  let html = cats.map(cat => {
     const type = myAbilities[cat];
     const a = ABILITIES[cat].find(x => x.type === type);
     if (!a) return '';
     const isAttack   = cat === 'attack';
     const isUsed     = abilitiesState[cat];
     const isReactive = (a.type === 'retry' || a.type === 'revival');
-    const preQOnly = (a.type === 'freeze' || a.type === 'cut' || a.type === 'immunity');
+    const preQOnly   = (a.type === 'freeze' || a.type === 'cut' || a.type === 'immunity');
     const lockedByQuestion = questionActive && preQOnly;
     const allowedAfterAnswer = (a.type === 'hole' || a.type === 'retry' || a.type === 'revival');
     const lockedByAnswer = hasAnswered && !allowedAfterAnswer;
     const isDisabled = isUsed || isReactive || lockedByAnswer || lockedByQuestion;
-    const isLocked = lockedByAnswer || lockedByQuestion;
+    const isLocked   = lockedByAnswer || lockedByQuestion;
     return `
-      <button class="abil-btn ${isAttack ? 'attack' : ''} ${isUsed ? 'used' : ''} ${isLocked ? 'used' : ''}"
+      <button class="abil-btn ${isAttack?'attack':''} ${isUsed?'used':''} ${isLocked?'used':''}"
         id="abil-btn-${cat}"
-        onclick="${isDisabled ? '' : isAttack ? `pickTarget('${cat}','${a.type}','${a.name}')` : `useAbility('${cat}')`}"
-        ${isDisabled ? 'disabled' : ''}
-        title="${lockedByQuestion ? 'تُستخدم قبل السؤال فقط' : lockedByAnswer ? 'لا يمكن الاستخدام بعد الإجابة' : ''}">
+        onclick="${isDisabled?'':isAttack?`pickTarget('${cat}','${a.type}','${a.name}')`:`useAbility('${cat}')`}"
+        ${isDisabled?'disabled':''}
+        title="${lockedByQuestion?'تُستخدم قبل السؤال':lockedByAnswer?'لا يمكن بعد الإجابة':''}">
         <span class="abil-icon">${a.icon}</span>${a.name}
-        ${isLocked ? '<div style="font-size:9px;margin-top:2px;opacity:.7">مقفّل</div>' : ''}
-      </button>
-    `;
+        ${isLocked?'<div style="font-size:9px;margin-top:2px;opacity:.7">مقفّل</div>':''}
+      </button>`;
   }).join('');
+
+  // ← خاصية البونص
+  if (myBonusAbility && !myBonusAbility.used) {
+    const b = myBonusAbility;
+    const isDisabled = hasAnswered && b.type !== 'retry' && b.type !== 'revival';
+    html += `
+      <button class="abil-btn bonus-ability" id="abil-btn-bonus"
+        onclick="${isDisabled?'':b.type==='hint'?`useBonus()`:`useBonus()`}"
+        ${isDisabled?'disabled':''}>
+        <span class="abil-icon">${b.icon}</span>${b.name}
+        <div style="font-size:9px;margin-top:2px;opacity:.9">🎁 مجاني</div>
+      </button>`;
+  }
+
+  bar.innerHTML = html;
 }
 
 function submitAnswer(choice) {
@@ -694,7 +777,7 @@ function submitAnswer(choice) {
     if (i !== choice) b.style.opacity = '0.4';
   });
   document.getElementById('ans-' + choice).classList.add('selected');
-  renderAbilitiesBar(); // lock abilities except hole & retry
+  renderAbilitiesBar();
 }
 
 function useAbility(cat) {
@@ -702,19 +785,31 @@ function useAbility(cat) {
   socket.emit('player:use-ability', { category: cat });
 }
 
+function useBonus() {
+  if (!myBonusAbility || myBonusAbility.used) return;
+  const b = myBonusAbility;
+  if (b.type === 'hint') {
+    socket.emit('player:use-ability', { category: 'bonus' });
+  } else if (b.type === 'immunity') {
+    socket.emit('player:use-ability', { category: 'bonus' });
+  } else if (b.type === 'retry') {
+    socket.emit('player:use-ability', { category: 'bonus' });
+  }
+}
+
 function pickTarget(cat, type, name) {
   if (abilitiesState[cat]) return;
   const others = Object.values(allPlayers).filter(p => p.id !== myId);
   if (!others.length) { notify('⚠️ لا يوجد لاعبون آخرون', 'red'); return; }
   const iconMap = { hole:'🕳️', freeze:'❄️', cut:'✂️' };
-  document.getElementById('target-modal-title').textContent = `${iconMap[type] || '⚔️'} اختر هدف — ${name}`;
+  document.getElementById('target-modal-title').textContent = `${iconMap[type]||'⚔️'} اختر هدف — ${name}`;
   document.getElementById('target-list').innerHTML = others.map(p => `
     <div class="target-item" onclick="confirmAttack('${cat}','${p.id}')">
       ${renderAvatar(p.avatar, 44)}
       <span class="target-name">${p.name}</span>
+      ${p.streak >= 3 ? `<span class="target-streak">🔥${p.streak}</span>` : ''}
       <span class="target-pts">${p.points.toLocaleString()} نقطة</span>
-    </div>
-  `).join('');
+    </div>`).join('');
   document.getElementById('target-modal').classList.add('open');
 }
 
@@ -740,15 +835,10 @@ function showPreQuestionModal(abilities) {
     return `
       <button class="pre-q-ability-btn" onclick="${onclick}">
         <span class="pre-q-ab-icon">${a.icon}</span>
-        <div>
-          <div class="pre-q-ab-name">${a.name}</div>
-          <div class="pre-q-ab-desc">${a.desc}</div>
-        </div>
+        <div><div class="pre-q-ab-name">${a.name}</div><div class="pre-q-ab-desc">${a.desc}</div></div>
       </button>`;
   }).join('');
-
   document.getElementById('pre-q-modal').classList.add('open');
-
   let count = 4;
   document.getElementById('pre-q-timer').textContent = count;
   preQTimer = setInterval(() => {
@@ -760,31 +850,28 @@ function showPreQuestionModal(abilities) {
 }
 
 function usePreQAbility(category, type, targetId) {
-  clearPreQTimer();
-  closePreQModal();
+  clearPreQTimer(); closePreQModal();
   abilitiesState[category] = true;
   socket.emit('player:pre-question-decision', { use: true, category, type, targetId });
 }
 
 function pickPreQTarget(category, type, name) {
-  clearPreQTimer();
-  closePreQModal();
+  clearPreQTimer(); closePreQModal();
   showPreQTargetPicker(category, type, name);
 }
 
 function showPreQTargetPicker(category, type, name) {
   const others = Object.values(allPlayers).filter(p => p.id !== myId);
   if (!others.length) { socket.emit('player:pre-question-decision', { use: false }); return; }
-
   const iconMap = { freeze:'❄️', cut:'✂️' };
   document.getElementById('target-modal-title').textContent = `${iconMap[type]||''} اختر هدف — ${name}`;
   document.getElementById('target-list').innerHTML = others.map(p => `
     <div class="target-item" onclick="confirmPreQAttack('${category}','${type}','${p.id}')">
       ${renderAvatar(p.avatar, 44)}
       <span class="target-name">${p.name}</span>
+      ${p.streak >= 3 ? `<span class="target-streak">🔥${p.streak}</span>` : ''}
       <span class="target-pts">${p.points.toLocaleString()} نقطة</span>
-    </div>
-  `).join('');
+    </div>`).join('');
   document.getElementById('target-modal').classList.add('open');
 }
 
@@ -799,8 +886,7 @@ function clearPreQTimer() {
 }
 
 function skipPreQuestion() {
-  clearPreQTimer();
-  closePreQModal();
+  clearPreQTimer(); closePreQModal();
   socket.emit('player:pre-question-decision', { use: false });
 }
 
@@ -812,8 +898,7 @@ function closePreQModal() {
 let reverseOfferTimer = null;
 
 socket.on('game:reverse-offer', ({ attackerName, type }) => {
-  document.getElementById('reverse-offer-msg').textContent =
-    `⚔️ ${attackerName} استخدم خاصية ضدك!`;
+  document.getElementById('reverse-offer-msg').textContent = `⚔️ ${attackerName} استخدم خاصية ضدك!`;
   let secs = 5;
   document.getElementById('reverse-offer-secs').textContent = secs;
   document.getElementById('reverse-offer-notif').classList.add('show');
@@ -836,59 +921,52 @@ function sendReverseDecision(use) {
 }
 
 // ─── WAITING OVERLAY ─────────────────────────────────────────
-function showWaitingOverlay() {
-  document.getElementById('waiting-overlay').style.display = 'flex';
-}
-function hideWaitingOverlay() {
-  document.getElementById('waiting-overlay').style.display = 'none';
-}
+function showWaitingOverlay() { document.getElementById('waiting-overlay').style.display='flex'; }
+function hideWaitingOverlay() { document.getElementById('waiting-overlay').style.display='none'; }
 
 // ─── RESULTS ─────────────────────────────────────────────────
 function showResults(data) {
+  document.getElementById('live-counter').style.display = 'none';
+  document.getElementById('last-q-banner').classList.remove('show');
   const myResult  = data.results[myId] || {};
   const isCorrect = myResult.isCorrect;
   const delta     = myResult.delta || 0;
   if (myId && allPlayers[myId]) { myPoints = allPlayers[myId].points; myStreak = allPlayers[myId].streak; }
-
   const banner = document.getElementById('result-banner');
   banner.className = 'result-banner ' + (isCorrect ? 'correct' : 'wrong');
   document.getElementById('result-icon').textContent  = isCorrect ? '🎉' : '😔';
   document.getElementById('result-title').textContent = isCorrect ? 'إجابة صحيحة!' : (myResult.choice === null ? '!' : 'إجابة خاطئة');
   const sign = delta > 0 ? '+' : '';
   const ptsEl = document.getElementById('result-pts');
-  ptsEl.textContent = sign + delta.toLocaleString() + ' نقطة' + (myResult.holed ? ' (تم سرق نقاطك! 💀)' : '');
+  ptsEl.textContent = sign + delta.toLocaleString() + ' نقطة'
+    + (myResult.holed ? ' (سُرقت!)' : '')
+    + (myResult.doubled ? ' ×2 🔥' : '');
   ptsEl.className = 'result-pts ' + (delta >= 0 ? 'gain' : 'loss');
-  const strEl = document.getElementById('streak-display');
-  strEl.textContent = myStreak >= 3 ? `🔥 ستريك ${myStreak}x!` : '';
-  const timeEl = document.getElementById('result-time');
-  timeEl.textContent = myResult.timeTaken != null ? `⏱️ أجبت خلال ${myResult.timeTaken} ثانية` : '';
-
+  document.getElementById('streak-display').textContent = myStreak >= 3 ? `🔥 ستريك ${myStreak}×!` : '';
+  document.getElementById('result-time').textContent = myResult.timeTaken != null ? `⏱️ أجبت خلال ${myResult.timeTaken} ثانية` : '';
   const opts = currentQ?.options || [];
   document.getElementById('correct-ans-display').innerHTML = `
     <div style="background:#10b98120;border:1px solid #10b98140;border-radius:10px;padding:12px">
-      <strong style="color:var(--green)">${LETTERS[data.correctAnswer]}. ${opts[data.correctAnswer] || ''}</strong>
+      <strong style="color:var(--green)">${LETTERS[data.correctAnswer]}. ${opts[data.correctAnswer]||''}</strong>
     </div>`;
-
-  document.getElementById('result-leaderboard').innerHTML = (data.leaderboard || []).slice(0, 7).map(p => `
-    <div class="lb-mini-item" style="${p.id === myId ? 'border-color:var(--purple);background:#7c3aed15' : ''}">
+  document.getElementById('result-leaderboard').innerHTML = (data.leaderboard||[]).slice(0,7).map(p=>`
+    <div class="lb-mini-item" style="${p.id===myId?'border-color:var(--purple);background:#7c3aed15':''}">
       <span style="font-size:13px;font-weight:900;color:${p.rank<=3?'var(--gold)':'var(--muted)'};width:22px">${p.rank<=3?['🥇','🥈','🥉'][p.rank-1]:'#'+p.rank}</span>
       ${renderAvatar(p.avatar, 34)}
       <span style="flex:1;font-size:14px;font-weight:700">${p.name}${p.id===myId?' (أنت)':''}</span>
-      ${p.streak >= 3 ? `<span style="color:var(--gold);font-size:12px">🔥${p.streak}</span>` : ''}
+      ${p.streak>=3?`<span style="color:var(--gold);font-size:12px">🔥${p.streak}</span>`:''}
       <span style="font-size:14px;font-weight:900;color:var(--purple-light)">${p.points.toLocaleString()}</span>
     </div>`).join('');
-
   document.getElementById('reactive-offers').innerHTML = '';
   showScreen('result');
 }
 
-// ─── SOCKET ──────────────────────────────────────────────────
+// ─── SOCKET EVENTS ──────────────────────────────────────────
 socket.on('game:state', data => {
   allPlayers = {};
   data.players.forEach(p => allPlayers[p.id] = p);
 });
 
-// Auto-rejoin on every (re)connect using stored data
 socket.on('connect', () => {
   const pid = localStorage.getItem('quiz_pid');
   const raw = localStorage.getItem('quiz_player');
@@ -903,25 +981,22 @@ socket.on('player:joined', ({ id, player }) => {
   myAvatar = player.avatar;
   myAbilities = { attack: player.abilities.attack.type, defense: player.abilities.defense.type, general: player.abilities.general.type };
   abilitiesState = { attack: false, defense: false, general: false };
-  // Save for future reconnects
   localStorage.setItem('quiz_player', JSON.stringify({ name: myName, avatar: myAvatar, abilities: myAbilities }));
   showLobby();
 });
 
 socket.on('player:rejoined', ({ id, player, active, question, timeLeft }) => {
-  myId     = id;   myPlayer = player;
-  myName   = player.name;
-  myAvatar = player.avatar;
-  myPoints = player.points;
-  myStreak = player.streak;
+  myId     = id; myPlayer = player;
+  myName   = player.name; myAvatar = player.avatar;
+  myPoints = player.points; myStreak = player.streak;
   myAbilities  = { attack: player.abilities.attack.type, defense: player.abilities.defense.type, general: player.abilities.general.type };
   abilitiesState = { attack: player.abilities.attack.used, defense: player.abilities.defense.used, general: player.abilities.general.used };
-  document.getElementById('lobby-avatar').src         = player.avatar || '';
-  document.getElementById('lobby-name').textContent   = player.name;
+  document.getElementById('lobby-avatar').src = player.avatar || '';
+  document.getElementById('lobby-name').textContent = player.name;
   if (active && question) {
     questionActive = true;
     renderQuestion(question);
-    document.getElementById('timer-bar').style.width = (timeLeft / 30 * 100) + '%';
+    document.getElementById('timer-bar').style.width = (timeLeft / QUESTION_TIME * 100) + '%';
   } else {
     showLobby();
   }
@@ -939,11 +1014,15 @@ socket.on('game:leaderboard', lb => {
   lb.forEach(p => { if (allPlayers[p.id]) { allPlayers[p.id].points = p.points; allPlayers[p.id].streak = p.streak; } });
 });
 
-socket.on('game:question-start', ({ question }) => {
+socket.on('game:question-start', ({ question, isLastQuestion }) => {
   questionActive = true;
-  closePreQModal();
-  hideWaitingOverlay();
+  closePreQModal(); hideWaitingOverlay();
   renderQuestion(question);
+  // ← بانر السؤال الأخير
+  if (isLastQuestion) {
+    document.getElementById('last-q-banner').classList.add('show');
+    notify('🔥 السؤال الأخير! النقاط مضاعفة ×2', 'gold', 5000);
+  }
 });
 
 socket.on('game:pre-question', ({ abilities }) => {
@@ -957,19 +1036,34 @@ socket.on('game:waiting-pre-question', () => {
 socket.on('game:timer', t => {
   const bar  = document.getElementById('timer-bar');
   const wrap = document.getElementById('screen-game').querySelector('.timer-bar-wrap');
-  bar.style.width = (t / 30 * 100) + '%';
-  bar.style.background = t <= 5 ? 'var(--red)' : t <= 10 ? 'var(--gold)' : 'linear-gradient(90deg,var(--cyan),var(--purple))';
-  if (t <= 5 && t > 0) {
+  bar.style.width = (t / QUESTION_TIME * 100) + '%';
+  if (t <= 5) {
+    bar.style.background = 'var(--red)';
     wrap.classList.add('danger');
-    playTick();
+    playTick(900 + (5 - t) * 50); // تيك يرتفع مع الوقت
     showBigCountdown(t);
+  } else if (t <= 10) {
+    bar.style.background = 'var(--gold)';
+    wrap.classList.remove('danger');
+    if (t === 10) playTick(600); // تنبيه عند 10 ثواني
   } else {
+    bar.style.background = 'linear-gradient(90deg,var(--cyan),var(--purple))';
     wrap.classList.remove('danger');
   }
 });
 
+// ← ميزة 3: عداد الإجابات المباشر لكل اللاعبين
+socket.on('game:answer-progress', ({ answered, total, lb }) => {
+  const counterEl = document.getElementById('live-count-text');
+  const fillEl    = document.getElementById('count-fill');
+  if (counterEl) counterEl.textContent = `✅ أجاب ${answered} من ${total} لاعب`;
+  if (fillEl) fillEl.style.width = total > 0 ? (answered/total*100)+'%' : '0%';
+  // تحديث الترتيب في الوقت الفعلي (للّاعبين الذين أجابوا)
+  if (lb) lb.forEach(p => { if (allPlayers[p.id]) { allPlayers[p.id].points = p.points; allPlayers[p.id].streak = p.streak; } });
+});
+
 socket.on('player:answer-accepted', ({ choice, correct, isRetry }) => {
-  [0,1,2,3].forEach(i => { const b = document.getElementById('ans-'+i); if(b) b.disabled = true; });
+  [0,1,2,3].forEach(i => { const b=document.getElementById('ans-'+i); if(b) b.disabled=true; });
   const btn = document.getElementById('ans-' + choice);
   if (btn) { btn.classList.remove('selected'); btn.classList.add(correct ? 'correct' : 'wrong'); }
   if (!isRetry) notify(correct ? '✅ إجابة صحيحة!' : '❌ إجابة خاطئة', correct ? 'green' : 'red');
@@ -983,7 +1077,7 @@ socket.on('game:retry-available', () => {
     el.remove(); hasAnswered = false;
     [0,1,2,3].forEach(i => { const b=document.getElementById('ans-'+i); if(b){b.disabled=false;b.style.opacity='1';b.classList.remove('wrong','correct','selected');} });
     abilitiesState.defense = true; renderAbilitiesBar();
-    notify('↩️ اختر إجابتك الصحيحة!', 'gold');
+    notify('↩️ اختر إجابتك!', 'gold');
   };
   document.getElementById('reactive-offers').appendChild(el);
 });
@@ -1009,28 +1103,51 @@ socket.on('game:question-end', data => {
 });
 
 socket.on('game:notify', ({ type, msg }) => {
-  const colorMap = { 'shield-active':'green','ability-active':'gold','revival-active':'green','holed':'red','attack-reflected':'gold','reverse-fired':'green','immunity-saved':'green','cut-active':'red','frozen-active':'red','hole-incoming':'red','frozen-incoming':'red','cut-incoming':'red','error':'red' };
+  const colorMap = {
+    'shield-active':'green','ability-active':'gold','revival-active':'green',
+    'holed':'red','attack-reflected':'gold','reverse-fired':'green','immunity-saved':'green',
+    'cut-active':'red','frozen-active':'red','hole-incoming':'red','frozen-incoming':'red',
+    'cut-incoming':'red','error':'red',
+  };
   notify(msg, colorMap[type] || '');
+
+  // ← ميزة 2: إشعار هجوم درامي مع اهتزاز وأنيميشن
+  if (['cut-active','cut-incoming','frozen-incoming','frozen-active','hole-incoming'].includes(type)) {
+    const iconMap = { 'cut-active':'✂️', 'cut-incoming':'✂️', 'frozen-active':'❄️', 'frozen-incoming':'❄️', 'hole-incoming':'🕳️' };
+    showAttackHit(iconMap[type] || '⚔️', msg);
+  }
+
+  if (type === 'holed') {
+    showAttackHit('💀', msg);
+  }
+
   if (type === 'cut-active' || type === 'escaped-active') {
     isCut = true;
     const cutEl = document.getElementById('cut-overlay');
-    if (type === 'escaped-active') cutEl.textContent = '🚫 غادرت الشاشة أثناء السؤال! لا يمكنك المشاركة في هذا السؤال';
+    if (type === 'escaped-active') cutEl.textContent = '🚫 غادرت الشاشة أثناء السؤال!';
     cutEl.style.display = 'block';
     const grid = document.getElementById('answer-grid');
     if (grid) grid.classList.add('cut-locked');
-    document.querySelectorAll('.ans-btn').forEach(b => { b.disabled = true; b.onclick = null; });
+    document.querySelectorAll('.ans-btn').forEach(b => { b.disabled=true; b.onclick=null; });
   }
-  if (type === 'frozen-active') { document.querySelectorAll('.abil-btn').forEach(b => b.disabled = true); }
+  if (type === 'frozen-active') { document.querySelectorAll('.abil-btn').forEach(b => b.disabled=true); }
 });
 
 socket.on('ability:result', ({ type, status }) => {
   const catMap = { hole:'attack',freeze:'attack',cut:'attack',reverse:'defense',immunity:'defense',retry:'defense',doubleRisk:'general',hint:'general',revival:'general' };
   const cat = catMap[type];
-  if (cat && status !== 'reflected' && status !== 'blocked') abilitiesState[cat] = true;
+  if (cat && status !== 'reflected' && status !== 'blocked') {
+    if (type === 'hint' || type === 'revival' || type === 'immunity' || type === 'retry' || type === 'doubleRisk') {
+      // don't mark as used yet
+    } else {
+      abilitiesState[cat] = true;
+    }
+  }
+  if (cat) abilitiesState[cat] = true;
   renderAbilitiesBar();
   if (['reverse','immunity','retry','doubleRisk','revival'].includes(type) && status === 'active') {
     const btn = document.getElementById('abil-btn-' + cat);
-    if (btn) { btn.classList.add('active'); btn.disabled = false; }
+    if (btn) { btn.classList.add('active'); btn.disabled=false; }
   }
 });
 
@@ -1040,14 +1157,26 @@ socket.on('game:hint', ({ hint }) => {
   hb.style.display = 'block';
 });
 
+// ← ميزة 8: الخاصية المجانية للأخير
+socket.on('game:bonus-ability', ({ type, icon, name, desc }) => {
+  myBonusAbility = { type, icon, name, desc, used: false };
+  // إظهار إشعار جميل من الأعلى
+  document.getElementById('bonus-icon').textContent = icon;
+  document.getElementById('bonus-title').textContent = `🎁 خاصية مجانية: ${name}`;
+  document.getElementById('bonus-desc').textContent = desc;
+  const notifEl = document.getElementById('bonus-notif');
+  notifEl.classList.add('show');
+  playBonusChime();
+  setTimeout(() => notifEl.classList.remove('show'), 4000);
+  // تحديث شريط الخصائص لو على شاشة اللعبة
+  const onGame = document.getElementById('screen-game').classList.contains('active');
+  if (onGame) renderAbilitiesBar();
+});
+
 socket.on('game:final', ({ top3, leaderboard: lb }) => {
-  // Build podium: order is 2nd, 1st, 3rd visually
-  const order = [1, 0, 2];
-  const classes = ['p2', 'p1', 'p3'];
-  const medals  = ['🥈', '🥇', '🥉'];
+  const order=[1,0,2]; const classes=['p2','p1','p3']; const medals=['🥈','🥇','🥉'];
   document.getElementById('final-podium').innerHTML = order.map((rank, vi) => {
-    const p = top3[rank];
-    if (!p) return '';
+    const p = top3[rank]; if (!p) return '';
     const avatar = p.avatar && p.avatar.startsWith('data:')
       ? `<img class="podium-avatar ${classes[vi]}-av" src="${p.avatar}" style="width:${vi===1?74:vi===0?60:54}px;height:${vi===1?74:vi===0?60:54}px;border-radius:50%;object-fit:cover;border:3px solid ${vi===1?'#f59e0b':vi===0?'#94a3b8':'#cd7f32'}">`
       : `<div style="width:${vi===1?74:vi===0?60:54}px;height:${vi===1?74:vi===0?60:54}px;border-radius:50%;background:var(--surface);border:3px solid ${vi===1?'#f59e0b':vi===0?'#94a3b8':'#cd7f32'};display:flex;align-items:center;justify-content:center;font-size:28px">👤</div>`;
@@ -1059,27 +1188,24 @@ socket.on('game:final', ({ top3, leaderboard: lb }) => {
         <div class="podium-block">${medals[vi]}</div>
       </div>`;
   }).join('');
-
-  document.getElementById('final-leaderboard').innerHTML = lb.map(p => `
+  document.getElementById('final-leaderboard').innerHTML = lb.map(p=>`
     <div class="lb-mini-item" style="${p.id===myId?'border-color:var(--purple);background:#7c3aed15':''}">
       <span style="font-size:13px;font-weight:900;color:${p.rank<=3?'var(--gold)':'var(--muted)'};width:22px">${p.rank<=3?['🥇','🥈','🥉'][p.rank-1]:'#'+p.rank}</span>
       ${renderAvatar(p.avatar, 32)}
       <span style="flex:1;font-size:14px;font-weight:700">${p.name}${p.id===myId?' (أنت)':''}</span>
       <span style="font-size:14px;font-weight:900;color:var(--purple-light)">${p.points.toLocaleString()}</span>
     </div>`).join('');
-
   showScreen('final');
   playReveal();
 });
 
 socket.on('game:reset', () => {
-  myId = null; myPlayer = null; myPoints = 0; myStreak = 0;
-  allPlayers = {}; abilitiesState = { attack:false, defense:false, general:false }; questionActive = false;
+  myId=null; myPlayer=null; myPoints=0; myStreak=0;
+  allPlayers={}; abilitiesState={attack:false,defense:false,general:false};
+  questionActive=false; myBonusAbility=null;
   showScreen('join');
-  notify('', 'gold');
 });
 
-// Detect tab/app switch during active question
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && questionActive) {
     socket.emit('player:question-escape');
