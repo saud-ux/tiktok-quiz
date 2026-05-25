@@ -31,6 +31,7 @@ function newState() {
     retryPending: {},  // id → true
     revivalPending: {},// id → true
     reverseOffers: {}, // targetId → { attackerId, type, immediate, timeout }
+    disconnectTimers: {}, // persistentId → setTimeout handle
     preQ: false,
     preQEligible: new Set(),
     preQResponded: new Set(),
@@ -41,6 +42,9 @@ function newState() {
 // ─────────────────────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────────────────────
+function findByPid(pid) {
+  return Object.values(G.players).find(p => p.persistentId === pid);
+}
 function leaderboard() {
   return Object.values(G.players)
     .sort((a, b) => b.points - a.points)
@@ -414,21 +418,59 @@ io.on('connection', socket => {
   socket.on('host:reset', () => {
     clearInterval(G.timerRef);
     Object.values(G.reverseOffers).forEach(o => clearTimeout(o.timeout));
+    Object.values(G.disconnectTimers).forEach(t => clearTimeout(t));
     G = newState();
     io.emit('game:reset');
   });
 
   // ── PLAYER ─────────────────────────────────────────────────
-  socket.on('player:join', ({ name, avatar, abilities }) => {
+  socket.on('player:join', ({ name, avatar, abilities, persistentId }) => {
+    // ── Reconnecting player ────────────────────────────────────
+    const existing = persistentId ? findByPid(persistentId) : null;
+    if (existing) {
+      const oldId = existing.id;
+
+      // Cancel pending removal timer
+      if (G.disconnectTimers[persistentId]) {
+        clearTimeout(G.disconnectTimers[persistentId]);
+        delete G.disconnectTimers[persistentId];
+      }
+
+      // Remap all state from old socket id → new socket id
+      existing.id      = socket.id;
+      existing.offline = false;
+      G.players[socket.id] = existing;
+      if (oldId !== socket.id) {
+        delete G.players[oldId];
+        G.effects[socket.id]      = G.effects[oldId]      || {};    delete G.effects[oldId];
+        if (G.answers[oldId])        { G.answers[socket.id]        = G.answers[oldId];        delete G.answers[oldId]; }
+        if (G.retryPending[oldId])   { G.retryPending[socket.id]   = true;                    delete G.retryPending[oldId]; }
+        if (G.revivalPending[oldId]) { G.revivalPending[socket.id] = true;                    delete G.revivalPending[oldId]; }
+        if (G.reverseOffers[oldId])  { G.reverseOffers[socket.id]  = G.reverseOffers[oldId]; delete G.reverseOffers[oldId]; }
+      }
+
+      socket.emit('player:rejoined', {
+        id: socket.id, player: existing,
+        active: G.active, preQ: G.preQ,
+        question: G.active ? { text: G.question.text, options: G.question.options, number: G.qNum } : null,
+        timeLeft: G.timeLeft,
+      });
+      io.emit('game:players-update', publicPlayers());
+      return;
+    }
+
+    // ── New player ─────────────────────────────────────────────
     if (G.players[socket.id]) return;
 
     G.players[socket.id] = {
-      id:         socket.id,
-      name:       String(name).trim().slice(0, 20),
+      id:           socket.id,
+      persistentId: persistentId || socket.id,
+      name:         String(name).trim().slice(0, 20),
       avatar,
-      points:     0,
-      streak:     0,
-      lastStreak: 0,
+      points:       0,
+      streak:       0,
+      lastStreak:   0,
+      offline:      false,
       abilities: {
         attack:  { type: abilities.attack,  used: false },
         defense: { type: abilities.defense, used: false },
@@ -570,16 +612,31 @@ io.on('connection', socket => {
   });
 
   socket.on('disconnect', () => {
-    if (G.players[socket.id]) {
-      if (G.reverseOffers[socket.id]) {
-        clearTimeout(G.reverseOffers[socket.id].timeout);
-        delete G.reverseOffers[socket.id];
-      }
-      delete G.players[socket.id];
-      delete G.effects[socket.id];
-      io.emit('game:players-update', publicPlayers());
-      io.emit('game:leaderboard', leaderboard());
+    const p = G.players[socket.id];
+    if (!p) return;
+
+    // Clear any reverse offer for this player
+    if (G.reverseOffers[socket.id]) {
+      clearTimeout(G.reverseOffers[socket.id].timeout);
+      delete G.reverseOffers[socket.id];
     }
+
+    // Mark offline — keep points/state intact for reconnect
+    p.offline = true;
+    io.emit('game:players-update', publicPlayers());
+    io.emit('game:leaderboard', leaderboard());
+
+    // Remove after 5 minutes if they don't come back
+    G.disconnectTimers[p.persistentId] = setTimeout(() => {
+      const player = findByPid(p.persistentId);
+      if (player && player.offline) {
+        delete G.players[player.id];
+        delete G.effects[player.id];
+        io.emit('game:players-update', publicPlayers());
+        io.emit('game:leaderboard', leaderboard());
+      }
+      delete G.disconnectTimers[p.persistentId];
+    }, 5 * 60 * 1000);
   });
 });
 

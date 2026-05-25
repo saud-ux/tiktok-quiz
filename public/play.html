@@ -354,6 +354,13 @@ const OPT_COLORS = [
   {border:'#7c3aed'},{border:'#06b6d4'},{border:'#10b981'},{border:'#f59e0b'},
 ];
 
+// ─── PERSISTENT ID (survives refresh) ────────────────────────
+function getOrCreatePid() {
+  let pid = localStorage.getItem('quiz_pid');
+  if (!pid) { pid = 'p' + Math.random().toString(36).substr(2,9) + Date.now().toString(36); localStorage.setItem('quiz_pid', pid); }
+  return pid;
+}
+
 // ─── STATE ───────────────────────────────────────────────────
 let myId = null, myName = '', myAvatar = null, myPlayer = null;
 let myAbilities = { attack: null, defense: null, general: null };
@@ -460,7 +467,7 @@ function joinGame() {
   if (!myAbilities.attack)  { notify('⚠️ اختر خاصية هجومية', 'red'); return; }
   if (!myAbilities.defense) { notify('⚠️ اختر خاصية دفاعية', 'red'); return; }
   if (!myAbilities.general) { notify('⚠️ اختر خاصية عامة',   'red'); return; }
-  socket.emit('player:join', { name: myName, avatar: myAvatar, abilities: myAbilities });
+  socket.emit('player:join', { name: myName, avatar: myAvatar, abilities: myAbilities, persistentId: getOrCreatePid() });
 }
 
 // ─── LOBBY ───────────────────────────────────────────────────
@@ -745,10 +752,44 @@ socket.on('game:state', data => {
   data.players.forEach(p => allPlayers[p.id] = p);
 });
 
+// Auto-rejoin on every (re)connect using stored data
+socket.on('connect', () => {
+  const pid = localStorage.getItem('quiz_pid');
+  const raw = localStorage.getItem('quiz_player');
+  if (pid && raw) {
+    try { socket.emit('player:join', { ...JSON.parse(raw), persistentId: pid }); } catch(e) {}
+  }
+});
+
 socket.on('player:joined', ({ id, player }) => {
   myId = id; myPlayer = player;
+  myName   = player.name;
+  myAvatar = player.avatar;
+  myAbilities = { attack: player.abilities.attack.type, defense: player.abilities.defense.type, general: player.abilities.general.type };
   abilitiesState = { attack: false, defense: false, general: false };
+  // Save for future reconnects
+  localStorage.setItem('quiz_player', JSON.stringify({ name: myName, avatar: myAvatar, abilities: myAbilities }));
   showLobby();
+});
+
+socket.on('player:rejoined', ({ id, player, active, question, timeLeft }) => {
+  myId     = id;   myPlayer = player;
+  myName   = player.name;
+  myAvatar = player.avatar;
+  myPoints = player.points;
+  myStreak = player.streak;
+  myAbilities  = { attack: player.abilities.attack.type, defense: player.abilities.defense.type, general: player.abilities.general.type };
+  abilitiesState = { attack: player.abilities.attack.used, defense: player.abilities.defense.used, general: player.abilities.general.used };
+  document.getElementById('lobby-avatar').src         = player.avatar || '';
+  document.getElementById('lobby-name').textContent   = player.name;
+  if (active && question) {
+    questionActive = true;
+    renderQuestion(question);
+    document.getElementById('timer-bar').style.width = (timeLeft / 30 * 100) + '%';
+  } else {
+    showLobby();
+  }
+  notify('✅ تم إعادة الاتصال', 'green');
 });
 
 socket.on('game:players-update', ps => {
