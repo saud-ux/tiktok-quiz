@@ -165,6 +165,22 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 
 .lb-mini-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface);border-radius:10px;border:1px solid var(--border);margin-bottom:6px}
 
+/* ── PODIUM ── */
+.podium-wrap{display:flex;align-items:flex-end;justify-content:center;gap:10px;padding:10px 0 0}
+.podium-place{display:flex;flex-direction:column;align-items:center;gap:8px;animation:riseUp .7s ease forwards;opacity:0}
+.podium-place.p1{animation-delay:.1s}.podium-place.p2{animation-delay:.35s}.podium-place.p3{animation-delay:.55s}
+@keyframes riseUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+.podium-avatar{border-radius:50%;object-fit:cover;border:3px solid}
+.podium-name{font-size:13px;font-weight:800;text-align:center;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.podium-pts{font-size:12px;font-weight:700;color:var(--muted)}
+.podium-block{border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;width:95px}
+.p1 .podium-block{height:110px;background:linear-gradient(180deg,#f59e0b,#d97706);color:#000}
+.p2 .podium-block{height:75px;background:linear-gradient(180deg,#94a3b8,#64748b);color:#000}
+.p3 .podium-block{height:55px;background:linear-gradient(180deg,#cd7f32,#92400e);color:#000}
+.p1 .podium-avatar{width:74px;height:74px;border-color:#f59e0b}
+.p2 .podium-avatar{width:60px;height:60px;border-color:#94a3b8}
+.p3 .podium-avatar{width:54px;height:54px;border-color:#cd7f32}
+
 /* ── BIG COUNTDOWN ── */
 #big-countdown{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:60;pointer-events:none}
 #big-cnt-num{font-size:140px;font-weight:900;color:var(--red);text-shadow:0 0 80px #ef444490,0 0 30px #ef4444;line-height:1;animation:bigPop .85s ease forwards}
@@ -293,6 +309,7 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
     <div class="result-title" id="result-title"></div>
     <div class="result-pts" id="result-pts"></div>
     <div class="streak-display" id="streak-display"></div>
+    <div id="result-time" style="margin-top:6px;font-size:13px;color:var(--muted);font-weight:600"></div>
   </div>
   <div class="card">
     <div class="section-title">الإجابة الصحيحة</div>
@@ -303,6 +320,20 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
     <div id="result-leaderboard"></div>
   </div>
   <div style="text-align:center;color:var(--muted);font-size:14px;padding:10px">في انتظار السؤال التالي...</div>
+</div>
+
+<!-- ════ SCREEN 6: FINAL PODIUM ════ -->
+<div class="screen" id="screen-final">
+  <div style="text-align:center;padding:20px 0 10px">
+    <div style="font-size:52px;margin-bottom:6px">🏆</div>
+    <div class="logo">نهاية اللعبة!</div>
+    <div class="subtitle">أفضل 3 لاعبين</div>
+  </div>
+  <div class="podium-wrap" id="final-podium"></div>
+  <div class="card" style="margin-top:12px">
+    <div class="section-title">🏅 الترتيب الكامل</div>
+    <div id="final-leaderboard"></div>
+  </div>
 </div>
 
 <!-- ════ PRE-QUESTION MODAL ════ -->
@@ -829,6 +860,8 @@ function showResults(data) {
   ptsEl.className = 'result-pts ' + (delta >= 0 ? 'gain' : 'loss');
   const strEl = document.getElementById('streak-display');
   strEl.textContent = myStreak >= 3 ? `🔥 ستريك ${myStreak}x!` : '';
+  const timeEl = document.getElementById('result-time');
+  timeEl.textContent = myResult.timeTaken != null ? `⏱️ أجبت خلال ${myResult.timeTaken} ثانية` : '';
 
   const opts = currentQ?.options || [];
   document.getElementById('correct-ans-display').innerHTML = `
@@ -1005,6 +1038,38 @@ socket.on('game:hint', ({ hint }) => {
   const hb = document.getElementById('hint-box');
   hb.textContent = '💡 تلميح: ' + hint;
   hb.style.display = 'block';
+});
+
+socket.on('game:final', ({ top3, leaderboard: lb }) => {
+  // Build podium: order is 2nd, 1st, 3rd visually
+  const order = [1, 0, 2];
+  const classes = ['p2', 'p1', 'p3'];
+  const medals  = ['🥈', '🥇', '🥉'];
+  document.getElementById('final-podium').innerHTML = order.map((rank, vi) => {
+    const p = top3[rank];
+    if (!p) return '';
+    const avatar = p.avatar && p.avatar.startsWith('data:')
+      ? `<img class="podium-avatar ${classes[vi]}-av" src="${p.avatar}" style="width:${vi===1?74:vi===0?60:54}px;height:${vi===1?74:vi===0?60:54}px;border-radius:50%;object-fit:cover;border:3px solid ${vi===1?'#f59e0b':vi===0?'#94a3b8':'#cd7f32'}">`
+      : `<div style="width:${vi===1?74:vi===0?60:54}px;height:${vi===1?74:vi===0?60:54}px;border-radius:50%;background:var(--surface);border:3px solid ${vi===1?'#f59e0b':vi===0?'#94a3b8':'#cd7f32'};display:flex;align-items:center;justify-content:center;font-size:28px">👤</div>`;
+    return `
+      <div class="podium-place ${classes[vi]}">
+        ${avatar}
+        <div class="podium-name">${p.name}</div>
+        <div class="podium-pts">${p.points.toLocaleString()} نقطة</div>
+        <div class="podium-block">${medals[vi]}</div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('final-leaderboard').innerHTML = lb.map(p => `
+    <div class="lb-mini-item" style="${p.id===myId?'border-color:var(--purple);background:#7c3aed15':''}">
+      <span style="font-size:13px;font-weight:900;color:${p.rank<=3?'var(--gold)':'var(--muted)'};width:22px">${p.rank<=3?['🥇','🥈','🥉'][p.rank-1]:'#'+p.rank}</span>
+      ${renderAvatar(p.avatar, 32)}
+      <span style="flex:1;font-size:14px;font-weight:700">${p.name}${p.id===myId?' (أنت)':''}</span>
+      <span style="font-size:14px;font-weight:900;color:var(--purple-light)">${p.points.toLocaleString()}</span>
+    </div>`).join('');
+
+  showScreen('final');
+  playReveal();
 });
 
 socket.on('game:reset', () => {

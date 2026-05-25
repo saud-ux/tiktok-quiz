@@ -170,7 +170,7 @@ function endQuestion() {
       if (!eff.revival) p.streak = 0;
     }
 
-    results[p.id] = { isCorrect: correct, delta, choice: ans?.choice ?? null, streak: p.streak };
+    results[p.id] = { isCorrect: correct, delta, choice: ans?.choice ?? null, streak: p.streak, timeTaken: ans ? (30 - ans.timeLeft) : null };
   });
 
   // Phase 2 – process hole attacks
@@ -415,6 +415,14 @@ io.on('connection', socket => {
       // Player declined — apply attack normally
       applyAttack(offer.attackerId, offer.type, socket.id, offer.immediate, true);
     }
+  });
+
+  socket.on('host:end-game', () => {
+    clearInterval(G.timerRef);
+    G.active = false;
+    G.preQ   = false;
+    const lb = leaderboard();
+    io.emit('game:final', { top3: lb.slice(0, 3), leaderboard: lb });
   });
 
   socket.on('host:reset', () => {
