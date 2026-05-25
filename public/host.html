@@ -112,6 +112,25 @@ textarea{min-height:70px}
 .panel{display:none}
 .panel.active{display:block}
 #panel-active .card{margin-bottom:12px}
+
+/* Import buttons */
+.btn-import{padding:7px 13px;border-radius:8px;border:1px solid var(--cyan);background:transparent;color:var(--cyan);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s}
+.btn-import:hover{background:var(--cyan);color:#000}
+.btn-template{padding:7px 13px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s}
+.btn-template:hover{border-color:var(--muted);color:var(--text)}
+
+/* Question queue */
+.queue-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--border);margin-bottom:8px;transition:.2s}
+.queue-item.used{opacity:.4}
+.queue-item.active-q{border-color:var(--cyan);background:#22c55e10}
+.queue-item:not(.used):hover{border-color:var(--cyan)}
+.queue-num{width:24px;text-align:center;font-size:13px;font-weight:900;color:var(--muted);flex-shrink:0}
+.queue-text{flex:1;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.queue-done{color:var(--green);font-size:15px;flex-shrink:0}
+.queue-load-btn{padding:5px 12px;border-radius:8px;border:none;background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0}
+.queue-scroll{max-height:260px;overflow-y:auto;padding-left:2px}
+.queue-scroll::-webkit-scrollbar{width:4px}
+.queue-scroll::-webkit-scrollbar-thumb{background:var(--purple);border-radius:2px}
 </style>
 </head>
 <body>
@@ -135,7 +154,14 @@ textarea{min-height:70px}
       <!-- SETUP PANEL -->
       <div class="panel active" id="panel-setup">
         <div class="card">
-          <div class="card-title">✏️ السؤال</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <div class="card-title" style="margin-bottom:0">✏️ السؤال</div>
+            <div style="display:flex;gap:8px">
+              <button class="btn-template" onclick="downloadTemplate()" title="تحميل نموذج JSON">⬇️ نموذج</button>
+              <button class="btn-import" onclick="document.getElementById('file-import').click()">📂 استيراد</button>
+              <input type="file" id="file-import" accept=".json,.csv" style="display:none" onchange="importFile(this)">
+            </div>
+          </div>
           <div style="margin-bottom:14px">
             <label>نص السؤال</label>
             <textarea id="q-text" placeholder="اكتب سؤالك هنا..."></textarea>
@@ -162,6 +188,15 @@ textarea{min-height:70px}
           </div>
 
           <button class="btn btn-start" id="btn-start" onclick="startQuestion()">▶ ابدأ السؤال</button>
+        </div>
+
+        <!-- Question queue (shown after import) -->
+        <div class="card" id="queue-card" style="display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div class="card-title" style="margin-bottom:0">📋 قائمة الأسئلة &nbsp;<span id="queue-counter" style="color:var(--cyan)"></span></div>
+            <button onclick="clearQueue()" style="background:transparent;border:1px solid var(--red);color:var(--red);padding:5px 10px;border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">🗑️ مسح</button>
+          </div>
+          <div class="queue-scroll" id="queue-list"></div>
         </div>
 
         <!-- Waiting players -->
@@ -224,6 +259,8 @@ const socket = io();
 let players = {};
 let currentQuestion = null;
 let qNum = 0;
+let questionQueue = [];
+let currentQueueIndex = -1;
 
 // ── HELPERS ──────────────────────────────────────────────────
 function showPanel(name) {
@@ -280,11 +317,117 @@ function resetGame() {
 
 function showSetup() {
   showPanel('setup');
-  // Clear form
+
+  // Mark last question as used and try to auto-load next
+  if (currentQueueIndex >= 0 && questionQueue[currentQueueIndex]) {
+    questionQueue[currentQueueIndex].used = true;
+  }
+  renderQueue();
+
+  const nextIdx = questionQueue.findIndex((q, i) => !q.used && i > currentQueueIndex);
+  if (nextIdx >= 0) { loadQuestion(nextIdx); return; }
+
+  // No queue or all done — clear form
   document.getElementById('q-text').value = '';
   [0,1,2,3].forEach(i => document.getElementById('opt-' + i).value = '');
   document.getElementById('q-hint').value = '';
   document.querySelectorAll('input[name="correct"]').forEach(r => r.checked = false);
+}
+
+// ── QUESTION QUEUE ────────────────────────────────────────────
+function importFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      file.name.endsWith('.csv') ? parseCSV(e.target.result) : parseJSON(e.target.result);
+    } catch(err) { toast('⚠️ خطأ في الملف: ' + err.message); }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+function parseJSON(text) {
+  const data = JSON.parse(text);
+  if (!Array.isArray(data)) throw new Error('يجب أن يكون المحتوى مصفوفة');
+  questionQueue = data.map(q => ({
+    text:          q.text || q.question || q['سؤال'] || '',
+    options:       q.options || [q['أ']||'', q['ب']||'', q['ج']||'', q['د']||''],
+    correctAnswer: q.correct ?? q.correctAnswer ?? 0,
+    hint:          q.hint || q['تلميح'] || '',
+    used: false,
+  })).filter(q => q.text);
+  currentQueueIndex = -1;
+  renderQueue();
+  loadQuestion(0);
+  toast(`✅ تم استيراد ${questionQueue.length} سؤال`);
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/).map(l =>
+    l.split(',').map(c => c.trim().replace(/^"|"$/g, ''))
+  );
+  const rows = lines.slice(1).filter(l => l[0]);
+  questionQueue = rows.map(c => ({
+    text:          c[0] || '',
+    options:       [c[1]||'', c[2]||'', c[3]||'', c[4]||''],
+    correctAnswer: Math.max(0, (parseInt(c[5]) || 1) - 1),
+    hint:          c[6] || '',
+    used: false,
+  })).filter(q => q.text);
+  currentQueueIndex = -1;
+  renderQueue();
+  loadQuestion(0);
+  toast(`✅ تم استيراد ${questionQueue.length} سؤال من CSV`);
+}
+
+function renderQueue() {
+  const card = document.getElementById('queue-card');
+  if (!questionQueue.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  const remaining = questionQueue.filter(q => !q.used).length;
+  document.getElementById('queue-counter').textContent = `${remaining} / ${questionQueue.length}`;
+  document.getElementById('queue-list').innerHTML = questionQueue.map((q, i) => `
+    <div class="queue-item ${q.used ? 'used' : ''} ${i === currentQueueIndex ? 'active-q' : ''}">
+      <span class="queue-num">${i + 1}</span>
+      <span class="queue-text">${q.text.slice(0, 65)}${q.text.length > 65 ? '…' : ''}</span>
+      ${q.used
+        ? '<span class="queue-done">✓</span>'
+        : `<button class="queue-load-btn" onclick="loadQuestion(${i})">تحميل</button>`}
+    </div>
+  `).join('');
+}
+
+function loadQuestion(index) {
+  const q = questionQueue[index];
+  if (!q) return;
+  currentQueueIndex = index;
+  document.getElementById('q-text').value = q.text;
+  [0,1,2,3].forEach(i => { const el = document.getElementById('opt-'+i); if (el) el.value = q.options[i] || ''; });
+  document.querySelectorAll('input[name="correct"]').forEach(r => r.checked = parseInt(r.value) === q.correctAnswer);
+  document.getElementById('q-hint').value = q.hint || '';
+  renderQueue();
+  if (index > 0) toast(`📌 تم تحميل السؤال ${index + 1}`);
+}
+
+function clearQueue() {
+  if (!confirm('هل تريد مسح قائمة الأسئلة؟')) return;
+  questionQueue = []; currentQueueIndex = -1;
+  document.getElementById('queue-card').style.display = 'none';
+  toast('🗑️ تم مسح القائمة');
+}
+
+function downloadTemplate() {
+  const t = [
+    { text: 'ما عاصمة المملكة العربية السعودية؟', options: ['الرياض','جدة','مكة المكرمة','الدمام'], correct: 0, hint: 'تبدأ بحرف الراء' },
+    { text: 'كم عدد أيام الأسبوع؟', options: ['5','6','7','8'], correct: 2, hint: 'أيام العمل + عطلة نهاية الأسبوع' },
+    { text: 'ما أكبر دولة عربية مساحةً؟', options: ['السعودية','الجزائر','السودان','ليبيا'], correct: 1, hint: 'تقع في شمال أفريقيا' },
+  ];
+  const blob = new Blob([JSON.stringify(t, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'quiz-template.json'; a.click();
+  toast('⬇️ تم تحميل النموذج');
 }
 
 // ── HELPERS ──────────────────────────────────────────────────
