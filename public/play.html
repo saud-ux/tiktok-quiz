@@ -505,6 +505,8 @@ function renderQuestion(q) {
   document.getElementById('hint-box').style.display = 'none';
   document.getElementById('reactive-offers').innerHTML = '';
   document.getElementById('cut-overlay').style.display = 'none';
+  document.getElementById('cut-overlay').textContent = '✂️ أنت مقطوع! لا يمكنك الإجابة على هذا السؤال';
+  document.getElementById('answer-grid').classList.remove('cut-locked');
   document.getElementById('my-pts').textContent = myPoints.toLocaleString();
   const sb = document.getElementById('streak-badge');
   if (myStreak >= 3) { sb.style.display = 'inline'; sb.textContent = `🔥${myStreak}`; }
