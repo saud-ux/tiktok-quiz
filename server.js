@@ -32,6 +32,7 @@ function newState() {
     revivalPending: {},// id → true
     reverseOffers: {}, // targetId → { attackerId, type, immediate, timeout }
     disconnectTimers: {}, // persistentId → setTimeout handle
+    escapedPlayers: new Set(), // persistentIds who left during active question
     preQ: false,
     preQEligible: new Set(),
     preQResponded: new Set(),
@@ -233,6 +234,7 @@ function startActualQuestion() {
   clearTimeout(G.preQTimeout);
   G.preQ = false;
   G.active   = true;
+  G.escapedPlayers = new Set();
   G.timeLeft = 30;
   G.answers  = {};
   G.retryPending   = {};
@@ -455,6 +457,13 @@ io.on('connection', socket => {
         question: G.active ? { text: G.question.text, options: G.question.options, number: G.qNum } : null,
         timeLeft: G.timeLeft,
       });
+
+      // If they escaped during the active question, cut them
+      if (G.active && G.escapedPlayers.has(existing.persistentId)) {
+        G.effects[socket.id] = { ...(G.effects[socket.id] || {}), cut: true };
+        io.to(socket.id).emit('game:notify', { type: 'escaped-active', msg: '🚫 غادرت الشاشة أثناء السؤال! لا يمكنك المشاركة' });
+      }
+
       io.emit('game:players-update', publicPlayers());
       return;
     }
@@ -482,6 +491,17 @@ io.on('connection', socket => {
     socket.emit('player:joined', { id: socket.id, player: G.players[socket.id] });
     io.emit('game:players-update', publicPlayers());
     io.emit('game:leaderboard', leaderboard());
+  });
+
+  socket.on('player:question-escape', () => {
+    if (!G.active) return;
+    const p = G.players[socket.id];
+    if (!p) return;
+    if (G.escapedPlayers.has(p.persistentId)) return; // already marked
+    G.escapedPlayers.add(p.persistentId);
+    if (!G.effects[socket.id]) G.effects[socket.id] = {};
+    G.effects[socket.id].cut = true;
+    socket.emit('game:notify', { type: 'escaped-active', msg: '🚫 غادرت الشاشة أثناء السؤال! لا يمكنك المشاركة' });
   });
 
   socket.on('player:answer', ({ choice }) => {
@@ -620,6 +640,9 @@ io.on('connection', socket => {
       clearTimeout(G.reverseOffers[socket.id].timeout);
       delete G.reverseOffers[socket.id];
     }
+
+    // Mark as escaped if they disconnected during an active question
+    if (G.active) G.escapedPlayers.add(p.persistentId);
 
     // Mark offline — keep points/state intact for reconnect
     p.offline = true;

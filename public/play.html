@@ -864,9 +864,11 @@ socket.on('game:question-end', data => {
 socket.on('game:notify', ({ type, msg }) => {
   const colorMap = { 'shield-active':'green','ability-active':'gold','revival-active':'green','holed':'red','attack-reflected':'gold','reverse-fired':'green','immunity-saved':'green','cut-active':'red','frozen-active':'red','hole-incoming':'red','frozen-incoming':'red','cut-incoming':'red','error':'red' };
   notify(msg, colorMap[type] || '');
-  if (type === 'cut-active') {
+  if (type === 'cut-active' || type === 'escaped-active') {
     isCut = true;
-    document.getElementById('cut-overlay').style.display = 'block';
+    const cutEl = document.getElementById('cut-overlay');
+    if (type === 'escaped-active') cutEl.textContent = '🚫 غادرت الشاشة أثناء السؤال! لا يمكنك المشاركة في هذا السؤال';
+    cutEl.style.display = 'block';
     const grid = document.getElementById('answer-grid');
     if (grid) grid.classList.add('cut-locked');
     document.querySelectorAll('.ans-btn').forEach(b => { b.disabled = true; b.onclick = null; });
@@ -896,6 +898,13 @@ socket.on('game:reset', () => {
   allPlayers = {}; abilitiesState = { attack:false, defense:false, general:false }; questionActive = false;
   showScreen('join');
   notify('', 'gold');
+});
+
+// Detect tab/app switch during active question
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && questionActive) {
+    socket.emit('player:question-escape');
+  }
 });
 </script>
 </body>
