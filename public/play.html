@@ -164,6 +164,23 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 #notif.gold{border-color:var(--gold)}
 
 .lb-mini-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface);border-radius:10px;border:1px solid var(--border);margin-bottom:6px}
+
+/* ── BIG COUNTDOWN ── */
+#big-countdown{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:60;pointer-events:none}
+#big-cnt-num{font-size:140px;font-weight:900;color:var(--red);text-shadow:0 0 80px #ef444490,0 0 30px #ef4444;line-height:1;animation:bigPop .85s ease forwards}
+@keyframes bigPop{0%{transform:scale(2.8);opacity:0}20%{opacity:1}55%{transform:scale(1.05);opacity:1}85%{transform:scale(1);opacity:.9}100%{transform:scale(.5);opacity:0}}
+
+/* ── TIMER DANGER ── */
+.timer-bar-wrap.danger{animation:pulseBar .45s infinite alternate}
+@keyframes pulseBar{from{box-shadow:none}to{box-shadow:0 0 18px #ef444450}}
+
+/* ── SCREEN SHAKE ── */
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.shaking{animation:shake .4s ease}
+
+/* ── REVEAL GLOW ── */
+@keyframes revealGlow{0%,100%{transform:scale(1)}40%{transform:scale(1.06);box-shadow:0 0 40px #4ade8070}}
+.ans-btn.reveal-correct{animation:revealGlow .7s ease}
 </style>
 </head>
 <body>
@@ -321,6 +338,9 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
   </div>
 </div>
 
+<!-- ════ BIG COUNTDOWN ════ -->
+<div id="big-countdown"><div id="big-cnt-num"></div></div>
+
 <!-- ════ WAITING OVERLAY ════ -->
 <div id="waiting-overlay">
   <div class="waiting-spinner"></div>
@@ -353,6 +373,87 @@ const LETTERS = ['أ','ب','ج','د'];
 const OPT_COLORS = [
   {border:'#7c3aed'},{border:'#06b6d4'},{border:'#10b981'},{border:'#f59e0b'},
 ];
+
+// ─── AUDIO ───────────────────────────────────────────────────
+let _audioCtx = null;
+function _ac() {
+  if (!_audioCtx) try { _audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+  if (_audioCtx?.state === 'suspended') _audioCtx.resume();
+  return _audioCtx;
+}
+document.addEventListener('click', () => _ac(), { once: true });
+
+function playTick() {
+  const c = _ac(); if (!c) return;
+  const o = c.createOscillator(), g = c.createGain();
+  o.connect(g); g.connect(c.destination);
+  o.frequency.value = 900;
+  g.gain.setValueAtTime(0.18, c.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.07);
+  o.start(); o.stop(c.currentTime + 0.07);
+}
+
+function playBuzzer() {
+  const c = _ac(); if (!c) return;
+  const o = c.createOscillator(), g = c.createGain();
+  o.connect(g); g.connect(c.destination);
+  o.type = 'sawtooth'; o.frequency.value = 130;
+  g.gain.setValueAtTime(0.35, c.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.5);
+  o.start(); o.stop(c.currentTime + 0.5);
+}
+
+function playReveal() {
+  const c = _ac(); if (!c) return;
+  [523, 659, 784, 1047].forEach((f, i) => {
+    const o = c.createOscillator(), g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    o.frequency.value = f;
+    const t = c.currentTime + i * 0.1;
+    g.gain.setValueAtTime(0.18, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+    o.start(t); o.stop(t + 0.28);
+  });
+}
+
+// ─── BIG COUNTDOWN ───────────────────────────────────────────
+function showBigCountdown(n) {
+  const wrap = document.getElementById('big-countdown');
+  const num  = document.getElementById('big-cnt-num');
+  wrap.style.display = 'flex';
+  num.textContent = n;
+  num.style.animation = 'none';
+  num.offsetHeight; // reflow
+  num.style.animation = 'bigPop .85s ease forwards';
+  clearTimeout(wrap._t);
+  wrap._t = setTimeout(() => { wrap.style.display = 'none'; }, 900);
+}
+
+// ─── DRAMATIC REVEAL ─────────────────────────────────────────
+function dramaticReveal(data) {
+  playBuzzer();
+  const gameEl = document.getElementById('screen-game');
+  gameEl.classList.add('shaking');
+  setTimeout(() => gameEl.classList.remove('shaking'), 420);
+
+  setTimeout(() => {
+    playReveal();
+    const ci = data.correctAnswer;
+    [0,1,2,3].forEach(i => {
+      const b = document.getElementById('ans-' + i);
+      if (!b) return;
+      if (i === ci) {
+        b.classList.remove('wrong', 'selected');
+        b.classList.add('correct', 'reveal-correct');
+      } else if (!b.classList.contains('correct')) {
+        b.style.opacity = '0.18';
+        b.style.filter = 'grayscale(1)';
+      }
+    });
+  }, 500);
+
+  setTimeout(() => showResults(data), 2800);
+}
 
 // ─── PERSISTENT ID (survives refresh) ────────────────────────
 function getOrCreatePid() {
@@ -821,9 +922,17 @@ socket.on('game:waiting-pre-question', () => {
 });
 
 socket.on('game:timer', t => {
-  document.getElementById('timer-bar').style.width = (t / 30 * 100) + '%';
-  const bar = document.getElementById('timer-bar');
+  const bar  = document.getElementById('timer-bar');
+  const wrap = document.getElementById('screen-game').querySelector('.timer-bar-wrap');
+  bar.style.width = (t / 30 * 100) + '%';
   bar.style.background = t <= 5 ? 'var(--red)' : t <= 10 ? 'var(--gold)' : 'linear-gradient(90deg,var(--cyan),var(--purple))';
+  if (t <= 5 && t > 0) {
+    wrap.classList.add('danger');
+    playTick();
+    showBigCountdown(t);
+  } else {
+    wrap.classList.remove('danger');
+  }
 });
 
 socket.on('player:answer-accepted', ({ choice, correct, isRetry }) => {
@@ -856,11 +965,14 @@ socket.on('game:revival-available', () => {
 
 socket.on('game:question-end', data => {
   questionActive = false;
+  document.getElementById('screen-game').querySelector('.timer-bar-wrap').classList.remove('danger');
   if (data.leaderboard) {
     data.leaderboard.forEach(p => { if(allPlayers[p.id]){allPlayers[p.id].points=p.points;allPlayers[p.id].streak=p.streak;} });
     if (myId && allPlayers[myId]) { myPoints = allPlayers[myId].points; myStreak = allPlayers[myId].streak; }
   }
-  showResults(data);
+  const onGame = document.getElementById('screen-game').classList.contains('active');
+  if (onGame) dramaticReveal(data);
+  else showResults(data);
 });
 
 socket.on('game:notify', ({ type, msg }) => {
