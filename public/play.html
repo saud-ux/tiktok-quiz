@@ -538,6 +538,37 @@ function playLastQuestion() {
   bass.start(); bass.stop(c.currentTime + 0.8);
 }
 
+function playCorrect() {
+  const c = _ac(); if (!c) return;
+  // وتر صاعد إيجابي
+  [523, 659, 784, 1047].forEach((f, i) => {
+    const o = c.createOscillator(), g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    o.type = 'sine';
+    o.frequency.value = f;
+    const t = c.currentTime + i * 0.07;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.22, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+    o.start(t); o.stop(t + 0.35);
+  });
+}
+
+function playWrong() {
+  const c = _ac(); if (!c) return;
+  // وتر هابط سلبي
+  [392, 330, 277, 220].forEach((f, i) => {
+    const o = c.createOscillator(), g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    o.type = 'sawtooth';
+    o.frequency.value = f;
+    const t = c.currentTime + i * 0.09;
+    g.gain.setValueAtTime(0.18, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    o.start(t); o.stop(t + 0.2);
+  });
+}
+
 function playBonusChime() {
   const c = _ac(); if (!c) return;
   [783, 1047, 1318].forEach((f, i) => {
@@ -1157,6 +1188,7 @@ socket.on('player:answer-accepted', ({ choice, correct, isRetry }) => {
   [0,1,2,3].forEach(i => { const b=document.getElementById('ans-'+i); if(b) b.disabled=true; });
   const btn = document.getElementById('ans-' + choice);
   if (btn) { btn.classList.remove('selected'); btn.classList.add(correct ? 'correct' : 'wrong'); }
+  if (correct) playCorrect(); else playWrong();
   if (!isRetry) notify(correct ? '✅ إجابة صحيحة!' : '❌ إجابة خاطئة', correct ? 'green' : 'red');
 });
 
