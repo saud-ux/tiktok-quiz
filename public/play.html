@@ -164,6 +164,18 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 .bonus-title{font-size:15px;font-weight:900;color:var(--gold)}
 .bonus-desc{font-size:12px;color:var(--muted);margin-top:2px}
 
+/* ── LAST QUESTION ANNOUNCEMENT OVERLAY ── */
+#last-q-announcement{position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;flex-direction:column;gap:0;background:radial-gradient(circle at 50% 40%,#f59e0b22 0%,#dc262615 50%,#00000090 100%);backdrop-filter:blur(4px)}
+#last-q-announcement.show{display:flex}
+.lqa-fire{font-size:80px;animation:fireBounce .4s ease-in-out infinite alternate;display:block;text-align:center}
+@keyframes fireBounce{from{transform:scale(1) translateY(0)}to{transform:scale(1.15) translateY(-10px)}}
+.lqa-title{font-size:48px;font-weight:900;color:#fff;text-align:center;text-shadow:0 0 40px #f59e0b,0 0 80px #f59e0b80;animation:lqaIn .5s ease both;line-height:1.1;margin-top:8px}
+.lqa-sub{font-size:22px;font-weight:800;color:var(--gold);text-align:center;text-shadow:0 0 20px #f59e0b80;animation:lqaIn .5s ease .15s both;margin-top:8px}
+.lqa-pts{font-size:18px;font-weight:700;color:#fff;background:#f59e0b30;border:2px solid var(--gold);border-radius:30px;padding:8px 24px;text-align:center;animation:lqaIn .5s ease .3s both;margin-top:12px}
+.lqa-countdown{font-size:14px;color:#ffffff80;margin-top:16px;animation:lqaIn .5s ease .45s both}
+@keyframes lqaIn{from{opacity:0;transform:scale(.6) translateY(30px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes lqaShake{0%,100%{transform:rotate(0)}25%{transform:rotate(-2deg)}75%{transform:rotate(2deg)}}
+
 /* ── ATTACK HIT OVERLAY ── */
 #attack-hit{position:fixed;inset:0;z-index:200;pointer-events:none;display:none;align-items:center;justify-content:center;flex-direction:column;gap:8px}
 #attack-hit.show{display:flex}
@@ -393,6 +405,15 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
   </div>
 </div>
 
+<!-- ════ LAST QUESTION ANNOUNCEMENT ════ -->
+<div id="last-q-announcement">
+  <span class="lqa-fire">🔥</span>
+  <div class="lqa-title">السؤال الأخير!</div>
+  <div class="lqa-sub">استعد — هذا هو الحسم</div>
+  <div class="lqa-pts">⚡ النقاط مضاعفة ×2</div>
+  <div class="lqa-countdown" id="lqa-countdown">يختفي خلال 4 ثوانٍ...</div>
+</div>
+
 <!-- ════ ATTACK HIT OVERLAY ════ -->
 <div id="attack-hit">
   <div class="attack-hit-icon" id="attack-hit-icon"></div>
@@ -493,6 +514,30 @@ function playAttackHit() {
   });
 }
 
+function playLastQuestion() {
+  const c = _ac(); if (!c) return;
+  // نغمة دراماتيكية تصاعدية
+  const notes = [261, 329, 392, 523, 659, 784, 1047];
+  notes.forEach((f, i) => {
+    const o = c.createOscillator(), g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    o.type = i < 4 ? 'triangle' : 'sine';
+    o.frequency.value = f;
+    const t = c.currentTime + i * 0.1;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.25, t + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+    o.start(t); o.stop(t + 0.4);
+  });
+  // نبضة باس عميقة
+  const bass = c.createOscillator(), bg = c.createGain();
+  bass.connect(bg); bg.connect(c.destination);
+  bass.type = 'sine'; bass.frequency.value = 55;
+  bg.gain.setValueAtTime(0.4, c.currentTime);
+  bg.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.8);
+  bass.start(); bass.stop(c.currentTime + 0.8);
+}
+
 function playBonusChime() {
   const c = _ac(); if (!c) return;
   [783, 1047, 1318].forEach((f, i) => {
@@ -540,10 +585,17 @@ function showAttackHit(icon, msg) {
 
 // ─── DRAMATIC REVEAL ─────────────────────────────────────────
 function dramaticReveal(data) {
-  playBuzzer();
-  const gameEl = document.getElementById('screen-game');
-  gameEl.classList.add('shaking');
-  setTimeout(() => gameEl.classList.remove('shaking'), 420);
+  const myResult  = data.results[myId] || {};
+  const isCorrect = myResult.isCorrect;
+
+  // ← الاهتزاز والصوت الحاد فقط لمن أجاب خطأ أو لم يجب
+  if (!isCorrect) {
+    playBuzzer();
+    const gameEl = document.getElementById('screen-game');
+    gameEl.classList.add('shaking');
+    setTimeout(() => gameEl.classList.remove('shaking'), 420);
+  }
+
   setTimeout(() => {
     playReveal();
     const ci = data.correctAnswer;
@@ -559,6 +611,7 @@ function dramaticReveal(data) {
       }
     });
   }, 500);
+
   setTimeout(() => showResults(data), 2800);
 }
 
@@ -961,6 +1014,43 @@ function showResults(data) {
   showScreen('result');
 }
 
+// ─── LAST QUESTION ANNOUNCEMENT ─────────────────────────────
+let lqaTimer = null;
+
+function showLastQuestionAnnouncement() {
+  _ac(); // unlock audio context
+  const overlay = document.getElementById('last-q-announcement');
+  overlay.classList.add('show');
+  playLastQuestion();
+
+  let secs = 4;
+  const cdEl = document.getElementById('lqa-countdown');
+  if (cdEl) cdEl.textContent = `يختفي خلال ${secs} ثوانٍ...`;
+
+  clearInterval(lqaTimer);
+  lqaTimer = setInterval(() => {
+    secs--;
+    if (cdEl) cdEl.textContent = secs > 0 ? `يختفي خلال ${secs} ثوانٍ...` : '';
+    if (secs <= 0) {
+      clearInterval(lqaTimer);
+      overlay.classList.remove('show');
+    }
+  }, 1000);
+
+  // اغلاق بالضغط
+  overlay.onclick = () => {
+    clearInterval(lqaTimer);
+    overlay.classList.remove('show');
+    overlay.onclick = null;
+  };
+}
+
+socket.on('game:last-question-announcement', () => {
+  showLastQuestionAnnouncement();
+  // تأكد أن السؤال القادم سيكون last question في الـ banner
+  document.getElementById('last-q-banner').classList.add('show');
+});
+
 // ─── SOCKET EVENTS ──────────────────────────────────────────
 socket.on('game:state', data => {
   allPlayers = {};
@@ -1136,18 +1226,27 @@ socket.on('game:notify', ({ type, msg }) => {
 socket.on('ability:result', ({ type, status }) => {
   const catMap = { hole:'attack',freeze:'attack',cut:'attack',reverse:'defense',immunity:'defense',retry:'defense',doubleRisk:'general',hint:'general',revival:'general' };
   const cat = catMap[type];
-  if (cat && status !== 'reflected' && status !== 'blocked') {
-    if (type === 'hint' || type === 'revival' || type === 'immunity' || type === 'retry' || type === 'doubleRisk') {
-      // don't mark as used yet
-    } else {
-      abilitiesState[cat] = true;
-    }
+
+  // ← إصلاح: عند الانعكاس أو الحجب، لا نستهلك الخاصية بل نُعيدها
+  if (status === 'reflected') {
+    notify('🔄 هجومك انعكس! الخاصية لم تُستهلك', 'gold', 3000);
+    // الخاصية لا تزال متاحة
+    renderAbilitiesBar();
+    return;
   }
+  if (status === 'blocked') {
+    notify('🛡️ الهدف محصّن! الخاصية لم تُستهلك', 'gold', 3000);
+    renderAbilitiesBar();
+    return;
+  }
+
+  // الخاصية استُخدمت بنجاح
   if (cat) abilitiesState[cat] = true;
   renderAbilitiesBar();
+
   if (['reverse','immunity','retry','doubleRisk','revival'].includes(type) && status === 'active') {
     const btn = document.getElementById('abil-btn-' + cat);
-    if (btn) { btn.classList.add('active'); btn.disabled=false; }
+    if (btn) { btn.classList.add('active'); btn.disabled = false; }
   }
 });
 

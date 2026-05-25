@@ -51,9 +51,14 @@ textarea{min-height:70px}
 .btn-end:disabled{opacity:.4;cursor:not-allowed}
 
 /* ── LAST QUESTION TOGGLE ── */
-.last-q-toggle{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:12px;border:2px solid var(--border);background:var(--surface);cursor:pointer;transition:.3s;margin-bottom:14px;user-select:none}
+.last-q-toggle{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:12px;border:2px solid var(--border);background:var(--surface);cursor:pointer;transition:.3s;margin-bottom:8px;user-select:none}
 .last-q-toggle.active{border-color:var(--gold);background:#f59e0b15}
 .last-q-toggle input{display:none}
+.btn-announce{width:100%;padding:13px;border-radius:12px;border:none;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;transition:.3s;background:linear-gradient(135deg,#dc2626,#f59e0b);color:#fff;letter-spacing:.5px;margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 20px #dc262640}
+.btn-announce:hover{filter:brightness(1.1);transform:translateY(-1px);box-shadow:0 6px 28px #dc262660}
+.btn-announce:disabled{opacity:.4;cursor:not-allowed;transform:none}
+@keyframes announcePulse{0%,100%{box-shadow:0 4px 20px #f59e0b60}50%{box-shadow:0 4px 40px #f59e0bc0}}
+.btn-announce.pulsing{animation:announcePulse .8s infinite}
 .toggle-dot{width:44px;height:24px;background:var(--border);border-radius:12px;position:relative;flex-shrink:0;transition:.3s}
 .toggle-dot::after{content:'';width:18px;height:18px;background:#fff;border-radius:50%;position:absolute;top:3px;right:3px;transition:.3s}
 .last-q-toggle.active .toggle-dot{background:var(--gold)}
@@ -199,6 +204,11 @@ textarea{min-height:70px}
             </div>
           </label>
 
+          <!-- ── إعلان السؤال الأخير ── -->
+          <button class="btn-announce" id="btn-announce" onclick="announceLastQuestion()">
+            📢 أعلن الآن — هذا السؤال الأخير!
+          </button>
+
           <button class="btn btn-start" id="btn-start" onclick="startQuestion()">▶ ابدأ السؤال</button>
         </div>
 
@@ -323,6 +333,23 @@ function toast(msg, dur = 3000) {
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), dur);
 }
+
+function announceLastQuestion() {
+  const btn = document.getElementById('btn-announce');
+  btn.disabled = true;
+  btn.textContent = '✅ تم الإرسال!';
+  socket.emit('host:announce-last-question');
+  // تفعيل التوجل تلقائياً
+  if (!isLastQuestion) toggleLastQuestion();
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.innerHTML = '📢 أعلن الآن — هذا السؤال الأخير!';
+  }, 3000);
+}
+
+socket.on('host:announcement-sent', () => {
+  toast('📢 تم إرسال الإعلان لكل اللاعبين!', 3000);
+});
 
 function toggleLastQuestion() {
   isLastQuestion = !isLastQuestion;

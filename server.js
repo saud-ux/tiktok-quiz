@@ -93,15 +93,23 @@ function applyAttack(attackerId, type, targetId, immediate = false, skipReverseO
   if (tEff.reverse) {
     tEff.reverse = false;
     if (immediate) {
-      if (type === 'freeze') G.effects[attackerId] = { ...(G.effects[attackerId] || {}), frozen: true };
-      if (type === 'cut')    G.effects[attackerId] = { ...(G.effects[attackerId] || {}), cut: true };
+      if (type === 'freeze') {
+        G.effects[attackerId] = { ...(G.effects[attackerId] || {}), frozen: true };
+        // ← إشعار فوري بالتأثير على المهاجم
+        io.to(attackerId).emit('game:notify', { type: 'frozen-active', msg: `❄️ ${target.name} عكس هجومك! أنت مجمد الآن` });
+      }
+      if (type === 'cut') {
+        G.effects[attackerId] = { ...(G.effects[attackerId] || {}), cut: true };
+        // ← إشعار فوري بالتأثير على المهاجم
+        io.to(attackerId).emit('game:notify', { type: 'cut-active', msg: `✂️ ${target.name} عكس هجومك! أنت مقطوع الآن` });
+      }
     } else {
       if (type === 'freeze') G.nextEffects[attackerId] = { ...(G.nextEffects[attackerId] || {}), frozen: true };
       if (type === 'cut')    G.nextEffects[attackerId] = { ...(G.nextEffects[attackerId] || {}), cut: true };
     }
     if (type === 'hole') G.effects[targetId] = { ...(G.effects[targetId] || {}), holeTarget: attackerId };
-    notify(attackerId, 'attack-reflected', `${target.name} عكس هجومك!`);
-    notify(targetId,   'reverse-fired',    '🔄 درع الانعكاس انطلق!');
+    notify(attackerId, 'attack-reflected', `🔄 ${target.name} عكس هجومك!`);
+    notify(targetId,   'reverse-fired',    '🔄 درع الانعكاس انطلق على المهاجم!');
     return { ok: true, reflected: true };
   }
 
@@ -297,6 +305,15 @@ function startActualQuestion() {
     if (eff.frozen) io.to(pid).emit('game:notify', { type: 'frozen-active', msg: '❄️ أنت مجمد! لا يمكنك استخدام الخصائص' });
   });
 
+  // ← أي reverse offer معلق لم يُردّ عليه: أعطِ المدافع ثانيتين إضافيتين ثم طبّق الهجوم
+  Object.entries(G.reverseOffers).forEach(([targetId, offer]) => {
+    clearTimeout(offer.timeout);
+    offer.timeout = setTimeout(() => {
+      delete G.reverseOffers[targetId];
+      applyAttack(offer.attackerId, offer.type, targetId, offer.immediate, true);
+    }, 2000);
+  });
+
   G.timerRef = setInterval(() => {
     G.timeLeft--;
     io.emit('game:timer', G.timeLeft);
@@ -427,15 +444,25 @@ io.on('connection', socket => {
     if (use && p) {
       p.abilities.defense.used = true;
       if (offer.type === 'freeze') {
-        if (offer.immediate) G.effects[offer.attackerId] = { ...(G.effects[offer.attackerId] || {}), frozen: true };
-        else G.nextEffects[offer.attackerId] = { ...(G.nextEffects[offer.attackerId] || {}), frozen: true };
+        if (offer.immediate) {
+          G.effects[offer.attackerId] = { ...(G.effects[offer.attackerId] || {}), frozen: true };
+          // ← إشعار بالتأثير على المهاجم
+          io.to(offer.attackerId).emit('game:notify', { type: 'frozen-active', msg: `❄️ ${p.name} عكس هجومك! أنت مجمد الآن` });
+        } else {
+          G.nextEffects[offer.attackerId] = { ...(G.nextEffects[offer.attackerId] || {}), frozen: true };
+        }
       } else if (offer.type === 'cut') {
-        if (offer.immediate) G.effects[offer.attackerId] = { ...(G.effects[offer.attackerId] || {}), cut: true };
-        else G.nextEffects[offer.attackerId] = { ...(G.nextEffects[offer.attackerId] || {}), cut: true };
+        if (offer.immediate) {
+          G.effects[offer.attackerId] = { ...(G.effects[offer.attackerId] || {}), cut: true };
+          // ← إشعار بالتأثير على المهاجم
+          io.to(offer.attackerId).emit('game:notify', { type: 'cut-active', msg: `✂️ ${p.name} عكس هجومك! أنت مقطوع الآن` });
+        } else {
+          G.nextEffects[offer.attackerId] = { ...(G.nextEffects[offer.attackerId] || {}), cut: true };
+        }
       } else if (offer.type === 'hole') {
         G.effects[socket.id] = { ...(G.effects[socket.id] || {}), holeTarget: offer.attackerId };
       }
-      notify(offer.attackerId, 'attack-reflected', `${p.name} عكس هجومك!`);
+      notify(offer.attackerId, 'attack-reflected', `🔄 ${p.name} عكس هجومك عليك!`);
       notify(socket.id, 'reverse-fired', '🔄 درع الانعكاس انطلق!');
       io.to(socket.id).emit('ability:result', { type: 'reverse', status: 'active' });
       io.emit('game:players-update', publicPlayers());
@@ -450,6 +477,13 @@ io.on('connection', socket => {
     G.preQ   = false;
     const lb = leaderboard();
     io.emit('game:final', { top3: lb.slice(0, 3), leaderboard: lb });
+  });
+
+  // ── إعلان السؤال الأخير ──────────────────────────────────
+  socket.on('host:announce-last-question', () => {
+    G.isLastQuestion = true;
+    io.emit('game:last-question-announcement');
+    socket.emit('host:announcement-sent');
   });
 
   socket.on('host:reset', () => {
