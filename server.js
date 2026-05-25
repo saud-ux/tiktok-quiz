@@ -458,9 +458,9 @@ io.on('connection', socket => {
         timeLeft: G.timeLeft,
       });
 
-      // If they escaped during the active question, cut them
+      // If they escaped during the active question, cut and freeze them
       if (G.active && G.escapedPlayers.has(existing.persistentId)) {
-        G.effects[socket.id] = { ...(G.effects[socket.id] || {}), cut: true };
+        G.effects[socket.id] = { ...(G.effects[socket.id] || {}), cut: true, frozen: true };
         io.to(socket.id).emit('game:notify', { type: 'escaped-active', msg: '🚫 غادرت الشاشة أثناء السؤال! لا يمكنك المشاركة' });
       }
 
@@ -500,7 +500,8 @@ io.on('connection', socket => {
     if (G.escapedPlayers.has(p.persistentId)) return; // already marked
     G.escapedPlayers.add(p.persistentId);
     if (!G.effects[socket.id]) G.effects[socket.id] = {};
-    G.effects[socket.id].cut = true;
+    G.effects[socket.id].cut    = true;
+    G.effects[socket.id].frozen = true;
     socket.emit('game:notify', { type: 'escaped-active', msg: '🚫 غادرت الشاشة أثناء السؤال! لا يمكنك المشاركة' });
   });
 
