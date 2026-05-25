@@ -121,6 +121,12 @@ textarea{min-height:70px}
 .btn-template{padding:7px 13px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s}
 .btn-template:hover{border-color:var(--muted);color:var(--text)}
 
+/* Category selector */
+.cat-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+.cat-btn{padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s}
+.cat-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.cat-btn.active{border-color:var(--green);background:#10b98118;color:var(--green)}
+
 /* Question queue */
 .queue-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:var(--surface);border:1px solid var(--border);margin-bottom:8px;transition:.2s;cursor:pointer}
 .queue-item.used{opacity:.4;cursor:default;pointer-events:none}
@@ -207,6 +213,13 @@ textarea{min-height:70px}
           </div>
 
           <button class="btn btn-start" id="btn-start" onclick="startQuestion()">▶ ابدأ السؤال</button>
+        </div>
+
+        <!-- Category selector (shown after importing a categorized bank) -->
+        <div class="card" id="category-section" style="display:none">
+          <div class="card-title">📚 اختر تصنيفاً</div>
+          <div class="cat-grid" id="cat-grid"></div>
+          <div id="cat-info" style="margin-top:10px;font-size:13px;color:var(--muted)">اختر تصنيفاً لتحميل أسئلته</div>
         </div>
 
         <!-- Question queue (shown after import) -->
@@ -306,6 +319,8 @@ let currentQuestion = null;
 let qNum = 0;
 let questionQueue = [];
 let currentQueueIndex = -1;
+let categoriesData = null;
+let activeCategory = null;
 
 // ── HELPERS ──────────────────────────────────────────────────
 function showPanel(name) {
@@ -400,18 +415,63 @@ function importFile(input) {
 
 function parseJSON(text) {
   const data = JSON.parse(text);
-  if (!Array.isArray(data)) throw new Error('يجب أن يكون المحتوى مصفوفة');
-  questionQueue = data.map(q => ({
-    text:          q.text || q.question || q['سؤال'] || '',
-    options:       q.options || [q['أ']||'', q['ب']||'', q['ج']||'', q['د']||''],
+  if (Array.isArray(data)) {
+    categoriesData = null;
+    activeCategory = null;
+    document.getElementById('category-section').style.display = 'none';
+    questionQueue = data.map(q => ({
+      text:          q.text || q.question || q['سؤال'] || '',
+      options:       q.options || [q['أ']||'', q['ب']||'', q['ج']||'', q['د']||''],
+      correctAnswer: q.correct ?? q.correctAnswer ?? 0,
+      hint:          q.hint || q['تلميح'] || '',
+      used: false,
+    })).filter(q => q.text);
+    currentQueueIndex = -1;
+    renderQueue();
+    loadQuestion(0);
+    toast(`✅ تم استيراد ${questionQueue.length} سؤال`);
+  } else if (data && typeof data === 'object') {
+    categoriesData = data;
+    activeCategory = null;
+    questionQueue = [];
+    currentQueueIndex = -1;
+    document.getElementById('queue-card').style.display = 'none';
+    showCategorySelector(Object.keys(data));
+    toast('✅ تم تحميل بنك الأسئلة — اختر تصنيفاً');
+  } else {
+    throw new Error('صيغة الملف غير مدعومة');
+  }
+}
+
+function showCategorySelector(cats) {
+  const section = document.getElementById('category-section');
+  section.style.display = 'block';
+  document.getElementById('cat-grid').innerHTML = cats.map(cat => {
+    const count = (categoriesData[cat] || []).length;
+    return `<button class="cat-btn" onclick="loadCategory('${cat}')">${cat} <span style="opacity:.6;font-size:11px">(${count})</span></button>`;
+  }).join('');
+  document.getElementById('cat-info').textContent = 'اختر تصنيفاً لتحميل أسئلته';
+}
+
+function loadCategory(name) {
+  if (!categoriesData || !categoriesData[name]) return;
+  activeCategory = name;
+  document.querySelectorAll('.cat-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.trim().startsWith(name));
+  });
+  const qs = categoriesData[name];
+  questionQueue = qs.map(q => ({
+    text:          q.text || '',
+    options:       q.options || [],
     correctAnswer: q.correct ?? q.correctAnswer ?? 0,
-    hint:          q.hint || q['تلميح'] || '',
+    hint:          q.hint || '',
     used: false,
   })).filter(q => q.text);
   currentQueueIndex = -1;
   renderQueue();
   loadQuestion(0);
-  toast(`✅ تم استيراد ${questionQueue.length} سؤال`);
+  document.getElementById('cat-info').textContent = `تم تحميل ${questionQueue.length} سؤال من تصنيف "${name}"`;
+  toast(`📚 "${name}" — ${questionQueue.length} سؤال`);
 }
 
 function parseCSV(text) {
@@ -494,7 +554,14 @@ function loadQuestion(index) {
 function clearQueue() {
   if (!confirm('هل تريد مسح قائمة الأسئلة؟')) return;
   questionQueue = []; currentQueueIndex = -1;
+  activeCategory = null;
   document.getElementById('queue-card').style.display = 'none';
+  if (categoriesData) {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('cat-info').textContent = 'اختر تصنيفاً لتحميل أسئلته';
+  } else {
+    document.getElementById('category-section').style.display = 'none';
+  }
   toast('🗑️ تم مسح القائمة');
 }
 
