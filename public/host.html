@@ -91,6 +91,8 @@ textarea{min-height:70px}
 .q-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
 .q-opt{padding:10px 14px;border-radius:10px;font-size:14px;font-weight:600;background:var(--surface);border:1px solid var(--border)}
 .q-opt.correct{background:#10b98120;border-color:var(--green);color:var(--green)}
+.btn-kick{background:transparent;border:1px solid #ef444450;color:#ef4444;padding:4px 10px;border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:.2s;flex-shrink:0}
+.btn-kick:hover{background:var(--red);color:#fff;border-color:var(--red)}
 .lb-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--surface);margin-bottom:8px;transition:.3s}
 .lb-rank{width:28px;text-align:center;font-size:14px;font-weight:900}
 .lb-rank.r1{color:var(--gold)}.lb-rank.r2{color:#94a3b8}.lb-rank.r3{color:#cd7f32}
@@ -574,6 +576,7 @@ function renderLeaderboard(lb) {
       <div class="lb-name">${p.name}</div>
       ${p.streak>=3?`<div class="lb-streak">🔥${p.streak}</div>`:''}
       <div class="lb-pts">${p.points.toLocaleString()}</div>
+      <button class="btn-kick" onclick="kickPlayer('${p.id}')" title="طرد اللاعب">✕</button>
     </div>`).join('');
 }
 
@@ -581,7 +584,11 @@ function renderWaitingPlayers() {
   const el=document.getElementById('waiting-players');
   const ps=Object.values(players);
   if (!ps.length) { el.innerHTML='<div style="color:var(--muted);font-size:14px">في انتظار اللاعبين...</div>'; return; }
-  el.innerHTML=ps.map(p=>`<div class="player-chip">${renderAvatar(p.avatar,24)} ${p.name}</div>`).join('');
+  el.innerHTML=ps.map(p=>`
+    <div class="player-chip">
+      ${renderAvatar(p.avatar,24)} ${p.name}
+      <button class="btn-kick" onclick="kickPlayer('${p.id}')" title="طرد">✕</button>
+    </div>`).join('');
   document.getElementById('player-count').textContent=ps.length+' لاعب';
 }
 
@@ -596,6 +603,15 @@ function renderActiveQuestion(q) {
 }
 
 // ── SOCKET EVENTS ────────────────────────────────────────────
+function kickPlayer(playerId) {
+  if (!confirm('طرد هذا اللاعب من اللعبة؟')) return;
+  socket.emit('host:kick-player', { playerId });
+}
+
+socket.on('host:kick-confirmed', ({ name }) => {
+  toast(`🚫 تم طرد ${name}`);
+});
+
 socket.on('game:state', data => {
   players={}; data.players.forEach(p=>players[p.id]=p);
   renderWaitingPlayers(); renderLeaderboard(data.leaderboard); qNum=data.qNum;

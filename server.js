@@ -488,6 +488,26 @@ io.on('connection', socket => {
   });
 
   // ── إعلان السؤال الأخير ──────────────────────────────────
+  socket.on('host:kick-player', ({ playerId }) => {
+    const p = G.players[playerId];
+    if (!p) return;
+    // أبلغ اللاعب أنه طُرد
+    io.to(playerId).emit('game:kicked', { name: p.name });
+    // احذفه من كل الحالات
+    delete G.players[playerId];
+    delete G.effects[playerId];
+    delete G.answers[playerId];
+    delete G.retryPending[playerId];
+    delete G.revivalPending[playerId];
+    if (G.reverseOffers[playerId]) {
+      clearTimeout(G.reverseOffers[playerId].timeout);
+      delete G.reverseOffers[playerId];
+    }
+    io.emit('game:players-update', publicPlayers());
+    io.emit('game:leaderboard', leaderboard());
+    socket.emit('host:kick-confirmed', { name: p.name });
+  });
+
   socket.on('host:announce-last-question', () => {
     G.isLastQuestion = true;
     io.emit('game:last-question-announcement');

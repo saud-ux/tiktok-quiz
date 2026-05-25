@@ -1344,6 +1344,18 @@ socket.on('game:final', ({ top3, leaderboard: lb }) => {
   playReveal();
 });
 
+socket.on('game:kicked', () => {
+  // إعادة تعيين الحالة
+  myId = null; myPlayer = null; myPoints = 0; myStreak = 0;
+  allPlayers = {}; abilitiesState = { attack:false, defense:false, general:false };
+  questionActive = false; myBonusAbility = null;
+  localStorage.removeItem('quiz_pid');
+  localStorage.removeItem('quiz_player');
+  // إظهار رسالة الطرد
+  notify('🚫 تم طردك من اللعبة من قبل الهوست', 'red', 5000);
+  setTimeout(() => showScreen('join'), 1500);
+});
+
 socket.on('game:reset', () => {
   myId=null; myPlayer=null; myPoints=0; myStreak=0;
   allPlayers={}; abilitiesState={attack:false,defense:false,general:false};
