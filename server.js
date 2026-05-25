@@ -122,7 +122,7 @@ function applyAttack(attackerId, type, targetId, immediate = false, skipReverseO
 
   if (type === 'hole') {
     G.effects[attackerId] = { ...(G.effects[attackerId] || {}), holeTarget: targetId };
-    notify(targetId, 'hole-incoming', `⚠️ ${attacker.name} فتح ثقباً! سيسرق نقاطك`);
+    notify(targetId, 'hole-incoming', `🪙 ${attacker.name} يحاول سرقة نقاطك إذا أجبت صح!`);
   } else if (type === 'freeze') {
     if (immediate) {
       G.effects[targetId] = { ...(G.effects[targetId] || {}), frozen: true };
@@ -183,23 +183,25 @@ function endQuestion() {
     results[p.id] = { isCorrect: correct, delta, choice: ans?.choice ?? null, streak: p.streak, timeTaken: ans ? (QUESTION_TIME - ans.timeLeft) : null };
   });
 
-  // Phase 2 – معالجة هجمات الثقب
+  // Phase 2 – معالجة خاصية السرقة
   Object.entries(G.effects).forEach(([attackerId, eff]) => {
     if (!eff.holeTarget) return;
-    const tid     = eff.holeTarget;
-    const target  = G.players[tid];
-    const attacker= G.players[attackerId];
+    const tid      = eff.holeTarget;
+    const target   = G.players[tid];
+    const attacker = G.players[attackerId];
     if (!target || !attacker) return;
 
-    const tEff   = G.effects[tid]   || {};
-    const aResult = results[attackerId] || { delta: 0 };
-    const tResult = results[tid]        || { delta: 0 };
+    const tEff    = G.effects[tid]        || {};
+    const aResult = results[attackerId]   || { delta: 0 };
+    const tResult = results[tid]          || { delta: 0 };
 
     if (tEff.reverse) {
       tEff.reverse = false;
+      // الانعكاس: السارق يخسر نقاطه بدلاً من الضحية
       const lost = Math.max(0, aResult.delta);
-      results[attackerId] = { ...aResult, delta: -lost, reflected: true };
-      notify(attackerId, 'attack-reflected', `${target.name} عكس الثقب!`);
+      results[attackerId] = { ...aResult, delta: 0, reflected: true };
+      if (lost > 0) results[tid] = { ...tResult, delta: tResult.delta + lost, stolenGain: lost };
+      notify(attackerId, 'attack-reflected', `🔄 ${target.name} عكس السرقة عليك!`);
       notify(tid,        'reverse-fired',    '🔄 درع الانعكاس انطلق!');
     } else if (tEff.immunity) {
       tEff.immunity = false;
@@ -208,8 +210,14 @@ function endQuestion() {
     } else {
       const stolen = Math.max(0, tResult.delta);
       if (stolen > 0) {
-        results[tid] = { ...tResult, delta: -stolen, holed: true };
-        notify(tid, 'holed', `💀 ${attacker.name} سرق نقاطك!`);
+        // الضحية أجابت صح → تسرق نقاطها وتعطيها للمهاجم
+        results[tid]       = { ...tResult, delta: 0,                    holed: true };
+        results[attackerId]= { ...aResult, delta: aResult.delta + stolen, stolenGain: stolen };
+        notify(tid,       'holed',         `🪙 ${attacker.name} سرق نقاطك من هذا السؤال!`);
+        notify(attackerId,'theft-success', `✅ سرقت ${stolen} نقطة من ${target.name}!`);
+      } else {
+        // الضحية أجابت خطأ أو ما أجابت → السرقة فشلت، لا شيء للمهاجم
+        notify(attackerId,'theft-failed', `❌ ${target.name} لم يجب صح — السرقة فشلت`);
       }
     }
   });

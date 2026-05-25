@@ -650,8 +650,9 @@ socket.on('game:question-end', ({ correctAnswer, results, leaderboard: lb, wasLa
     return `<div class="result-item ${r.isCorrect?'correct':'wrong'}">
       <span>${r.isCorrect?'✅':'❌'}</span>${renderAvatar(p.avatar,26)}
       <span>${p.name}</span>
-      ${r.holed?'<span style="font-size:11px">(ثقب!)</span>':''}
-      ${r.doubled?'<span style="color:var(--gold);font-size:11px">×2</span>':''}
+      ${r.holed      ? '<span style="font-size:11px">🪙 سُرقت!</span>'                      : ''}
+      ${r.stolenGain ? `<span style="font-size:11px;color:var(--gold)">🪙+${r.stolenGain}</span>` : ''}
+      ${r.doubled    ? '<span style="color:var(--gold);font-size:11px">×2</span>'            : ''}
       <span style="margin-right:auto;font-weight:900">${sign}${r.delta}</span>
     </div>`;
   }).join('')||'<div style="color:var(--muted)">لم يجب أحد</div>';

@@ -438,7 +438,7 @@ const QUESTION_TIME = 20;
 // ─── ABILITIES DATA ───────────────────────────────────────────
 const ABILITIES = {
   attack: [
-    { type:'hole',   icon:'🕳️', name:'ثقب',   desc:'احذف نقاط السؤال من لاعب تختاره' },
+    { type:'hole',   icon:'🪙', name:'سرقة',  desc:'اسرق نقاط السؤال من لاعب إذا أجاب صح' },
     { type:'freeze', icon:'❄️', name:'تجميد', desc:'امنع لاعب من خصائصه السؤال القادم' },
     { type:'cut',    icon:'✂️', name:'قطع',    desc:'امنع لاعب من الإجابة السؤال القادم' },
   ],
@@ -992,8 +992,9 @@ function showResults(data) {
   const sign = delta > 0 ? '+' : '';
   const ptsEl = document.getElementById('result-pts');
   ptsEl.textContent = sign + delta.toLocaleString() + ' نقطة'
-    + (myResult.holed ? ' (سُرقت!)' : '')
-    + (myResult.doubled ? ' ×2 🔥' : '');
+    + (myResult.holed    ? ' (سُرقت نقاطك! 🪙)'        : '')
+    + (myResult.stolenGain ? ` (+${myResult.stolenGain} مسروقة 🪙)` : '')
+    + (myResult.doubled  ? ' ×2 🔥'                     : '');
   ptsEl.className = 'result-pts ' + (delta >= 0 ? 'gain' : 'loss');
   document.getElementById('streak-display').textContent = myStreak >= 3 ? `🔥 ستريك ${myStreak}×!` : '';
   document.getElementById('result-time').textContent = myResult.timeTaken != null ? `⏱️ أجبت خلال ${myResult.timeTaken} ثانية` : '';
@@ -1196,8 +1197,9 @@ socket.on('game:notify', ({ type, msg }) => {
   const colorMap = {
     'shield-active':'green','ability-active':'gold','revival-active':'green',
     'holed':'red','attack-reflected':'gold','reverse-fired':'green','immunity-saved':'green',
-    'cut-active':'red','frozen-active':'red','hole-incoming':'red','frozen-incoming':'red',
+    'cut-active':'red','frozen-active':'red','hole-incoming':'gold','frozen-incoming':'red',
     'cut-incoming':'red','error':'red',
+    'theft-success':'gold','theft-failed':'red',
   };
   notify(msg, colorMap[type] || '');
 
