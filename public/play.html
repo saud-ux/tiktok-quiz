@@ -295,16 +295,22 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 
 /* ── ORDERING QUESTION ── */
 .order-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
-.order-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:13px;border:2px solid var(--border);background:var(--surface);transition:.2s;cursor:grab;position:relative}
-.order-item:active{cursor:grabbing}
+.order-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:13px;border:2px solid var(--border);background:var(--surface);transition:border-color .15s,background .15s,opacity .15s;position:relative;user-select:none}
+.order-item.dragging{opacity:.25;border-style:dashed;border-color:var(--cyan)!important}
+.order-item.drag-over{border-color:var(--cyan)!important;background:#22c55e18!important;transform:scale(1.02)}
 .order-item.correct{border-color:var(--green)!important;background:#10b98120!important}
 .order-item.wrong{border-color:var(--red)!important;background:#ef444420!important}
+.drag-handle{font-size:20px;color:var(--muted);cursor:grab;flex-shrink:0;line-height:1;touch-action:none;padding:0 2px;transition:color .15s}
+.drag-handle:active{cursor:grabbing;color:var(--cyan)}
 .order-pos{width:28px;height:28px;border-radius:50%;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;flex-shrink:0}
 .order-text{flex:1;font-size:14px;font-weight:700;line-height:1.4}
 .order-arrows{display:flex;flex-direction:column;gap:2px;flex-shrink:0}
 .order-arrows button{width:26px;height:22px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
 .order-arrows button:hover:not(:disabled){border-color:var(--cyan);color:var(--cyan);background:#22c55e15}
 .order-arrows button:disabled{opacity:.2;cursor:not-allowed}
+.drag-ghost{position:fixed;pointer-events:none;z-index:9999;display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:13px;border:2px solid var(--cyan);background:var(--card);box-shadow:0 10px 40px #00000070;transform:rotate(1.5deg) scale(1.03);opacity:.95}
+.drag-ghost .order-pos{background:var(--cyan)}
+.drag-ghost .order-text{font-size:14px;font-weight:700;color:var(--text)}
 .btn-submit-order{width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;transition:.2s;margin-bottom:16px}
 .btn-submit-order:hover:not(:disabled){filter:brightness(1.1)}
 .btn-submit-order:disabled{opacity:.4;cursor:not-allowed}
@@ -1077,6 +1083,7 @@ function showNewLeader(name) {
 
 // ─── ORDERING QUESTION ───────────────────────────────────────
 let currentOrderItems = [];
+let dragState = null;
 
 function renderOrderQuestion(items) {
   currentOrderItems = items;
@@ -1090,13 +1097,19 @@ function redrawOrderList(grid) {
   grid.innerHTML = '';
   const list = document.createElement('div');
   list.className = 'order-list';
+  list.id = 'order-list';
 
   orderArr.forEach((shuffledIdx, pos) => {
     const item = document.createElement('div');
     item.className = 'order-item';
     item.id = 'ord-' + shuffledIdx;
+    item.dataset.pos = pos;
 
-    const posEl  = document.createElement('div');
+    const handleEl = document.createElement('div');
+    handleEl.className = 'drag-handle';
+    handleEl.textContent = '⠿';
+
+    const posEl = document.createElement('div');
     posEl.className = 'order-pos';
     posEl.textContent = pos + 1;
 
@@ -1119,9 +1132,13 @@ function redrawOrderList(grid) {
 
     arrowsEl.appendChild(upBtn);
     arrowsEl.appendChild(downBtn);
+    item.appendChild(handleEl);
     item.appendChild(posEl);
     item.appendChild(textEl);
     item.appendChild(arrowsEl);
+
+    handleEl.addEventListener('pointerdown', e => startDrag(e, pos, handleEl, list));
+
     list.appendChild(item);
   });
 
@@ -1134,6 +1151,75 @@ function redrawOrderList(grid) {
 
   grid.appendChild(list);
   grid.appendChild(submitBtn);
+}
+
+function startDrag(e, fromPos, handleEl, listEl) {
+  if (hasAnswered) return;
+  e.preventDefault();
+
+  const itemEl = handleEl.closest('.order-item');
+  const rect   = itemEl.getBoundingClientRect();
+
+  const ghost = document.createElement('div');
+  ghost.className = 'drag-ghost';
+  const gPos  = document.createElement('div'); gPos.className = 'order-pos';  gPos.textContent = fromPos + 1;
+  const gText = document.createElement('div'); gText.className = 'order-text'; gText.textContent = currentOrderItems[orderArr[fromPos]];
+  ghost.appendChild(gPos); ghost.appendChild(gText);
+  ghost.style.left  = rect.left + 'px';
+  ghost.style.top   = rect.top  + 'px';
+  ghost.style.width = rect.width + 'px';
+  document.body.appendChild(ghost);
+
+  itemEl.classList.add('dragging');
+
+  dragState = { fromPos, toPos: fromPos, ghost, offsetY: e.clientY - rect.top, listEl };
+
+  handleEl.setPointerCapture(e.pointerId);
+  handleEl.addEventListener('pointermove',   onDragMove);
+  handleEl.addEventListener('pointerup',     onDragEnd);
+  handleEl.addEventListener('pointercancel', onDragEnd);
+}
+
+function onDragMove(e) {
+  if (!dragState) return;
+  const { ghost, offsetY, listEl } = dragState;
+  ghost.style.top = (e.clientY - offsetY) + 'px';
+
+  const allItems = listEl.querySelectorAll('.order-item');
+  let toPos = dragState.fromPos, minDist = Infinity;
+  allItems.forEach(it => {
+    const r = it.getBoundingClientRect();
+    const d = Math.abs(e.clientY - (r.top + r.height / 2));
+    if (d < minDist) { minDist = d; toPos = parseInt(it.dataset.pos); }
+  });
+
+  allItems.forEach(it => it.classList.remove('drag-over'));
+  if (toPos !== dragState.fromPos)
+    listEl.querySelector(`.order-item[data-pos="${toPos}"]`)?.classList.add('drag-over');
+
+  dragState.toPos = toPos;
+}
+
+function onDragEnd(e) {
+  if (!dragState) return;
+  const { fromPos, toPos, ghost, listEl } = dragState;
+  const handle = e.currentTarget;
+
+  ghost.remove();
+  listEl.querySelectorAll('.order-item').forEach(it => it.classList.remove('dragging', 'drag-over'));
+  handle.removeEventListener('pointermove',   onDragMove);
+  handle.removeEventListener('pointerup',     onDragEnd);
+  handle.removeEventListener('pointercancel', onDragEnd);
+  dragState = null;
+
+  if (fromPos !== toPos) {
+    const moved = orderArr.splice(fromPos, 1)[0];
+    orderArr.splice(toPos, 0, moved);
+    playTick(700);
+  }
+
+  const grid = document.getElementById('answer-grid');
+  redrawOrderList(grid);
 }
 
 function moveOrderItem(pos, dir) {
