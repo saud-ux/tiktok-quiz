@@ -117,6 +117,38 @@ textarea{min-height:70px}
 .panel.active{display:block}
 #panel-active .card{margin-bottom:12px}
 
+/* Category selector */
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:4px}
+.cat-btn{
+  position:relative;padding:12px 10px;border-radius:12px;
+  border:1.5px solid var(--border);background:var(--surface);
+  color:var(--text);font-family:inherit;font-size:13px;font-weight:700;
+  cursor:pointer;transition:all .2s;text-align:center;line-height:1.4;
+  display:flex;flex-direction:column;align-items:center;gap:4px
+}
+.cat-btn .cat-count{
+  font-size:10px;font-weight:600;color:var(--muted);
+  background:var(--bg);padding:2px 7px;border-radius:20px;
+  border:1px solid var(--border)
+}
+.cat-btn:hover{transform:translateY(-2px);border-color:var(--cyan);background:#22c55e0a;color:var(--cyan)}
+.cat-btn:hover .cat-count{border-color:var(--cyan);color:var(--cyan)}
+.cat-btn.active{
+  border-color:var(--green);background:linear-gradient(135deg,#16a34a18,#22c55e10);
+  color:var(--green);box-shadow:0 0 16px #22c55e25,inset 0 0 20px #22c55e08;
+  transform:translateY(-2px)
+}
+.cat-btn.active .cat-count{background:#16a34a20;border-color:var(--green);color:var(--green)}
+.cat-btn.active::after{
+  content:'✓';position:absolute;top:6px;left:8px;
+  font-size:11px;color:var(--green);font-weight:900
+}
+#cat-info{
+  margin-top:12px;padding:8px 12px;border-radius:8px;
+  background:var(--surface);border:1px solid var(--border);
+  font-size:13px;color:var(--muted);font-weight:600;text-align:center
+}
+
 /* Import buttons */
 .btn-import{padding:7px 13px;border-radius:8px;border:1px solid var(--cyan);background:transparent;color:var(--cyan);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s}
 .btn-import:hover{background:var(--cyan);color:#000}
@@ -560,15 +592,27 @@ function loadQuestion(index) {
   if (index > 0) toast(`📌 تم تحميل السؤال ${index + 1}`);
 }
 
+const CAT_ICONS = {
+  'جغرافيا':'🌍','تاريخ سعودي':'📜','علوم وتقنية':'🔬','رياضة':'⚽',
+  'مغنيين سعوديين':'🎤','مغنيون سعوديون':'🎤','ثقافة إسلامية':'🕌',
+  'ترفيه وفن':'🎬','ثقافة سعودية':'🇸🇦','رياضيات ومنطق':'🧮',
+};
+
 function showCategorySelector(cats) {
   const section = document.getElementById('category-section');
   if (!section) return;
   section.style.display = 'block';
   document.getElementById('cat-grid').innerHTML = cats.map(cat => {
     const count = (categoriesData[cat] || []).length;
-    return `<button class="cat-btn" onclick="loadCategory('${cat}')">${cat} <span style="opacity:.6;font-size:11px">(${count})</span></button>`;
+    const icon  = CAT_ICONS[cat] || '📂';
+    return `
+      <button class="cat-btn" onclick="loadCategory('${cat}')">
+        <span style="font-size:22px">${icon}</span>
+        <span>${cat}</span>
+        <span class="cat-count">${count} سؤال</span>
+      </button>`;
   }).join('');
-  document.getElementById('cat-info').textContent = 'اختر تصنيفاً لتحميل أسئلته';
+  document.getElementById('cat-info').textContent = '👆 اختر تصنيفاً لتحميل أسئلته';
 }
 
 function loadCategory(name) {
