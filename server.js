@@ -1044,12 +1044,6 @@ io.on('connection', socket => {
     }
 
     G.storeVoteTimer = setTimeout(finalizeVote, duration * 1000);
-
-    // close vote early if all players voted
-    G._checkStoreVote = function() {
-      const total2 = Object.keys(G.players).length;
-      if (G.storeVoted.size >= total2) finalizeVote();
-    };
   });
 
   socket.on('player:store-vote', ({ vote }) => {
@@ -1058,9 +1052,7 @@ io.on('connection', socket => {
     if (!G.players[socket.id]) return;
     G.storeVoted.add(socket.id);
     if (vote === 'yes') G.storeVoteYes++; else G.storeVoteNo++;
-    // broadcast live tally to host (socket captured from outer handler)
     G._storeVoteHostSocket?.emit('host:store-vote-tally', { yes: G.storeVoteYes, no: G.storeVoteNo, total: Object.keys(G.players).length, voted: G.storeVoted.size });
-    if (G._checkStoreVote) G._checkStoreVote();
   });
 
   socket.on('player:buy-store-item', ({ itemId }) => {
