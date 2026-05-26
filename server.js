@@ -154,9 +154,16 @@ function applyAttack(attackerId, type, targetId, immediate = false, skipReverseO
       notify(attackerId, 'error', `❌ ${target.name} أجاب بالفعل!`);
       return { ok: false };
     }
-    const shuffle = [0,1,2,3].sort(() => Math.random() - 0.5);
-    io.to(targetId).emit('game:shuffle-options', { shuffle, attackerName: attacker.name });
-    notify(targetId, 'blur-incoming', `🌀 ${attacker.name} أربك خياراتك!`);
+    // Fisher-Yates shuffle مع ضمان تغيير الترتيب
+    const arr = [0,1,2,3];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    if (arr.every((v, i) => v === i)) { [arr[0], arr[1]] = [arr[1], arr[0]]; }
+    io.to(targetId).emit('game:shuffle-options', { shuffle: arr, attackerName: attacker.name });
+    notify(targetId,   'blur-incoming',   `🌀 ${attacker.name} أربك خياراتك!`);
+    notify(attackerId, 'blur-success',    `🌀 ربّكت ${target.name}! الخيارات اختلطت عليه`);
   }
 
   return { ok: true, success: true };

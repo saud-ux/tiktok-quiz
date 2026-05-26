@@ -1382,7 +1382,7 @@ socket.on('game:notify', ({ type, msg }) => {
     'shield-active':'green','ability-active':'gold','revival-active':'green',
     'holed':'red','attack-reflected':'gold','reverse-fired':'green','immunity-saved':'green',
     'cut-active':'red','frozen-active':'red','hole-incoming':'gold','frozen-incoming':'red',
-    'cut-incoming':'red','blur-incoming':'red','error':'red',
+    'cut-incoming':'red','blur-incoming':'red','blur-success':'gold','error':'red',
     'theft-success':'gold','theft-failed':'red',
   };
   notify(msg, colorMap[type] || '');
@@ -1474,8 +1474,8 @@ socket.on('ability:result', ({ type, status }) => {
     }
     if (type === 'doubleRisk') flashColor('gold');
     if (type === 'spy')        flashColor('gold');
-    if (type === 'blur' && status === 'success') flashColor('red');
   }
+  if (type === 'blur' && status === 'success') flashColor('gold');
 
   if (['reverse','immunity','retry','doubleRisk','revival'].includes(type) && status === 'active') {
     const btn = document.getElementById('abil-btn-' + cat);
@@ -1508,14 +1508,38 @@ socket.on('game:bonus-ability', ({ type, icon, name, desc }) => {
 socket.on('game:shuffle-options', ({ shuffle, attackerName }) => {
   if (hasAnswered) return;
   shuffleMap = shuffle;
-  showAttackHit('🌀', `${attackerName} أربك خياراتك!`);
-  notify(`🌀 ${attackerName} خلط الخيارات عليك!`, 'red', 3000);
   if (!currentQ) return;
   const grid = document.getElementById('answer-grid');
-  grid.innerHTML = shuffle.map((optIdx, pos) => `
-    <button class="ans-btn" id="ans-${pos}" style="border-color:${OPT_COLORS[pos].border}40;animation:shake .4s ease" onclick="submitAnswer(${pos})">
-      <span class="ans-letter">${LETTERS[pos]}</span>${currentQ.options[optIdx]}
-    </button>`).join('');
+
+  // مرحلة 1: إخفاء الخيارات مع دوران
+  grid.style.transition = 'transform .25s ease, opacity .25s ease';
+  grid.style.transform  = 'rotate(-6deg) scale(.88)';
+  grid.style.opacity    = '0';
+
+  setTimeout(() => {
+    // مرحلة 2: إعادة رسم الخيارات بالترتيب الجديد
+    grid.innerHTML = shuffle.map((optIdx, pos) => `
+      <button class="ans-btn" id="ans-${pos}" style="border-color:${OPT_COLORS[pos].border}40" onclick="submitAnswer(${pos})">
+        <span class="ans-letter">${LETTERS[pos]}</span>${currentQ.options[optIdx]}
+      </button>`).join('');
+
+    // مرحلة 3: ظهور بدوران معاكس
+    grid.style.transform = 'rotate(6deg) scale(.88)';
+    requestAnimationFrame(() => {
+      grid.style.transition = 'transform .3s ease, opacity .3s ease';
+      grid.style.transform  = 'rotate(0deg) scale(1)';
+      grid.style.opacity    = '1';
+    });
+
+    setTimeout(() => { grid.style.transition = ''; grid.style.transform = ''; grid.style.opacity = ''; }, 350);
+  }, 260);
+
+  // تأثيرات الهجوم
+  showAttackHit('🌀', `${attackerName} أربك خياراتك!`);
+  flashColor('red');
+  const g = document.getElementById('screen-game');
+  g.classList.add('blur-spinning');
+  setTimeout(() => g.classList.remove('blur-spinning'), 750);
 });
 
 socket.on('game:spy-result', ({ targetName, choiceText, correct, changed }) => {
