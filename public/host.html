@@ -158,6 +158,7 @@ textarea{min-height:70px}
     </div>
     <div style="display:flex;gap:10px;align-items:center">
       <span id="player-count" style="color:var(--muted);font-size:14px">0 لاعب</span>
+      <button class="btn-end-game" onclick="endGame()">🏁 انهاء اللعبة</button>
       <button class="btn-reset" onclick="resetGame()">🔄 إعادة تشغيل</button>
     </div>
   </div>
@@ -203,6 +204,13 @@ textarea{min-height:70px}
           </div>
 
           <button class="btn btn-start" id="btn-start" onclick="startQuestion()">▶ ابدأ السؤال</button>
+        </div>
+
+        <!-- Category selector (shown after importing a categorized bank) -->
+        <div class="card" id="category-section" style="display:none">
+          <div class="card-title">📚 اختر تصنيفاً</div>
+          <div class="cat-grid" id="cat-grid"></div>
+          <div id="cat-info" style="margin-top:10px;font-size:13px;color:var(--muted)">اختر تصنيفاً لتحميل أسئلته</div>
         </div>
 
         <!-- Question queue (shown after import) -->
@@ -252,6 +260,18 @@ textarea{min-height:70px}
           <div id="correct-answer-display" style="margin-bottom:14px"></div>
           <div class="result-list" id="result-list"></div>
           <button class="btn btn-start" style="margin-top:16px" onclick="showSetup()">➕ سؤال جديد</button>
+        </div>
+      </div>
+
+      <!-- FINAL PANEL -->
+      <div class="panel" id="panel-final">
+        <div class="card">
+          <div style="text-align:center;padding:10px 0 18px">
+            <div style="font-size:48px;margin-bottom:6px">🏆</div>
+            <div style="font-size:22px;font-weight:900;color:var(--green)">نهاية اللعبة!</div>
+          </div>
+          <div id="final-top3" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px"></div>
+          <button class="btn btn-start" style="width:100%;margin-top:4px" onclick="resetGame()">🔄 لعبة جديدة</button>
         </div>
       </div>
     </div>
@@ -342,6 +362,11 @@ function endQuestion() {
 function resetGame() {
   if (!confirm('هل أنت متأكد من إعادة تشغيل اللعبة؟ سيتم حذف جميع النقاط والإحصائيات.')) return;
   socket.emit('host:reset');
+}
+
+function endGame() {
+  if (!confirm('إنهاء اللعبة وعرض المراكز الثلاثة الأولى؟')) return;
+  socket.emit('host:end-game');
 }
 
 function showSetup() {
@@ -622,6 +647,25 @@ socket.on('game:reset', () => {
   document.getElementById('btn-start').disabled = false;
   showSetup();
   toast('🔄 تم إعادة تشغيل اللعبة');
+});
+
+socket.on('game:final', ({ top3, leaderboard: lb }) => {
+  const medals = ['🥇','🥈','🥉'];
+  const colors = ['#f59e0b','#94a3b8','#cd7f32'];
+  document.getElementById('final-top3').innerHTML = top3.map((p, i) => `
+    <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;background:var(--surface);border:2px solid ${colors[i]}">
+      <span style="font-size:28px">${medals[i]}</span>
+      ${renderAvatar(p.avatar, 44)}
+      <div style="flex:1">
+        <div style="font-size:16px;font-weight:800">${p.name}</div>
+        <div style="font-size:13px;color:var(--muted)">${p.points.toLocaleString()} نقطة</div>
+      </div>
+      <div style="font-size:22px;font-weight:900;color:${colors[i]}">#${i+1}</div>
+    </div>
+  `).join('');
+  renderLeaderboard(lb);
+  showPanel('final');
+  toast('🏆 انتهت اللعبة!', 4000);
 });
 </script>
 </body>
