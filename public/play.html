@@ -385,6 +385,33 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 #frozen-screen.ice-hit{animation:iceHit .18s ease}
 .ice-crack-pop{position:absolute;font-size:36px;pointer-events:none;z-index:2;animation:crackPop .35s ease forwards}
 @keyframes crackPop{0%{opacity:0;transform:scale(.5)}40%{opacity:1;transform:scale(1.3)}100%{opacity:0;transform:scale(1) translateY(-20px)}}
+
+/* ── SLASH (قطع) ── */
+@keyframes slashLine{0%{transform:scaleX(0);opacity:1}100%{transform:scaleX(1);opacity:.85}}
+.ans-btn.slashed{position:relative;overflow:hidden}
+.ans-btn.slashed::after{content:'';position:absolute;top:50%;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--red),#ff6b6b);transform:scaleX(0);transform-origin:left;animation:slashLine .35s ease forwards;border-radius:2px;box-shadow:0 0 8px #ef444480}
+
+/* ── COIN PARTICLES (سرقة) ── */
+.coin-particle{position:fixed;font-size:22px;pointer-events:none;z-index:9999;animation:coinFly .9s ease forwards}
+@keyframes coinFly{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--cx),var(--cy)) scale(.15)}}
+
+/* ── TIME UP ── */
+@keyframes timeupIn{0%{opacity:0;transform:scale(.4)}55%{transform:scale(1.1)}100%{opacity:1;transform:scale(1)}}
+@keyframes timeupFade{0%{opacity:1}100%{opacity:0}}
+
+/* ── ATTACK LAUNCH ── */
+@keyframes launchPop{0%{transform:scale(0) rotate(-20deg);opacity:0}60%{transform:scale(1.2) rotate(4deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes launchFade{0%{opacity:0}15%{opacity:1}75%{opacity:1}100%{opacity:0}}
+
+/* ── SCREEN CRACKS (غلط) ── */
+@keyframes crackGrow{to{width:110px}}
+@keyframes cracksFade{0%{opacity:0}10%{opacity:1}60%{opacity:1}100%{opacity:0}}
+
+/* ── REVERSE HALO ── */
+#reverse-halo{position:fixed;inset:0;pointer-events:none;z-index:495;border:2px solid #22c55e;opacity:0;transition:opacity .3s}
+#reverse-halo.active{opacity:1;animation:haloBreath 1.3s ease-in-out infinite alternate}
+@keyframes haloBreath{from{box-shadow:0 0 12px #22c55e50,inset 0 0 12px #22c55e10}to{box-shadow:0 0 32px #22c55e90,inset 0 0 26px #22c55e20}}
+@keyframes haloFire{0%{opacity:1;box-shadow:0 0 70px #4ade80,inset 0 0 60px #22c55e40}100%{opacity:0;box-shadow:none}}
 </style>
 </head>
 <body>
@@ -603,6 +630,7 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 <div id="danger-vignette"></div>
 <div id="ice-overlay"></div>
 <div id="shield-burst"></div>
+<div id="reverse-halo"></div>
 <div id="frozen-screen">
   <div class="frozen-big-icon">❄️</div>
   <div id="frozen-tap-counter">15</div>
@@ -808,6 +836,97 @@ function showShieldBurst(gold = false) {
   void el.offsetWidth;
   el.classList.add(gold ? 'gold-show' : 'show');
   setTimeout(() => el.classList.remove('show', 'gold-show'), 600);
+}
+
+function slashButtons() {
+  document.querySelectorAll('.ans-btn').forEach((btn, i) => {
+    setTimeout(() => btn.classList.add('slashed'), i * 90);
+  });
+}
+
+function showCoinsFlying() {
+  const ptsEl = document.getElementById('my-pts');
+  const rect  = ptsEl ? ptsEl.getBoundingClientRect() : null;
+  const cx    = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+  const cy    = rect ? rect.top + rect.height / 2 : window.innerHeight / 4;
+  for (let i = 0; i < 8; i++) {
+    const coin  = document.createElement('div');
+    coin.className   = 'coin-particle';
+    coin.textContent = '🪙';
+    const angle = (i / 8) * Math.PI * 2;
+    const dist  = 90 + Math.random() * 80;
+    coin.style.left = cx + 'px';
+    coin.style.top  = cy + 'px';
+    coin.style.setProperty('--cx', Math.cos(angle) * dist + 'px');
+    coin.style.setProperty('--cy', Math.sin(angle) * dist + 'px');
+    coin.style.animationDelay = (Math.random() * 0.18) + 's';
+    document.body.appendChild(coin);
+    setTimeout(() => coin.remove(), 1100);
+  }
+}
+
+function showTimeUp() {
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;background:#ef444425;pointer-events:none';
+  const inner = document.createElement('div');
+  inner.style.cssText = 'font-size:44px;font-weight:900;color:#ef4444;text-shadow:0 0 30px #ef4444,0 0 60px #ef444480;animation:timeupIn .4s cubic-bezier(.34,1.56,.64,1)';
+  inner.textContent = '⏰ انتهى الوقت!';
+  el.appendChild(inner);
+  el.style.animation = 'timeupFade .6s ease .5s forwards';
+  document.body.appendChild(el);
+  playBuzzer();
+  flashColor('red');
+  gameScreenShake(true);
+  setTimeout(() => el.remove(), 1200);
+}
+
+function showAttackLaunched(icon, targetName) {
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;pointer-events:none;animation:launchFade 1.1s ease forwards';
+  el.innerHTML = `
+    <span style="font-size:72px;display:block;animation:launchPop .4s cubic-bezier(.34,1.56,.64,1)">${icon}</span>
+    <div style="font-size:20px;font-weight:900;color:#fff;text-shadow:0 0 20px #ef4444">🎯 الهجوم أُطلق!</div>
+    <div style="font-size:14px;color:#fca5a5;font-weight:700">على ${targetName}</div>
+  `;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1200);
+  flashColor('red');
+}
+
+function showScreenCracks() {
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9997;animation:cracksFade .95s ease forwards';
+  const angles = [10, 50, 95, 140, 170, 210, 255, 310];
+  angles.forEach((angle, i) => {
+    const line = document.createElement('div');
+    line.style.cssText = `position:absolute;left:50%;top:48%;width:0;height:2px;background:linear-gradient(90deg,#ef4444cc,transparent);transform-origin:left center;transform:rotate(${angle}deg);box-shadow:0 0 5px #ef444470;animation:crackGrow .28s ease ${i * 0.03}s forwards`;
+    wrap.appendChild(line);
+  });
+  document.body.appendChild(wrap);
+  setTimeout(() => wrap.remove(), 1050);
+}
+
+function showReverseHalo() {
+  const el = document.getElementById('reverse-halo');
+  el.style.animation = '';
+  el.style.opacity   = '';
+  void el.offsetWidth;
+  el.className = 'active';
+}
+
+function fireReverseHalo() {
+  const el = document.getElementById('reverse-halo');
+  el.className = '';
+  el.style.opacity   = '1';
+  el.style.animation = 'haloFire .45s ease forwards';
+  setTimeout(() => { el.style.animation = ''; el.style.opacity = ''; }, 500);
+}
+
+function hideReverseHalo() {
+  const el = document.getElementById('reverse-halo');
+  el.className = '';
+  el.style.animation = '';
+  el.style.opacity   = '';
 }
 
 function triggerDanger(t) {
@@ -1379,6 +1498,9 @@ function pickTarget(cat, type, name) {
 
 function confirmAttack(cat, targetId) {
   closeTargetModal();
+  const target  = allPlayers[targetId];
+  const iconMap = { hole:'🪙', freeze:'❄️', cut:'✂️', blur:'🌀' };
+  if (target) showAttackLaunched(iconMap[myAbilities[cat]] || '⚔️', target.name);
   socket.emit('player:use-ability', { category: cat, targetId });
 }
 
@@ -1442,6 +1564,9 @@ function showPreQTargetPicker(category, type, name) {
 function confirmPreQAttack(category, type, targetId) {
   closeTargetModal();
   abilitiesState[category] = true;
+  const target  = allPlayers[targetId];
+  const iconMap = { hole:'🪙', freeze:'❄️', cut:'✂️', blur:'🌀' };
+  if (target) showAttackLaunched(iconMap[type] || '⚔️', target.name);
   socket.emit('player:pre-question-decision', { use: true, category, type, targetId });
 }
 
@@ -1733,7 +1858,8 @@ socket.on('game:leaderboard', lb => {
 socket.on('game:question-start', ({ question, isLastQuestion }) => {
   questionActive = true;
   closePreQModal(); hideWaitingOverlay();
-  closeStore(); // أغلق المتجر تلقائياً عند بدء السؤال
+  closeStore();
+  hideReverseHalo();
   renderQuestion(question);
   // ← بانر السؤال الأخير
   if (isLastQuestion) {
@@ -1778,7 +1904,10 @@ socket.on('game:timer', t => {
       offers.appendChild(btn);
     }
   }
-  if (t <= 0) document.getElementById('last-second-btn')?.remove();
+  if (t <= 0) {
+    document.getElementById('last-second-btn')?.remove();
+    if (questionActive && !hasAnswered) showTimeUp();
+  }
 
   if (t <= 5) {
     bar.style.background = 'var(--red)';
@@ -1818,7 +1947,7 @@ socket.on('player:answer-accepted', ({ choice, correct, isRetry, isLastSecond, i
   const btnPos = shuffleMap ? shuffleMap.indexOf(choice) : choice;
   const btn = document.getElementById('ans-' + btnPos);
   if (btn) { btn.classList.remove('selected'); btn.classList.add(correct ? 'correct' : 'wrong'); }
-  if (correct) playCorrect(); else playWrong();
+  if (correct) playCorrect(); else { playWrong(); showScreenCracks(); }
   if (!isRetry) {
     const msg = isLastSecond ? (correct ? '⚡ غيّرت وأجبت صح! ✅' : '⚡ غيّرت وأجبت غلط ❌') : (correct ? '✅ إجابة صحيحة!' : '❌ إجابة خاطئة');
     notify(msg, correct ? 'green' : 'red');
@@ -1849,6 +1978,7 @@ socket.on('game:revival-available', () => {
 socket.on('game:question-end', data => {
   questionActive = false;
   clearDanger();
+  hideReverseHalo();
   frozenClicksLeft = 0;
   document.getElementById('frozen-screen').classList.remove('show');
   document.getElementById('last-second-btn')?.remove();
@@ -1894,11 +2024,13 @@ socket.on('game:notify', ({ type, msg }) => {
   if (type === 'hole-incoming') flashColor('gold');
   if (type === 'holed') {
     showAttackHit('💀', msg);
+    showCoinsFlying();
     flashColor('red');
   }
   if (type === 'immunity-saved' || type === 'reverse-fired') {
     showShieldBurst(type === 'immunity-saved');
     flashColor('green');
+    if (type === 'reverse-fired') fireReverseHalo();
   }
   if (type === 'theft-success') flashColor('gold');
 
@@ -1920,6 +2052,7 @@ socket.on('game:notify', ({ type, msg }) => {
       cutEl.style.background = '';
     }
     if (type !== 'frozen-active') cutEl.style.display = 'block';
+    if (type === 'cut-active') slashButtons();
     const grid = document.getElementById('answer-grid');
     if (grid) grid.classList.add('cut-locked');
     document.querySelectorAll('.ans-btn').forEach(b => { b.disabled = true; b.onclick = null; });
@@ -1952,7 +2085,7 @@ socket.on('ability:result', ({ type, status }) => {
   // تأثيرات بصرية عند التفعيل
   if (status === 'active' || status === 'used') {
     if (type === 'immunity')   { showShieldBurst(true);  flashColor('gold');  }
-    if (type === 'reverse')    { showShieldBurst(false); flashColor('green'); }
+    if (type === 'reverse')    { showShieldBurst(false); flashColor('green'); showReverseHalo(); }
     if (type === 'ghost') {
       const g = document.getElementById('screen-game');
       g.classList.add('ghosting');
