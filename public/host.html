@@ -748,9 +748,11 @@ function parseJSON(text) {
     document.getElementById('category-section').style.display = 'none';
     questionQueue = data.map(q => ({
       text:          q.text || q.question || q['سؤال'] || '',
+      type:          q.type || 'normal',
       options:       q.options || [q['أ']||'', q['ب']||'', q['ج']||'', q['د']||''],
       correctAnswer: q.correct ?? q.correctAnswer ?? 0,
       hint:          q.hint || q['تلميح'] || '',
+      image:         q.image || '',
       used: false,
     })).filter(q => q.text);
     currentQueueIndex = -1;
@@ -841,9 +843,21 @@ function loadQuestion(index) {
   if (!q) return;
   currentQueueIndex = index;
   document.getElementById('q-text').value = q.text;
-  [0,1,2,3].forEach(i => { const el = document.getElementById('opt-'+i); if (el) el.value = q.options[i] || ''; });
-  document.querySelectorAll('input[name="correct"]').forEach(r => r.checked = parseInt(r.value) === q.correctAnswer);
+
+  if (q.type === 'order') {
+    document.getElementById('type-order').checked = true;
+    setQType('order');
+    [0,1,2,3].forEach(i => { const el = document.getElementById('ord-'+i); if (el) el.value = q.options[i] || ''; });
+  } else {
+    document.getElementById('type-normal').checked = true;
+    setQType('normal');
+    [0,1,2,3].forEach(i => { const el = document.getElementById('opt-'+i); if (el) el.value = q.options[i] || ''; });
+    document.querySelectorAll('input[name="correct"]').forEach(r => r.checked = parseInt(r.value) === q.correctAnswer);
+  }
+
   document.getElementById('q-hint').value = q.hint || '';
+  const imgInput = document.getElementById('q-image');
+  if (imgInput) { imgInput.value = q.image || ''; previewImage(q.image || ''); }
   renderQueue();
   if (index > 0) toast(`📌 تم تحميل السؤال ${index + 1}`);
 }
@@ -879,9 +893,11 @@ function loadCategory(name) {
   });
   questionQueue = (categoriesData[name] || []).map(q => ({
     text:          q.text || '',
+    type:          q.type || 'normal',
     options:       q.options || [],
     correctAnswer: q.correct ?? q.correctAnswer ?? 0,
     hint:          q.hint || '',
+    image:         q.image || '',
     used: false,
   })).filter(q => q.text);
   currentQueueIndex = -1;
