@@ -1076,14 +1076,17 @@ function showNewLeader(name) {
 }
 
 // ─── ORDERING QUESTION ───────────────────────────────────────
+let currentOrderItems = [];
+
 function renderOrderQuestion(items) {
-  orderArr = items.map((_, i) => i); // [0,1,2,3] بالترتيب الحالي
+  currentOrderItems = items;
+  orderArr = items.map((_, i) => i);
   const grid = document.getElementById('answer-grid');
   grid.style.gridTemplateColumns = '1fr';
-  redrawOrderList(items, grid);
+  redrawOrderList(grid);
 }
 
-function redrawOrderList(items, grid) {
+function redrawOrderList(grid) {
   grid.innerHTML = '';
   const list = document.createElement('div');
   list.className = 'order-list';
@@ -1092,18 +1095,33 @@ function redrawOrderList(items, grid) {
     const item = document.createElement('div');
     item.className = 'order-item';
     item.id = 'ord-' + shuffledIdx;
-    item.innerHTML = `
-      <div class="order-pos">${pos + 1}</div>
-      <div class="order-text">${items[shuffledIdx]}</div>
-      <div class="order-arrows">
-        <button onclick="moveOrderItem(${pos},-1,'${JSON.stringify(items).replace(/'/g,"\\'")}')">↑</button>
-        <button onclick="moveOrderItem(${pos},1,'${JSON.stringify(items).replace(/'/g,"\\'")}')">↓</button>
-      </div>
-    `;
-    // disable first ↑ and last ↓
-    const btns = item.querySelectorAll('button');
-    if (pos === 0) btns[0].disabled = true;
-    if (pos === orderArr.length - 1) btns[1].disabled = true;
+
+    const posEl  = document.createElement('div');
+    posEl.className = 'order-pos';
+    posEl.textContent = pos + 1;
+
+    const textEl = document.createElement('div');
+    textEl.className = 'order-text';
+    textEl.textContent = currentOrderItems[shuffledIdx];
+
+    const arrowsEl = document.createElement('div');
+    arrowsEl.className = 'order-arrows';
+
+    const upBtn = document.createElement('button');
+    upBtn.textContent = '↑';
+    upBtn.disabled = pos === 0;
+    upBtn.addEventListener('click', () => moveOrderItem(pos, -1));
+
+    const downBtn = document.createElement('button');
+    downBtn.textContent = '↓';
+    downBtn.disabled = pos === orderArr.length - 1;
+    downBtn.addEventListener('click', () => moveOrderItem(pos, 1));
+
+    arrowsEl.appendChild(upBtn);
+    arrowsEl.appendChild(downBtn);
+    item.appendChild(posEl);
+    item.appendChild(textEl);
+    item.appendChild(arrowsEl);
     list.appendChild(item);
   });
 
@@ -1118,16 +1136,13 @@ function redrawOrderList(items, grid) {
   grid.appendChild(submitBtn);
 }
 
-function moveOrderItem(pos, dir, itemsJson) {
-  const items = JSON.parse(itemsJson);
+function moveOrderItem(pos, dir) {
   const newPos = pos + dir;
   if (newPos < 0 || newPos >= orderArr.length) return;
   [orderArr[pos], orderArr[newPos]] = [orderArr[newPos], orderArr[pos]];
-  // re-render
   const grid = document.getElementById('answer-grid');
   grid.style.gridTemplateColumns = '1fr';
-  redrawOrderList(items, grid);
-  // play tick
+  redrawOrderList(grid);
   playTick(600 + dir * 100);
 }
 
