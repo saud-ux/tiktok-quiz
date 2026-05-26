@@ -339,6 +339,8 @@ let currentQuestion = null;
 let qNum = 0;
 let questionQueue = [];
 let currentQueueIndex = -1;
+let categoriesData = null;
+let activeCategory = null;
 
 // ── HELPERS ──────────────────────────────────────────────────
 function showPanel(name) {
@@ -451,18 +453,34 @@ function importFile(input) {
 
 function parseJSON(text) {
   const data = JSON.parse(text);
-  if (!Array.isArray(data)) throw new Error('يجب أن يكون المحتوى مصفوفة');
-  questionQueue = data.map(q => ({
-    text:          q.text || q.question || q['سؤال'] || '',
-    options:       q.options || [q['أ']||'', q['ب']||'', q['ج']||'', q['د']||''],
-    correctAnswer: q.correct ?? q.correctAnswer ?? 0,
-    hint:          q.hint || q['تلميح'] || '',
-    used: false,
-  })).filter(q => q.text);
-  currentQueueIndex = -1;
-  renderQueue();
-  loadQuestion(0);
-  toast(`✅ تم استيراد ${questionQueue.length} سؤال`);
+  if (Array.isArray(data)) {
+    // ملف أسئلة عادي (مصفوفة)
+    categoriesData = null;
+    activeCategory = null;
+    document.getElementById('category-section').style.display = 'none';
+    questionQueue = data.map(q => ({
+      text:          q.text || q.question || q['سؤال'] || '',
+      options:       q.options || [q['أ']||'', q['ب']||'', q['ج']||'', q['د']||''],
+      correctAnswer: q.correct ?? q.correctAnswer ?? 0,
+      hint:          q.hint || q['تلميح'] || '',
+      used: false,
+    })).filter(q => q.text);
+    currentQueueIndex = -1;
+    renderQueue();
+    loadQuestion(0);
+    toast(`✅ تم استيراد ${questionQueue.length} سؤال`);
+  } else if (data && typeof data === 'object') {
+    // بنك أسئلة مصنّف (object بتصنيفات)
+    categoriesData = data;
+    activeCategory = null;
+    questionQueue = [];
+    currentQueueIndex = -1;
+    document.getElementById('queue-card').style.display = 'none';
+    showCategorySelector(Object.keys(data));
+    toast('✅ تم تحميل بنك الأسئلة — اختر تصنيفاً');
+  } else {
+    throw new Error('صيغة الملف غير مدعومة');
+  }
 }
 
 function parseCSV(text) {
@@ -542,10 +560,48 @@ function loadQuestion(index) {
   if (index > 0) toast(`📌 تم تحميل السؤال ${index + 1}`);
 }
 
+function showCategorySelector(cats) {
+  const section = document.getElementById('category-section');
+  if (!section) return;
+  section.style.display = 'block';
+  document.getElementById('cat-grid').innerHTML = cats.map(cat => {
+    const count = (categoriesData[cat] || []).length;
+    return `<button class="cat-btn" onclick="loadCategory('${cat}')">${cat} <span style="opacity:.6;font-size:11px">(${count})</span></button>`;
+  }).join('');
+  document.getElementById('cat-info').textContent = 'اختر تصنيفاً لتحميل أسئلته';
+}
+
+function loadCategory(name) {
+  if (!categoriesData || !categoriesData[name]) return;
+  activeCategory = name;
+  document.querySelectorAll('.cat-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.trim().startsWith(name));
+  });
+  questionQueue = (categoriesData[name] || []).map(q => ({
+    text:          q.text || '',
+    options:       q.options || [],
+    correctAnswer: q.correct ?? q.correctAnswer ?? 0,
+    hint:          q.hint || '',
+    used: false,
+  })).filter(q => q.text);
+  currentQueueIndex = -1;
+  renderQueue();
+  loadQuestion(0);
+  document.getElementById('cat-info').textContent = `تم تحميل ${questionQueue.length} سؤال من "${name}"`;
+  toast(`📚 "${name}" — ${questionQueue.length} سؤال`);
+}
+
 function clearQueue() {
   if (!confirm('هل تريد مسح قائمة الأسئلة؟')) return;
-  questionQueue = []; currentQueueIndex = -1;
+  questionQueue = []; currentQueueIndex = -1; activeCategory = null;
   document.getElementById('queue-card').style.display = 'none';
+  if (categoriesData) {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('cat-info').textContent = 'اختر تصنيفاً لتحميل أسئلته';
+  } else {
+    const sec = document.getElementById('category-section');
+    if (sec) sec.style.display = 'none';
+  }
   toast('🗑️ تم مسح القائمة');
 }
 
