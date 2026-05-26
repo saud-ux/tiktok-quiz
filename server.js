@@ -41,6 +41,11 @@ function newState() {
     preQTimeout: null,
     isLastQuestion: false,
     isDramatic: true, // ← الكشف الدرامي مفعّل افتراضياً
+    jokerUsed: {},       // ← من استخدم الجوكر في هذا السؤال
+    leaderId: null,      // ← معرّف المتصدر الحالي
+    storeOpen: false,    // ← حالة المتجر
+    storePurchases: {},  // ← مشتريات المتجر { pid: { hint, eliminate, multiplier } }
+    storeTimer: null,    // ← مؤقت إغلاق المتجر
   };
 }
 
@@ -182,12 +187,16 @@ function endQuestion() {
 
   const q = G.question;
   const results = {};
+  const oldLeaderId = G.leaderId; // ← تتبع القائد السابق
 
   // Phase 1 – حساب النقاط لكل لاعب
   Object.values(G.players).forEach(p => {
     const ans  = G.answers[p.id];
     const eff  = G.effects[p.id] || {};
-    const correct = ans && ans.choice === q.correctAnswer;
+    // ← دعم أسئلة الترتيب
+    const correct = (q.type === 'order' && ans?.isOrderCorrect !== undefined)
+      ? ans.isOrderCorrect
+      : (ans && ans.choice === q.correctAnswer);
     let delta = 0;
 
     if (correct) {
@@ -197,6 +206,7 @@ function endQuestion() {
       if (p.streak >= 5)      pts = Math.floor(pts * 2);
       else if (p.streak >= 3) pts = Math.floor(pts * 1.5);
       if (eff.doubleRisk)     pts *= 2;
+      if (eff.storeMultiplier) pts = Math.floor(pts * 1.5); // ← متجر النقاط
       delta = pts;
       p.lastStreak = p.streak;
       p.streak++;
@@ -265,6 +275,17 @@ function endQuestion() {
     const r = results[p.id] || { delta: 0 };
     p.points = Math.max(0, p.points + r.delta);
   });
+
+  // ← جديد: تتبع قائد جديد وإعلانه
+  const postLb = leaderboard();
+  const newLeaderId = postLb[0]?.id;
+  if (newLeaderId && oldLeaderId && newLeaderId !== oldLeaderId && G.players[newLeaderId]) {
+    io.emit('game:new-leader', {
+      name:   G.players[newLeaderId].name,
+      avatar: G.players[newLeaderId].avatar,
+    });
+  }
+  G.leaderId = newLeaderId || G.leaderId;
 
   // Phase 4 – تحضير تأثيرات السؤال القادم
   const newEff = {};
@@ -342,28 +363,64 @@ function startActualQuestion() {
   G.answers   = {};
   G.retryPending   = {};
   G.revivalPending = {};
+  G.jokerUsed = {}; // ← مسح الجوكرات لكل سؤال
+
+  // ← أسئلة الترتيب: خلط البنود
+  if (G.question.type === 'order' && G.question.items) {
+    const items = G.question.items;
+    const shuffled = [...items];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    G.question.shuffledItems = shuffled;
+    G.question.itemMapping = shuffled.map(item => items.indexOf(item));
+  }
 
   Object.keys(G.players).forEach(pid => {
     G.effects[pid] = {
-      cut:       G.effects[pid]?.cut    || false,
-      frozen:    G.effects[pid]?.frozen || false,
-      immunity:  G.effects[pid]?.immunity || false,
-      reverse:   G.effects[pid]?.reverse  || false,
-      ghost:     G.effects[pid]?.ghost    || false,
-      spyTarget: null,
-      doubleRisk:false,
-      revival:   false,
-      retry:     false,
-      holeTarget:null,
+      cut:            G.effects[pid]?.cut      || false,
+      frozen:         G.effects[pid]?.frozen   || false,
+      immunity:       G.effects[pid]?.immunity || false,
+      reverse:        G.effects[pid]?.reverse  || false,
+      ghost:          G.effects[pid]?.ghost    || false,
+      spyTarget:      null,
+      doubleRisk:     false,
+      revival:        false,
+      retry:          false,
+      holeTarget:     null,
+      storeMultiplier: G.storePurchases[pid]?.multiplier || false, // ← متجر
     };
   });
 
-  const playerQ = { text: G.question.text, options: G.question.options, number: G.qNum };
+  const playerQ = {
+    text:    G.question.text,
+    options: G.question.type === 'order'
+      ? (G.question.shuffledItems || G.question.items)
+      : G.question.options,
+    number:  G.qNum,
+    image:   G.question.image || null,
+    type:    G.question.type  || 'normal',
+  };
   io.emit('game:question-start', {
     question: playerQ,
     timeLeft: QUESTION_TIME,
     isLastQuestion: G.isLastQuestion,
   });
+
+  // ← تطبيق مشتريات المتجر (تلميح + حذف خيار)
+  Object.entries(G.storePurchases).forEach(([pid, purchases]) => {
+    if (!G.players[pid]) return;
+    if (purchases.hint && G.question.hint) {
+      io.to(pid).emit('game:hint', { hint: G.question.hint });
+    }
+    if (purchases.eliminate && G.question.correctAnswer !== undefined && G.question.type !== 'order') {
+      const wrongs = [0,1,2,3].filter(i => i !== G.question.correctAnswer);
+      const elim   = wrongs[Math.floor(Math.random() * wrongs.length)];
+      io.to(pid).emit('game:eliminate-option', { eliminate: elim });
+    }
+  });
+  G.storePurchases = {};
 
   Object.entries(G.effects).forEach(([pid, eff]) => {
     if (eff.cut)    io.to(pid).emit('game:notify', { type: 'cut-active',    msg: '✂️ أنت مقطوع! لا يمكنك الإجابة' });
@@ -589,6 +646,7 @@ io.on('connection', socket => {
 
   socket.on('host:reset', () => {
     clearInterval(G.timerRef);
+    if (G.storeTimer) clearTimeout(G.storeTimer);
     Object.values(G.reverseOffers).forEach(o => clearTimeout(o.timeout));
     Object.values(G.disconnectTimers).forEach(t => clearTimeout(t));
     G = newState();
@@ -672,13 +730,28 @@ io.on('connection', socket => {
     socket.emit('game:notify', { type: 'escaped-active', msg: '🚫 غادرت الشاشة أثناء السؤال!' });
   });
 
-  socket.on('player:answer', ({ choice }) => {
+  socket.on('player:answer', ({ choice, orderAnswer }) => {
     if (!G.active) return;
     const eff = G.effects[socket.id] || {};
     if (eff.cut)    { socket.emit('game:notify', { type: 'cut-active',    msg: '✂️ لا يمكنك الإجابة!' }); return; }
     if (eff.frozen) { socket.emit('game:notify', { type: 'frozen-active', msg: '❄️ أنت مجمد! لا يمكنك الإجابة أو استخدام الخصائص' }); return; }
 
     const existing = G.answers[socket.id];
+
+    // ← سؤال الترتيب
+    if (G.question.type === 'order' && orderAnswer) {
+      if (existing) return;
+      const originalOrder  = orderAnswer.map(si => G.question.itemMapping[si]);
+      const correctOrder   = G.question.correctOrder || [0,1,2,3];
+      const isOrderCorrect = JSON.stringify(originalOrder) === JSON.stringify(correctOrder);
+      G.answers[socket.id] = { choice: isOrderCorrect ? 0 : 1, timeLeft: G.timeLeft, orderAnswer, isOrderCorrect };
+      socket.emit('player:answer-accepted', { choice: 0, correct: isOrderCorrect, isOrder: true });
+      const answered = Object.keys(G.answers).length;
+      const total    = Object.keys(G.players).length;
+      io.emit('host:answer-stats', { answered, total });
+      io.emit('game:answer-progress', { answered, total, lb: leaderboard() });
+      return;
+    }
 
     if (existing) {
       if (G.retryPending[socket.id]) {
@@ -870,6 +943,57 @@ io.on('connection', socket => {
       if (isBonusAbility) p.bonusAbility.used = true;
       else ability.used = true;
     }
+    io.emit('game:players-update', publicPlayers());
+  });
+
+  // ── JOKER ──────────────────────────────────────────────────
+  socket.on('player:use-joker', () => {
+    if (!G.active) return;
+    if (G.jokerUsed[socket.id]) { socket.emit('game:notify', { type: 'error', msg: '⚠️ استخدمت الجوكر مسبقاً!' }); return; }
+    if (G.answers[socket.id])   { socket.emit('game:notify', { type: 'error', msg: '⚠️ أجبت بالفعل!' }); return; }
+    if (G.question.type === 'order') { socket.emit('game:notify', { type: 'error', msg: '⚠️ الجوكر لا يعمل مع أسئلة الترتيب' }); return; }
+    const correct = G.question.correctAnswer;
+    const wrongs  = [0,1,2,3].filter(i => i !== correct);
+    // احتفظ بخيار خاطئ واحد عشوائي
+    const keepWrongIdx  = Math.floor(Math.random() * wrongs.length);
+    const eliminated    = wrongs.filter((_, i) => i !== keepWrongIdx);
+    G.jokerUsed[socket.id] = true;
+    socket.emit('game:joker-result', { eliminated });
+    notify(socket.id, 'ability-active', '🃏 الجوكر! حُذف خياران خاطئان');
+  });
+
+  // ── POINTS STORE ──────────────────────────────────────────
+  socket.on('host:open-store', () => {
+    if (G.storeTimer) clearTimeout(G.storeTimer);
+    G.storeOpen = true;
+    G.storePurchases = {};
+    const storeItems = [
+      { id: 'hint',       icon: '💡', name: 'تلميح تلقائي',    desc: 'يُكشف تلميح السؤال القادم تلقائياً',        cost: 150 },
+      { id: 'eliminate',  icon: '🗑️', name: 'حذف خيار خاطئ',  desc: 'يُحذف خيار خاطئ في السؤال القادم',         cost: 100 },
+      { id: 'multiplier', icon: '⚡', name: 'مضاعف النقاط ×1.5', desc: 'نقاطك في السؤال القادم ×1.5 إذا أجبت صح', cost: 200 },
+    ];
+    io.emit('game:store-open', { items: storeItems, duration: 30 });
+    G.storeTimer = setTimeout(() => {
+      G.storeOpen = false;
+      io.emit('game:store-closed');
+    }, 30000);
+    socket.emit('host:store-opened');
+  });
+
+  socket.on('player:buy-store-item', ({ itemId }) => {
+    if (!G.storeOpen) { socket.emit('game:notify', { type: 'error', msg: '⚠️ المتجر مغلق الآن' }); return; }
+    const p = G.players[socket.id];
+    if (!p) return;
+    const costs = { hint: 150, eliminate: 100, multiplier: 200 };
+    const cost  = costs[itemId];
+    if (!cost) return;
+    if (!G.storePurchases[socket.id]) G.storePurchases[socket.id] = {};
+    if (G.storePurchases[socket.id][itemId]) { socket.emit('game:notify', { type: 'error', msg: '⚠️ اشتريت هذا بالفعل!' }); return; }
+    if (p.points < cost) { socket.emit('game:notify', { type: 'error', msg: `⚠️ نقاطك (${p.points}) غير كافية! تحتاج ${cost}` }); return; }
+    p.points -= cost;
+    G.storePurchases[socket.id][itemId] = true;
+    socket.emit('game:store-purchased', { itemId, newPoints: p.points, cost });
+    io.emit('game:leaderboard', leaderboard());
     io.emit('game:players-update', publicPlayers());
   });
 

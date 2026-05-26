@@ -152,6 +152,12 @@ textarea{min-height:70px}
   font-size:13px;color:var(--muted);font-weight:600;text-align:center
 }
 
+/* Question type selector */
+#type-normal-lbl{border-color:var(--border);transition:.2s}
+#type-order-lbl{border-color:var(--border);transition:.2s}
+#type-normal-lbl.active{border-color:var(--cyan);background:#22c55e15;color:var(--cyan)}
+#type-order-lbl.active{border-color:#f59e0b;background:#f59e0b15;color:var(--gold)}
+
 /* Import buttons */
 .btn-import{padding:7px 13px;border-radius:8px;border:1px solid var(--cyan);background:transparent;color:var(--cyan);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s}
 .btn-import:hover{background:var(--cyan);color:#000}
@@ -236,6 +242,23 @@ textarea{min-height:70px}
             <label>نص السؤال</label>
             <textarea id="q-text" placeholder="اكتب سؤالك هنا..."></textarea>
           </div>
+          <!-- نوع السؤال -->
+          <div style="margin-bottom:14px">
+            <label>نوع السؤال</label>
+            <div style="display:flex;gap:10px;margin-top:6px">
+              <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;border:1px solid var(--border);cursor:pointer;font-size:13px;font-weight:600;transition:.2s" id="type-normal-lbl">
+                <input type="radio" name="qtype" value="normal" checked id="type-normal" onchange="setQType('normal')" style="display:none">
+                <span>🔘 اختيار متعدد</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;border:1px solid var(--border);cursor:pointer;font-size:13px;font-weight:600;transition:.2s" id="type-order-lbl">
+                <input type="radio" name="qtype" value="order" id="type-order" onchange="setQType('order')" style="display:none">
+                <span>🔢 ترتيب</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- خيارات الاختيار المتعدد -->
+          <div id="mc-section">
           <div class="card-title" style="margin-bottom:10px">الخيارات</div>
           <div class="option-row"><div class="option-letter opt-a">أ</div><input type="text" id="opt-0" placeholder="الخيار الأول"></div>
           <div class="option-row"><div class="option-letter opt-b">ب</div><input type="text" id="opt-1" placeholder="الخيار الثاني"></div>
@@ -251,10 +274,29 @@ textarea{min-height:70px}
               <label><input type="radio" name="correct" value="3"><span>د</span></label>
             </div>
           </div>
+          </div>
+
+          <!-- بنود الترتيب -->
+          <div id="order-section" style="display:none">
+          <div class="card-title" style="margin-bottom:6px">🔢 بنود الترتيب (الأول = الأصح)</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px">اكتب البنود بالترتيب الصحيح — ستُخلط تلقائياً عند اللاعبين</div>
+          <div class="option-row"><div class="option-letter opt-a" style="background:#16a34a22;color:#4ade80">١</div><input type="text" id="ord-0" placeholder="البند الأول (الأول في الترتيب الصحيح)"></div>
+          <div class="option-row"><div class="option-letter opt-b" style="background:#06b6d422;color:#67e8f9">٢</div><input type="text" id="ord-1" placeholder="البند الثاني"></div>
+          <div class="option-row"><div class="option-letter opt-c" style="background:#f59e0b22;color:#fcd34d">٣</div><input type="text" id="ord-2" placeholder="البند الثالث"></div>
+          <div class="option-row"><div class="option-letter opt-d" style="background:#ef444422;color:#fca5a5">٤</div><input type="text" id="ord-3" placeholder="البند الرابع (الأخير في الترتيب الصحيح)"></div>
+          </div>
 
           <div style="margin-bottom:16px">
             <label>تلميح (اختياري)</label>
             <input type="text" id="q-hint" placeholder="أضف تلميحاً للاعبين الذين يملكون خاصية التلميح">
+          </div>
+
+          <div style="margin-bottom:16px">
+            <label>🖼️ صورة السؤال — رابط URL (اختياري)</label>
+            <input type="text" id="q-image" placeholder="https://example.com/image.jpg" oninput="previewImage(this.value)">
+            <div id="q-image-preview" style="display:none;margin-top:8px;border-radius:10px;overflow:hidden;max-height:180px;text-align:center">
+              <img id="q-image-img" style="max-height:180px;max-width:100%;object-fit:contain;border-radius:8px;border:1px solid var(--border)">
+            </div>
           </div>
 
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
@@ -309,6 +351,7 @@ textarea{min-height:70px}
             <div class="stat-box"><div class="stat-num" id="stat-total">0</div><div class="stat-lbl">إجمالي</div></div>
           </div>
           <button class="btn btn-end" style="margin-top:16px" id="btn-end" onclick="endQuestion()">⏹ أنهِ السؤال</button>
+          <button onclick="openStore()" style="width:100%;margin-top:10px;padding:12px;border-radius:12px;border:2px solid var(--gold);background:#f59e0b15;color:var(--gold);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:.2s" id="btn-open-store">🛒 افتح متجر النقاط (30 ثانية)</button>
         </div>
       </div>
 
@@ -377,6 +420,32 @@ let questionQueue = [];
 let currentQueueIndex = -1;
 let categoriesData = null;
 let activeCategory = null;
+let questionType = 'normal'; // 'normal' | 'order'
+
+// ── QUESTION TYPE ─────────────────────────────────────────────
+function setQType(type) {
+  questionType = type;
+  document.getElementById('mc-section').style.display    = type === 'normal' ? 'block' : 'none';
+  document.getElementById('order-section').style.display = type === 'order'  ? 'block' : 'none';
+  document.getElementById('type-normal-lbl').classList.toggle('active', type === 'normal');
+  document.getElementById('type-order-lbl').classList.toggle('active', type === 'order');
+}
+
+function previewImage(url) {
+  const preview = document.getElementById('q-image-preview');
+  const img     = document.getElementById('q-image-img');
+  if (url && url.startsWith('http')) { img.src = url; preview.style.display = 'block'; }
+  else preview.style.display = 'none';
+}
+
+function openStore() {
+  socket.emit('host:open-store');
+  const btn = document.getElementById('btn-open-store');
+  if (btn) { btn.disabled = true; btn.textContent = '🔒 المتجر مفتوح (30 ثانية)'; }
+  setTimeout(() => {
+    if (btn) { btn.disabled = false; btn.textContent = '🛒 افتح متجر النقاط (30 ثانية)'; }
+  }, 31000);
+}
 
 // ── HELPERS ──────────────────────────────────────────────────
 function showPanel(name) {
@@ -410,15 +479,24 @@ function startQuestion() {
   const text = document.getElementById('q-text').value.trim();
   if (!text) { toast('⚠️ أدخل نص السؤال'); return; }
 
+  const hint  = document.getElementById('q-hint').value.trim();
+  const image = document.getElementById('q-image').value.trim() || null;
+
+  if (questionType === 'order') {
+    const items = [0,1,2,3].map(i => document.getElementById('ord-' + i).value.trim());
+    if (items.some(it => !it)) { toast('⚠️ أدخل جميع بنود الترتيب'); return; }
+    currentQuestion = { text, type: 'order', items, correctOrder: [0,1,2,3], options: items, hint: hint || null, image, isLastQuestion, isDramatic };
+    socket.emit('host:start-question', currentQuestion);
+    return;
+  }
+
   const options = [0,1,2,3].map(i => document.getElementById('opt-' + i).value.trim());
   if (options.some(o => !o)) { toast('⚠️ أدخل جميع الخيارات'); return; }
 
   const correctEl = document.querySelector('input[name="correct"]:checked');
   if (!correctEl) { toast('⚠️ اختر الإجابة الصحيحة'); return; }
 
-  const hint = document.getElementById('q-hint').value.trim();
-
-  currentQuestion = { text, options, correctAnswer: parseInt(correctEl.value), hint: hint || null, isLastQuestion, isDramatic };
+  currentQuestion = { text, options, correctAnswer: parseInt(correctEl.value), hint: hint || null, image, isLastQuestion, isDramatic };
   socket.emit('host:start-question', currentQuestion);
 }
 
@@ -484,7 +562,12 @@ function showSetup() {
   document.getElementById('q-text').value = '';
   [0,1,2,3].forEach(i => document.getElementById('opt-' + i).value = '');
   document.getElementById('q-hint').value = '';
+  document.getElementById('q-image').value = '';
+  document.getElementById('q-image-preview').style.display = 'none';
   document.querySelectorAll('input[name="correct"]').forEach(r => r.checked = false);
+  // reset type to normal
+  document.getElementById('type-normal').checked = true;
+  setQType('normal');
 }
 
 // ── QUESTION QUEUE ────────────────────────────────────────────
@@ -843,6 +926,10 @@ socket.on('game:reveal-sequence', ({ sequence, correctAnswer, options }) => {
   setTimeout(() => overlay.classList.remove('open'), totalDelay - 200);
 });
 
+socket.on('host:store-opened', () => {
+  toast('🛒 تم فتح المتجر للاعبين — 30 ثانية', 3000);
+});
+
 socket.on('game:final', ({ top3, leaderboard: lb }) => {
   const medals = ['🥇','🥈','🥉'];
   const colors = ['#f59e0b','#94a3b8','#cd7f32'];
@@ -861,6 +948,8 @@ socket.on('game:final', ({ top3, leaderboard: lb }) => {
   showPanel('final');
   toast('🏆 انتهت اللعبة!', 4000);
 });
+// تهيئة نوع السؤال عند التحميل
+setQType('normal');
 </script>
 </body>
 </html>

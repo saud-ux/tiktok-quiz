@@ -273,6 +273,72 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 @keyframes bigShake{0%,100%{transform:translate(0)}15%{transform:translate(-13px,-4px) rotate(-1deg)}30%{transform:translate(13px,4px) rotate(1deg)}50%{transform:translate(-10px,2px)}70%{transform:translate(10px,-2px)}90%{transform:translate(-5px,0)}}
 .big-shaking{animation:bigShake .55s ease!important}
 
+/* ── JOKER BUTTON ── */
+.joker-bar{display:flex;gap:8px;margin-top:8px}
+.btn-joker{flex:1;padding:10px;border-radius:12px;border:2px solid #f59e0b60;background:linear-gradient(135deg,#f59e0b18,#d9770615);color:var(--gold);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s;text-align:center}
+.btn-joker:hover:not(:disabled){border-color:var(--gold);box-shadow:0 0 12px #f59e0b40}
+.btn-joker:disabled{opacity:.3;cursor:not-allowed}
+.btn-joker.used{opacity:.25;cursor:not-allowed;text-decoration:line-through}
+
+/* ── NEW LEADER ANNOUNCEMENT ── */
+#new-leader-banner{position:fixed;top:0;left:0;right:0;z-index:600;padding:14px 20px;display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#f59e0b,#d97706);transform:translateY(-110%);transition:transform .4s cubic-bezier(.34,1.56,.64,1)}
+#new-leader-banner.show{transform:translateY(0)}
+.nlb-icon{font-size:28px;flex-shrink:0}
+.nlb-info{flex:1}
+.nlb-title{font-size:11px;font-weight:700;color:#000;opacity:.7;text-transform:uppercase;letter-spacing:1px}
+.nlb-name{font-size:18px;font-weight:900;color:#000}
+.nlb-crown{font-size:28px;flex-shrink:0;animation:crownBounce .5s ease-in-out infinite alternate}
+@keyframes crownBounce{from{transform:translateY(0) rotate(-5deg)}to{transform:translateY(-6px) rotate(5deg)}}
+
+/* ── IMAGE QUESTION ── */
+.q-image{width:100%;max-height:200px;object-fit:contain;border-radius:12px;margin-bottom:12px;border:1px solid var(--border)}
+
+/* ── ORDERING QUESTION ── */
+.order-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.order-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:13px;border:2px solid var(--border);background:var(--surface);transition:.2s;cursor:grab;position:relative}
+.order-item:active{cursor:grabbing}
+.order-item.correct{border-color:var(--green)!important;background:#10b98120!important}
+.order-item.wrong{border-color:var(--red)!important;background:#ef444420!important}
+.order-pos{width:28px;height:28px;border-radius:50%;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;flex-shrink:0}
+.order-text{flex:1;font-size:14px;font-weight:700;line-height:1.4}
+.order-arrows{display:flex;flex-direction:column;gap:2px;flex-shrink:0}
+.order-arrows button{width:26px;height:22px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+.order-arrows button:hover:not(:disabled){border-color:var(--cyan);color:var(--cyan);background:#22c55e15}
+.order-arrows button:disabled{opacity:.2;cursor:not-allowed}
+.btn-submit-order{width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;transition:.2s;margin-bottom:16px}
+.btn-submit-order:hover:not(:disabled){filter:brightness(1.1)}
+.btn-submit-order:disabled{opacity:.4;cursor:not-allowed}
+
+/* ── POINTS STORE ── */
+#store-overlay{position:fixed;inset:0;z-index:700;background:#000000dd;display:none;flex-direction:column;padding:0 0 30px}
+#store-overlay.open{display:flex}
+.store-header{padding:20px 20px 12px;background:linear-gradient(135deg,#7c3aed22,#16a34a18);border-bottom:1px solid var(--border)}
+.store-title{font-size:20px;font-weight:900;color:var(--text);text-align:center}
+.store-subtitle{font-size:13px;color:var(--muted);text-align:center;margin-top:4px}
+.store-timer-bar{height:4px;background:var(--border);border-radius:2px;margin-top:10px;overflow:hidden}
+.store-timer-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--green));border-radius:2px;transition:width 1s linear}
+.store-my-pts{text-align:center;font-size:14px;color:var(--muted);margin:10px 0 4px;font-weight:600}
+.store-my-pts span{color:var(--gold);font-weight:900;font-size:18px}
+.store-items{display:flex;flex-direction:column;gap:12px;padding:16px 20px;overflow-y:auto;flex:1}
+.store-item{background:var(--card);border:2px solid var(--border);border-radius:16px;padding:16px;display:flex;align-items:center;gap:14px;transition:.2s;cursor:pointer}
+.store-item:hover:not(.bought){border-color:var(--purple-light);transform:translateY(-2px)}
+.store-item.bought{border-color:var(--green);background:#16a34a12;cursor:default}
+.store-item.cant-afford{opacity:.5;cursor:not-allowed}
+.store-item-icon{font-size:32px;flex-shrink:0}
+.store-item-info{flex:1}
+.store-item-name{font-size:15px;font-weight:800;margin-bottom:3px}
+.store-item-desc{font-size:12px;color:var(--muted);line-height:1.4}
+.store-item-cost{font-size:16px;font-weight:900;color:var(--gold);flex-shrink:0}
+.store-item-cost.bought-tag{color:var(--green);font-size:14px}
+@keyframes storePop{0%{transform:scale(.9);opacity:0}100%{transform:scale(1);opacity:1}}
+#store-overlay.open .store-item{animation:storePop .3s ease both}
+#store-overlay.open .store-item:nth-child(1){animation-delay:.05s}
+#store-overlay.open .store-item:nth-child(2){animation-delay:.15s}
+#store-overlay.open .store-item:nth-child(3){animation-delay:.25s}
+
+/* ── ELIMINATE OPTION EFFECT ── */
+.ans-btn.eliminated{opacity:.08!important;pointer-events:none!important;cursor:not-allowed!important;text-decoration:line-through;filter:grayscale(1)!important;border-color:#ffffff10!important}
+
 /* ── ICE OVERLAY (تجميد) ── */
 #ice-overlay{position:fixed;inset:0;z-index:448;pointer-events:none;background:linear-gradient(135deg,#0ea5e918,#06b6d425,transparent);border:2px solid #06b6d455;display:none}
 @keyframes iceIn{0%{opacity:0;transform:scale(1.04)}25%{opacity:1}85%{opacity:.6}100%{opacity:0;transform:scale(1)}}
@@ -421,6 +487,9 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
   <div class="card">
     <div class="section-title">خصائصك</div>
     <div class="abilities-bar" id="abilities-bar"></div>
+    <div class="joker-bar" id="joker-bar" style="display:none">
+      <button class="btn-joker" id="btn-joker" onclick="useJoker()">🃏 جوكر — احذف خيارَين خاطئَين</button>
+    </div>
   </div>
 </div>
 
@@ -540,6 +609,27 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
   <div id="frozen-tap-hint">انقر على الشاشة لكسر الثلج</div>
   <div class="frozen-label">م ج م د</div>
 </div>
+<!-- ════ NEW LEADER BANNER ════ -->
+<div id="new-leader-banner">
+  <div class="nlb-icon">🚀</div>
+  <div class="nlb-info">
+    <div class="nlb-title">متصدر جديد</div>
+    <div class="nlb-name" id="nlb-name"></div>
+  </div>
+  <div class="nlb-crown">👑</div>
+</div>
+
+<!-- ════ POINTS STORE OVERLAY ════ -->
+<div id="store-overlay">
+  <div class="store-header">
+    <div class="store-title">🛒 متجر النقاط</div>
+    <div class="store-subtitle">اشترِ ميزة للسؤال القادم قبل انتهاء الوقت</div>
+    <div class="store-timer-bar"><div class="store-timer-fill" id="store-timer-fill" style="width:100%"></div></div>
+    <div class="store-my-pts">نقاطي الحالية: <span id="store-my-pts-num">0</span></div>
+  </div>
+  <div class="store-items" id="store-items"></div>
+</div>
+
 <div id="notif"></div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -786,22 +876,163 @@ function dramaticReveal(data) {
 
   setTimeout(() => {
     playReveal();
-    const ci = data.correctAnswer;
-    const correctPos = shuffleMap ? shuffleMap.indexOf(ci) : ci;
-    [0,1,2,3].forEach(i => {
-      const b = document.getElementById('ans-' + i);
-      if (!b) return;
-      if (i === correctPos) {
-        b.classList.remove('wrong', 'selected');
-        b.classList.add('correct', 'reveal-correct');
-      } else if (!b.classList.contains('correct')) {
-        b.style.opacity = '0.18';
-        b.style.filter = 'grayscale(1)';
-      }
-    });
+    if (currentQ?.type === 'order') {
+      // ← كشف نتيجة الترتيب: لون كل بند
+      const myResult  = data.results[myId] || {};
+      document.querySelectorAll('.order-item').forEach(el => {
+        el.classList.add(myResult.isCorrect ? 'correct' : 'wrong');
+      });
+    } else {
+      const ci = data.correctAnswer;
+      const correctPos = shuffleMap ? shuffleMap.indexOf(ci) : ci;
+      [0,1,2,3].forEach(i => {
+        const b = document.getElementById('ans-' + i);
+        if (!b) return;
+        if (i === correctPos) {
+          b.classList.remove('wrong', 'selected');
+          b.classList.add('correct', 'reveal-correct');
+        } else if (!b.classList.contains('correct') && !b.classList.contains('eliminated')) {
+          b.style.opacity = '0.18';
+          b.style.filter = 'grayscale(1)';
+        }
+      });
+    }
   }, 500);
 
   setTimeout(() => showResults(data), 2800);
+}
+
+// ─── JOKER ───────────────────────────────────────────────────
+function useJoker() {
+  if (jokerUsed || hasAnswered || isCut) return;
+  socket.emit('player:use-joker');
+}
+
+function showJokerBtn() {
+  const bar = document.getElementById('joker-bar');
+  const btn = document.getElementById('btn-joker');
+  if (!bar) return;
+  bar.style.display = 'flex';
+  if (jokerUsed) { btn.classList.add('used'); btn.disabled = true; }
+  else { btn.classList.remove('used'); btn.disabled = false; }
+}
+
+// ─── NEW LEADER ANNOUNCEMENT ─────────────────────────────────
+function showNewLeader(name) {
+  const banner = document.getElementById('new-leader-banner');
+  document.getElementById('nlb-name').textContent = name + ' يتصدر الآن!';
+  banner.classList.add('show');
+  playReveal();
+  clearTimeout(banner._t);
+  banner._t = setTimeout(() => banner.classList.remove('show'), 3500);
+}
+
+// ─── ORDERING QUESTION ───────────────────────────────────────
+function renderOrderQuestion(items) {
+  orderArr = items.map((_, i) => i); // [0,1,2,3] بالترتيب الحالي
+  const grid = document.getElementById('answer-grid');
+  grid.style.gridTemplateColumns = '1fr';
+  redrawOrderList(items, grid);
+}
+
+function redrawOrderList(items, grid) {
+  grid.innerHTML = '';
+  const list = document.createElement('div');
+  list.className = 'order-list';
+
+  orderArr.forEach((shuffledIdx, pos) => {
+    const item = document.createElement('div');
+    item.className = 'order-item';
+    item.id = 'ord-' + shuffledIdx;
+    item.innerHTML = `
+      <div class="order-pos">${pos + 1}</div>
+      <div class="order-text">${items[shuffledIdx]}</div>
+      <div class="order-arrows">
+        <button onclick="moveOrderItem(${pos},-1,'${JSON.stringify(items).replace(/'/g,"\\'")}')">↑</button>
+        <button onclick="moveOrderItem(${pos},1,'${JSON.stringify(items).replace(/'/g,"\\'")}')">↓</button>
+      </div>
+    `;
+    // disable first ↑ and last ↓
+    const btns = item.querySelectorAll('button');
+    if (pos === 0) btns[0].disabled = true;
+    if (pos === orderArr.length - 1) btns[1].disabled = true;
+    list.appendChild(item);
+  });
+
+  const submitBtn = document.createElement('button');
+  submitBtn.className = 'btn-submit-order';
+  submitBtn.id = 'btn-submit-order';
+  submitBtn.textContent = '✅ تأكيد الترتيب';
+  submitBtn.disabled = hasAnswered;
+  submitBtn.onclick = submitOrderAnswer;
+
+  grid.appendChild(list);
+  grid.appendChild(submitBtn);
+}
+
+function moveOrderItem(pos, dir, itemsJson) {
+  const items = JSON.parse(itemsJson);
+  const newPos = pos + dir;
+  if (newPos < 0 || newPos >= orderArr.length) return;
+  [orderArr[pos], orderArr[newPos]] = [orderArr[newPos], orderArr[pos]];
+  // re-render
+  const grid = document.getElementById('answer-grid');
+  grid.style.gridTemplateColumns = '1fr';
+  redrawOrderList(items, grid);
+  // play tick
+  playTick(600 + dir * 100);
+}
+
+function submitOrderAnswer() {
+  if (hasAnswered) return;
+  hasAnswered = true;
+  document.getElementById('btn-submit-order')?.setAttribute('disabled', true);
+  socket.emit('player:answer', { orderAnswer: orderArr });
+  notify('📤 تم إرسال ترتيبك!', 'gold');
+}
+
+// ─── POINTS STORE ─────────────────────────────────────────────
+let storePurchased = {};
+
+function openStore(items, duration) {
+  storePurchased = {};
+  document.getElementById('store-my-pts-num').textContent = myPoints.toLocaleString();
+  const container = document.getElementById('store-items');
+  container.innerHTML = items.map(item => `
+    <div class="store-item ${myPoints < item.cost ? 'cant-afford' : ''}" id="si-${item.id}" onclick="buyStoreItem('${item.id}',${item.cost})">
+      <div class="store-item-icon">${item.icon}</div>
+      <div class="store-item-info">
+        <div class="store-item-name">${item.name}</div>
+        <div class="store-item-desc">${item.desc}</div>
+      </div>
+      <div class="store-item-cost" id="sc-${item.id}">${item.cost} نقطة</div>
+    </div>
+  `).join('');
+
+  // timer bar
+  let secs = duration;
+  const fill = document.getElementById('store-timer-fill');
+  fill.style.width = '100%';
+  if (storeTimerInterval) clearInterval(storeTimerInterval);
+  storeTimerInterval = setInterval(() => {
+    secs--;
+    if (fill) fill.style.width = (secs / duration * 100) + '%';
+    if (secs <= 0) { clearInterval(storeTimerInterval); storeTimerInterval = null; }
+  }, 1000);
+
+  document.getElementById('store-overlay').classList.add('open');
+  playBonusChime();
+}
+
+function buyStoreItem(itemId, cost) {
+  if (storePurchased[itemId]) return;
+  if (myPoints < cost) { notify(`⚠️ نقاطك غير كافية! تحتاج ${cost}`, 'red'); return; }
+  socket.emit('player:buy-store-item', { itemId });
+}
+
+function closeStore() {
+  if (storeTimerInterval) { clearInterval(storeTimerInterval); storeTimerInterval = null; }
+  document.getElementById('store-overlay').classList.remove('open');
 }
 
 // ─── PERSISTENT ID ────────────────────────────────────────────
@@ -823,6 +1054,9 @@ let questionActive = false;
 let shuffleMap = null;         // ترتيب الخيارات بعد الإرباك
 let hasUsedLastSecond = false; // قرار الثانية الأخيرة (مرة واحدة في اللعبة)
 let frozenClicksLeft = 0;
+let jokerUsed = false;         // 🃏 الجوكر (مرة واحدة في اللعبة)
+let orderArr  = [];            // 🔢 ترتيب اللاعب في سؤال الترتيب
+let storeTimerInterval = null; // ⏱️ مؤقت المتجر
 
 document.getElementById('frozen-screen').addEventListener('click', function(e) {
   if (frozenClicksLeft <= 0) return;
@@ -983,6 +1217,7 @@ function renderLobbyPlayers() {
 function renderQuestion(q) {
   currentQ = q; hasAnswered = false; myAnswer = null; isCut = false;
   shuffleMap = null; isLastSecondChange = false; frozenClicksLeft = 0;
+  orderArr = [];
   document.getElementById('frozen-screen').classList.remove('show');
   document.getElementById('q-counter').textContent  = `سؤال #${q.number}`;
   document.getElementById('q-num-label').textContent = `السؤال ${q.number}`;
@@ -992,19 +1227,40 @@ function renderQuestion(q) {
   document.getElementById('reactive-offers').innerHTML = '';
   document.getElementById('cut-overlay').style.display = 'none';
   document.getElementById('answer-grid').classList.remove('cut-locked');
+  document.getElementById('answer-grid').style.gridTemplateColumns = '';
   document.getElementById('my-pts').textContent = myPoints.toLocaleString();
-  // عداد مباشر
   document.getElementById('live-counter').style.display = 'flex';
   document.getElementById('live-count-text').textContent = 'في انتظار الإجابات...';
   document.getElementById('count-fill').style.width = '0%';
   const sb = document.getElementById('streak-badge');
   if (myStreak >= 3) { sb.style.display='inline'; sb.textContent=`🔥${myStreak}`; }
   else sb.style.display = 'none';
+
+  // ← صورة السؤال
+  let imgEl = document.getElementById('q-image');
+  if (!imgEl) {
+    imgEl = document.createElement('img'); imgEl.id = 'q-image'; imgEl.className = 'q-image';
+    document.getElementById('q-text').before(imgEl);
+  }
+  if (q.image) { imgEl.src = q.image; imgEl.style.display = 'block'; }
+  else imgEl.style.display = 'none';
+
   const grid = document.getElementById('answer-grid');
-  grid.innerHTML = q.options.map((opt, i) => `
-    <button class="ans-btn" id="ans-${i}" style="border-color:${OPT_COLORS[i].border}40" onclick="submitAnswer(${i})">
-      <span class="ans-letter">${LETTERS[i]}</span>${opt}
-    </button>`).join('');
+
+  if (q.type === 'order') {
+    // ← سؤال الترتيب
+    renderOrderQuestion(q.options);
+  } else {
+    grid.innerHTML = q.options.map((opt, i) => `
+      <button class="ans-btn" id="ans-${i}" style="border-color:${OPT_COLORS[i].border}40" onclick="submitAnswer(${i})">
+        <span class="ans-letter">${LETTERS[i]}</span>${opt}
+      </button>`).join('');
+  }
+
+  // ← الجوكر
+  showJokerBtn();
+  if (jokerUsed) document.getElementById('btn-joker')?.setAttribute('disabled', true);
+
   renderAbilitiesBar();
   showScreen('game');
 }
@@ -1369,6 +1625,58 @@ socket.on('game:triple-boost', () => {
   setTimeout(() => el.remove(), 4000);
 });
 
+// ─── JOKER RESULT ─────────────────────────────────────────
+socket.on('game:joker-result', ({ eliminated }) => {
+  jokerUsed = true;
+  const btn = document.getElementById('btn-joker');
+  if (btn) { btn.classList.add('used'); btn.disabled = true; btn.textContent = '🃏 تم استخدام الجوكر'; }
+  eliminated.forEach(idx => {
+    const b = document.getElementById('ans-' + idx);
+    if (b) { b.classList.add('eliminated'); b.disabled = true; }
+  });
+  // Flash
+  flashColor('gold');
+  notify('🃏 تم حذف ' + eliminated.length + ' خيارَين خاطئَين!', 'gold', 3000);
+});
+
+// ─── NEW LEADER ────────────────────────────────────────────
+socket.on('game:new-leader', ({ name }) => {
+  showNewLeader(name);
+});
+
+// ─── STORE EVENTS ─────────────────────────────────────────
+socket.on('game:store-open', ({ items, duration }) => {
+  openStore(items, duration);
+  notify('🛒 المتجر مفتوح! اشترِ ميزة للسؤال القادم', 'gold', 4000);
+});
+
+socket.on('game:store-closed', () => {
+  closeStore();
+  notify('🔒 أُغلق المتجر', '', 2000);
+});
+
+socket.on('game:store-purchased', ({ itemId, newPoints, cost }) => {
+  myPoints = newPoints;
+  storePurchased[itemId] = true;
+  document.getElementById('my-pts').textContent = newPoints.toLocaleString();
+  document.getElementById('store-my-pts-num').textContent = newPoints.toLocaleString();
+  // Mark bought
+  const si = document.getElementById('si-' + itemId);
+  const sc = document.getElementById('sc-' + itemId);
+  if (si) si.classList.add('bought');
+  if (sc) { sc.textContent = '✅ تم الشراء'; sc.className = 'store-item-cost bought-tag'; }
+  playBonusChime();
+  notify(`✅ تم الشراء (−${cost} نقطة)`, 'green', 2500);
+});
+
+// ─── ELIMINATE OPTION ─────────────────────────────────────
+socket.on('game:eliminate-option', ({ eliminate }) => {
+  const b = document.getElementById('ans-' + eliminate);
+  if (b) { b.classList.add('eliminated'); b.disabled = true; }
+  notify('🗑️ تم حذف خيار خاطئ تلقائياً!', 'gold', 3000);
+  flashColor('gold');
+});
+
 // ─── SOCKET EVENTS ──────────────────────────────────────────
 socket.on('game:state', data => {
   allPlayers = {};
@@ -1425,6 +1733,7 @@ socket.on('game:leaderboard', lb => {
 socket.on('game:question-start', ({ question, isLastQuestion }) => {
   questionActive = true;
   closePreQModal(); hideWaitingOverlay();
+  closeStore(); // أغلق المتجر تلقائياً عند بدء السؤال
   renderQuestion(question);
   // ← بانر السؤال الأخير
   if (isLastQuestion) {
@@ -1496,7 +1805,15 @@ socket.on('game:answer-progress', ({ answered, total, lb }) => {
   if (lb) lb.forEach(p => { if (allPlayers[p.id]) { allPlayers[p.id].points = p.points; allPlayers[p.id].streak = p.streak; } });
 });
 
-socket.on('player:answer-accepted', ({ choice, correct, isRetry, isLastSecond }) => {
+socket.on('player:answer-accepted', ({ choice, correct, isRetry, isLastSecond, isOrder }) => {
+  if (isOrder) {
+    // ← سؤال الترتيب: تعطيل زر الإرسال فقط
+    const submitBtn = document.getElementById('btn-submit-order');
+    if (submitBtn) submitBtn.disabled = true;
+    if (correct) playCorrect(); else playWrong();
+    notify(correct ? '✅ ترتيبك صحيح!' : '❌ ترتيب خاطئ', correct ? 'green' : 'red');
+    return;
+  }
   [0,1,2,3].forEach(i => { const b=document.getElementById('ans-'+i); if(b) b.disabled=true; });
   const btnPos = shuffleMap ? shuffleMap.indexOf(choice) : choice;
   const btn = document.getElementById('ans-' + btnPos);
@@ -1536,6 +1853,7 @@ socket.on('game:question-end', data => {
   document.getElementById('frozen-screen').classList.remove('show');
   document.getElementById('last-second-btn')?.remove();
   document.getElementById('screen-game').querySelector('.timer-bar-wrap').classList.remove('danger');
+  document.getElementById('joker-bar').style.display = 'none';
   if (data.leaderboard) {
     data.leaderboard.forEach(p => { if(allPlayers[p.id]){allPlayers[p.id].points=p.points;allPlayers[p.id].streak=p.streak;} });
     if (myId && allPlayers[myId]) { myPoints = allPlayers[myId].points; myStreak = allPlayers[myId].streak; }
@@ -1760,6 +2078,8 @@ socket.on('game:reset', () => {
   allPlayers={}; abilitiesState={attack:false,defense:false,general:false};
   questionActive=false; myBonusAbility=null;
   shuffleMap=null; hasUsedLastSecond=false; isLastSecondChange=false;
+  jokerUsed=false; orderArr=[]; storePurchased={};
+  closeStore();
   showScreen('join');
 });
 
