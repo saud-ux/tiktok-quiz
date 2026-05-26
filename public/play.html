@@ -268,7 +268,7 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 #shield-burst.gold-show{animation:shieldBurst .55s ease forwards;border-color:var(--gold)}
 
 /* ── FROZEN SCREEN ── */
-#frozen-screen{position:fixed;inset:0;z-index:88;display:none;align-items:center;justify-content:center;flex-direction:column;gap:8px;pointer-events:none;
+#frozen-screen{position:fixed;inset:0;z-index:88;display:none;align-items:center;justify-content:center;flex-direction:column;gap:8px;pointer-events:all;cursor:pointer;
   background:linear-gradient(135deg,#0ea5e922 0%,#06b6d42e 40%,#0284c722 100%);
   box-shadow:inset 0 0 120px #06b6d455,inset 0 0 50px #0ea5e928;
   border:2px solid #06b6d455;
@@ -288,6 +288,12 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 .frozen-big-icon{font-size:110px;filter:drop-shadow(0 0 25px #06b6d4) drop-shadow(0 0 55px #0ea5e9);animation:frozenFloat 2.5s ease-in-out infinite;position:relative;z-index:1}
 @keyframes frozenFloat{0%,100%{transform:scale(1) translateY(0);opacity:.5}50%{transform:scale(1.12) translateY(-8px);opacity:.85}}
 .frozen-label{font-size:18px;font-weight:900;color:#b3e5fc;letter-spacing:6px;text-shadow:0 0 20px #06b6d4,0 0 40px #0ea5e9;opacity:.75;position:relative;z-index:1}
+#frozen-tap-counter{font-size:64px;font-weight:900;color:#fff;text-shadow:0 0 30px #06b6d4,0 0 60px #0ea5e9;position:relative;z-index:1;line-height:1}
+#frozen-tap-hint{font-size:15px;color:#b3e5fc;opacity:.85;position:relative;z-index:1;letter-spacing:2px}
+@keyframes iceHit{0%{transform:translate(0)}20%{transform:translate(-5px,3px) scale(.98)}50%{transform:translate(5px,-3px) scale(1.01)}80%{transform:translate(-3px,2px)}100%{transform:translate(0)}}
+#frozen-screen.ice-hit{animation:iceHit .18s ease}
+.ice-crack-pop{position:absolute;font-size:36px;pointer-events:none;z-index:2;animation:crackPop .35s ease forwards}
+@keyframes crackPop{0%{opacity:0;transform:scale(.5)}40%{opacity:1;transform:scale(1.3)}100%{opacity:0;transform:scale(1) translateY(-20px)}}
 </style>
 </head>
 <body>
@@ -499,6 +505,8 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 <div id="shield-burst"></div>
 <div id="frozen-screen">
   <div class="frozen-big-icon">❄️</div>
+  <div id="frozen-tap-counter">15</div>
+  <div id="frozen-tap-hint">انقر على الشاشة لكسر الثلج</div>
   <div class="frozen-label">م ج م د</div>
 </div>
 <div id="notif"></div>
@@ -783,6 +791,38 @@ let myBonusAbility = null;
 let questionActive = false;
 let shuffleMap = null;         // ترتيب الخيارات بعد الإرباك
 let hasUsedLastSecond = false; // قرار الثانية الأخيرة (مرة واحدة في اللعبة)
+let frozenClicksLeft = 0;
+
+document.getElementById('frozen-screen').addEventListener('click', function(e) {
+  if (frozenClicksLeft <= 0) return;
+  frozenClicksLeft--;
+  document.getElementById('frozen-tap-counter').textContent = frozenClicksLeft;
+
+  // shake animation
+  const fs = this;
+  fs.classList.remove('ice-hit');
+  void fs.offsetWidth;
+  fs.classList.add('ice-hit');
+
+  // crack pop at click position
+  const crack = document.createElement('div');
+  crack.className = 'ice-crack-pop';
+  crack.textContent = ['💥','❄️','🧊','✨'][Math.floor(Math.random()*4)];
+  crack.style.left = e.clientX + 'px';
+  crack.style.top  = e.clientY + 'px';
+  crack.style.transform = 'translate(-50%,-50%)';
+  document.body.appendChild(crack);
+  setTimeout(() => crack.remove(), 400);
+
+  if (frozenClicksLeft === 0) {
+    setTimeout(() => {
+      fs.classList.remove('show');
+      isCut = false;
+      const grid = document.getElementById('answer-grid');
+      if (grid) grid.classList.remove('cut-locked');
+    }, 200);
+  }
+});
 let isLastSecondChange = false;// هل اللاعب الآن يغيّر إجابته
 const socket = io();
 
@@ -905,7 +945,7 @@ function renderLobbyPlayers() {
 // ─── GAME SCREEN ─────────────────────────────────────────────
 function renderQuestion(q) {
   currentQ = q; hasAnswered = false; myAnswer = null; isCut = false;
-  shuffleMap = null; isLastSecondChange = false;
+  shuffleMap = null; isLastSecondChange = false; frozenClicksLeft = 0;
   document.getElementById('frozen-screen').classList.remove('show');
   document.getElementById('q-counter').textContent  = `سؤال #${q.number}`;
   document.getElementById('q-num-label').textContent = `السؤال ${q.number}`;
@@ -1393,6 +1433,7 @@ socket.on('game:revival-available', () => {
 socket.on('game:question-end', data => {
   questionActive = false;
   clearDanger();
+  frozenClicksLeft = 0;
   document.getElementById('frozen-screen').classList.remove('show');
   document.getElementById('last-second-btn')?.remove();
   document.getElementById('screen-game').querySelector('.timer-bar-wrap').classList.remove('danger');
@@ -1450,6 +1491,8 @@ socket.on('game:notify', ({ type, msg }) => {
     if (type === 'escaped-active') {
       cutEl.textContent = '🚫 غادرت الشاشة أثناء السؤال!';
     } else if (type === 'frozen-active') {
+      frozenClicksLeft = 15;
+      document.getElementById('frozen-tap-counter').textContent = 15;
       document.getElementById('frozen-screen').classList.add('show');
       showIceOverlay();
       cutEl.style.display = 'none';
