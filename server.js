@@ -54,6 +54,7 @@ function newState() {
     storeVoteNo: 0,
     storeVoteTimer: null,
     storeVoteEndTime: 0,
+    autoEndRef: null,
   };
 }
 
@@ -189,6 +190,7 @@ function applyAttack(attackerId, type, targetId, immediate = false, skipReverseO
 function endQuestion() {
   if (!G.active) return;
   clearInterval(G.timerRef);
+  clearTimeout(G.autoEndRef);
   G.active = false;
   G.retryPending  = {};
   G.revivalPending = {};
@@ -473,7 +475,10 @@ function startActualQuestion() {
   G.timerRef = setInterval(() => {
     G.timeLeft--;
     io.emit('game:timer', G.timeLeft);
-    if (G.timeLeft <= 0) endQuestion();
+    if (G.timeLeft <= 0) {
+      clearInterval(G.timerRef);
+      G.autoEndRef = setTimeout(() => endQuestion(), 3000);
+    }
   }, 1000);
 }
 

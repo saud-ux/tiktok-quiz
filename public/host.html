@@ -599,11 +599,29 @@ function updateTimerCircle(t) {
   const circle = document.getElementById('timer-circle');
   const num = document.getElementById('timer-num');
   const circumference = 326;
-  const offset = circumference - (t / 30) * circumference;
+  const offset = circumference - (t / selectedDuration) * circumference;
   circle.style.strokeDashoffset = offset;
   circle.style.stroke = t > 10 ? 'var(--cyan)' : t > 5 ? 'var(--gold)' : 'var(--red)';
   num.textContent = t;
   num.style.color = t > 10 ? 'var(--text)' : t > 5 ? 'var(--gold)' : 'var(--red)';
+  if (t <= 0) {
+    const btn = document.getElementById('btn-end');
+    if (btn && !btn._autoEndStarted) {
+      btn._autoEndStarted = true;
+      let countdown = 3;
+      btn.textContent = `⏹ أنهِ السؤال ← ينتهي تلقائياً بعد ${countdown}ث`;
+      btn.style.animation = 'goldPulse 0.6s ease-in-out infinite alternate';
+      const cd = setInterval(() => {
+        countdown--;
+        if (countdown <= 0) {
+          clearInterval(cd);
+          btn.textContent = '⏹ إنهاء...';
+        } else {
+          btn.textContent = `⏹ أنهِ السؤال ← ينتهي تلقائياً بعد ${countdown}ث`;
+        }
+      }, 1000);
+    }
+  }
 }
 
 const LETTERS = ['أ','ب','ج','د'];
@@ -974,7 +992,9 @@ socket.on('host:question-confirmed', ({ question, number }) => {
   document.getElementById('stat-total').textContent = Object.keys(players).length;
   document.getElementById('stat-answered').textContent = '0';
   renderActiveQuestion({ ...question, number });
-  updateTimerCircle(30);
+  updateTimerCircle(selectedDuration);
+  const btn = document.getElementById('btn-end');
+  if (btn) { btn.textContent = '⏹ أنهِ السؤال'; btn.style.animation = ''; btn._autoEndStarted = false; }
   showPanel('active');
   toast('▶️ السؤال بدأ!');
 });
