@@ -587,7 +587,7 @@
       "correct": 1,
       "difficulty": "سهل",
       "hint": "أكبر دول أمريكا اللاتينية مساحةً",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Flag_of_Brazil.svg/400px-Flag_of_Brazil.svg.png"
+      "image": "https://flagcdn.com/w320/br.png"
     },
     {
       "text": "ما اسم الدولة صاحبة هذا العلم؟",
@@ -600,7 +600,7 @@
       "correct": 3,
       "difficulty": "سهل",
       "hint": "بلد برج إيفل",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Flag_of_France.svg/400px-Flag_of_France.svg.png"
+      "image": "https://flagcdn.com/w320/fr.png"
     },
     {
       "text": "ما اسم الدولة صاحبة هذا العلم؟",
@@ -613,7 +613,7 @@
       "correct": 3,
       "difficulty": "سهل",
       "hint": "بلاد السيارات الفاخرة",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Flag_of_Germany.svg/400px-Flag_of_Germany.svg.png"
+      "image": "https://flagcdn.com/w320/de.png"
     },
     {
       "text": "في أي مدينة يقع هذا البرج الشهير؟",
@@ -846,7 +846,7 @@
       "correct": 1,
       "difficulty": "سهل",
       "hint": "قرص أحمر على خلفية بيضاء",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Flag_of_Japan.svg/400px-Flag_of_Japan.svg.png"
+      "image": "https://flagcdn.com/w320/jp.png"
     },
     {
       "text": "ما اسم الدولة صاحبة هذا العلم؟",
@@ -859,7 +859,7 @@
       "correct": 1,
       "difficulty": "سهل",
       "hint": "دولة الساحرة المستديرة",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Flag_of_Brazil.svg/400px-Flag_of_Brazil.svg.png"
+      "image": "https://flagcdn.com/w320/br.png"
     },
     {
       "text": "ما اسم الدولة صاحبة هذا العلم؟",
@@ -872,7 +872,7 @@
       "correct": 0,
       "difficulty": "متوسط",
       "hint": "علمها أزرق وأصفر",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Flag_of_Sweden.svg/400px-Flag_of_Sweden.svg.png"
+      "image": "https://flagcdn.com/w320/se.png"
     },
     {
       "text": "ما اسم الدولة صاحبة هذا العلم؟",
@@ -885,7 +885,7 @@
       "correct": 0,
       "difficulty": "سهل",
       "hint": "بلد الزنبق وطواحين الهواء",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Flag_of_the_Netherlands.svg/400px-Flag_of_the_Netherlands.svg.png"
+      "image": "https://flagcdn.com/w320/nl.png"
     },
     {
       "text": "رتّب هذه الأنهار من الأطول إلى الأقصر:",
@@ -2808,7 +2808,7 @@
       "correct": 3,
       "difficulty": "سهل",
       "hint": "فازت بكأس العالم 2022",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Flag_of_Argentina.svg/400px-Flag_of_Argentina.svg.png"
+      "image": "https://flagcdn.com/w320/ar.png"
     },
     {
       "text": "رتّب هذه الدول من الأكثر إلى الأقل فوزاً بكأس العالم:",
@@ -6283,7 +6283,7 @@
       "correct": 0,
       "difficulty": "سهل",
       "hint": "أكبر دول أمريكا اللاتينية",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Flag_of_Brazil.svg/400px-Flag_of_Brazil.svg.png"
+      "image": "https://flagcdn.com/w320/br.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6296,7 +6296,7 @@
       "correct": 0,
       "difficulty": "سهل",
       "hint": "عاصمتها باريس",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Flag_of_France.svg/400px-Flag_of_France.svg.png"
+      "image": "https://flagcdn.com/w320/fr.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6309,7 +6309,7 @@
       "correct": 0,
       "difficulty": "سهل",
       "hint": "عاصمتها برلين",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Flag_of_Germany.svg/400px-Flag_of_Germany.svg.png"
+      "image": "https://flagcdn.com/w320/de.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6322,7 +6322,7 @@
       "correct": 0,
       "difficulty": "متوسط",
       "hint": "عاصمتها بوينس آيرس",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Flag_of_Argentina.svg/400px-Flag_of_Argentina.svg.png"
+      "image": "https://flagcdn.com/w320/ar.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6335,7 +6335,7 @@
       "correct": 0,
       "difficulty": "متوسط",
       "hint": "عاصمتها ستوكهولم",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Flag_of_Sweden.svg/400px-Flag_of_Sweden.svg.png"
+      "image": "https://flagcdn.com/w320/se.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6348,7 +6348,7 @@
       "correct": 0,
       "difficulty": "متوسط",
       "hint": "عاصمتها أمستردام",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Flag_of_the_Netherlands.svg/400px-Flag_of_the_Netherlands.svg.png"
+      "image": "https://flagcdn.com/w320/nl.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6361,7 +6361,7 @@
       "correct": 0,
       "difficulty": "سهل",
       "hint": "بلد الشمس المشرقة",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Flag_of_Japan.svg/400px-Flag_of_Japan.svg.png"
+      "image": "https://flagcdn.com/w320/jp.png"
     },
     {
       "text": "ما هذه اللوحة الشهيرة؟",
@@ -6413,7 +6413,7 @@
       "correct": 0,
       "difficulty": "سهل",
       "hint": "رمزها شجرة القيقب",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Flag_of_Canada_%28Pantone%29.svg/400px-Flag_of_Canada_%28Pantone%29.svg.png"
+      "image": "https://flagcdn.com/w320/ca.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6426,7 +6426,7 @@
       "correct": 0,
       "difficulty": "سهل",
       "hint": "بلد البيتزا والمعكرونة",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Flag_of_Italy.svg/400px-Flag_of_Italy.svg.png"
+      "image": "https://flagcdn.com/w320/it.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6439,7 +6439,7 @@
       "correct": 0,
       "difficulty": "سهل",
       "hint": "عاصمتها مدريد",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Flag_of_Spain.svg/400px-Flag_of_Spain.svg.png"
+      "image": "https://flagcdn.com/w320/es.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6452,7 +6452,7 @@
       "correct": 0,
       "difficulty": "متوسط",
       "hint": "عاصمتها لشبونة",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Flag_of_Portugal.svg/400px-Flag_of_Portugal.svg.png"
+      "image": "https://flagcdn.com/w320/pt.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6465,7 +6465,7 @@
       "correct": 0,
       "difficulty": "صعب",
       "hint": "أكبر دولة في العالم مساحة",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Flag_of_Russia.svg/400px-Flag_of_Russia.svg.png"
+      "image": "https://flagcdn.com/w320/ru.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6478,7 +6478,7 @@
       "correct": 0,
       "difficulty": "متوسط",
       "hint": "أكثر دول العالم سكانًا",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Flag_of_the_People%27s_Republic_of_China.svg/400px-Flag_of_the_People%27s_Republic_of_China.svg.png"
+      "image": "https://flagcdn.com/w320/cn.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6491,7 +6491,7 @@
       "correct": 0,
       "difficulty": "متوسط",
       "hint": "عاصمتها مكسيكو سيتي",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Flag_of_Mexico.svg/400px-Flag_of_Mexico.svg.png"
+      "image": "https://flagcdn.com/w320/mx.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6504,7 +6504,7 @@
       "correct": 0,
       "difficulty": "سهل",
       "hint": "عاصمتها أنقرة",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Flag_of_Turkey.svg/400px-Flag_of_Turkey.svg.png"
+      "image": "https://flagcdn.com/w320/tr.png"
     }
   ],
   "أسئلة الترتيب": [
