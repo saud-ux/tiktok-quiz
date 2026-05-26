@@ -695,6 +695,12 @@ io.on('connection', socket => {
     io.emit('game:answer-progress', { answered, total, lb: leaderboard() });
   });
 
+  socket.on('player:break-ice', () => {
+    if (!G.active) return;
+    const eff = G.effects[socket.id];
+    if (eff && eff.frozen) eff.frozen = false;
+  });
+
   socket.on('player:change-answer', ({ choice }) => {
     if (!G.active || G.timeLeft <= 0) return;
     const p = G.players[socket.id];

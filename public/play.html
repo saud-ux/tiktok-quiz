@@ -815,6 +815,7 @@ document.getElementById('frozen-screen').addEventListener('click', function(e) {
   setTimeout(() => crack.remove(), 400);
 
   if (frozenClicksLeft === 0) {
+    socket.emit('player:break-ice');
     setTimeout(() => {
       fs.classList.remove('show');
       isCut = false;
