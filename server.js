@@ -47,6 +47,11 @@ function newState() {
     storeOpen: false,    // ← حالة المتجر
     storePurchases: {},  // ← مشتريات المتجر { pid: { hint, eliminate, multiplier } }
     storeTimer: null,    // ← مؤقت إغلاق المتجر
+    storeVoteActive: false,
+    storeVoted: new Set(),
+    storeVoteYes: 0,
+    storeVoteNo: 0,
+    storeVoteTimer: null,
   };
 }
 
@@ -992,6 +997,61 @@ io.on('connection', socket => {
       io.emit('game:store-closed');
     }, 30000);
     socket.emit('host:store-opened');
+  });
+
+  socket.on('host:start-store-vote', () => {
+    if (G.storeVoteActive || G.storeOpen) return;
+    const total = Object.keys(G.players).length;
+    if (total === 0) return;
+    G.storeVoteActive       = true;
+    G.storeVoted            = new Set();
+    G.storeVoteYes          = 0;
+    G.storeVoteNo           = 0;
+    G._storeVoteHostSocket  = socket;
+    const duration          = 15;
+    io.emit('game:store-vote-start', { duration });
+    socket.emit('host:store-vote-started');
+
+    function finalizeVote() {
+      if (!G.storeVoteActive) return;
+      G.storeVoteActive = false;
+      clearTimeout(G.storeVoteTimer);
+      const yes = G.storeVoteYes, no = G.storeVoteNo;
+      const open = yes >= no;
+      io.emit('game:store-vote-result', { yes, no, open });
+      socket.emit('host:store-vote-result', { yes, no, open });
+      if (open) {
+        if (G.storeTimer) clearTimeout(G.storeTimer);
+        G.storeOpen = true;
+        G.storePurchases = {};
+        const storeItems = [
+          { id: 'hint',       icon: '💡', name: 'تلميح تلقائي',      desc: 'يُكشف تلميح السؤال القادم',        cost: 200 },
+          { id: 'eliminate',  icon: '🗑️', name: 'حذف خيار خاطئ',    desc: 'يُحذف خيار خاطئ في السؤال القادم', cost: 300 },
+          { id: 'multiplier', icon: '⚡', name: 'مضاعف النقاط ×1.5', desc: 'نقاطك ×1.5 إذا أجبت صح',           cost: 250 },
+        ];
+        io.emit('game:store-open', { items: storeItems, duration: 30 });
+        G.storeTimer = setTimeout(() => { G.storeOpen = false; io.emit('game:store-closed'); }, 30000);
+      }
+    }
+
+    G.storeVoteTimer = setTimeout(finalizeVote, duration * 1000);
+
+    // close vote early if all players voted
+    G._checkStoreVote = function() {
+      const total2 = Object.keys(G.players).length;
+      if (G.storeVoted.size >= total2) finalizeVote();
+    };
+  });
+
+  socket.on('player:store-vote', ({ vote }) => {
+    if (!G.storeVoteActive) return;
+    if (G.storeVoted.has(socket.id)) return;
+    if (!G.players[socket.id]) return;
+    G.storeVoted.add(socket.id);
+    if (vote === 'yes') G.storeVoteYes++; else G.storeVoteNo++;
+    // broadcast live tally to host (socket captured from outer handler)
+    G._storeVoteHostSocket?.emit('host:store-vote-tally', { yes: G.storeVoteYes, no: G.storeVoteNo, total: Object.keys(G.players).length, voted: G.storeVoted.size });
+    if (G._checkStoreVote) G._checkStoreVote();
   });
 
   socket.on('player:buy-store-item', ({ itemId }) => {

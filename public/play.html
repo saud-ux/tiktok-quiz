@@ -626,6 +626,20 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
   <div class="waiting-text">جاري اختيار الخصائص...</div>
 </div>
 
+<!-- ════ STORE VOTE OVERLAY ════ -->
+<div id="store-vote-overlay" style="display:none;position:fixed;inset:0;z-index:500;background:#000000cc;align-items:center;justify-content:center;flex-direction:column;gap:16px;padding:24px">
+  <div style="background:#0f172a;border:2px solid var(--gold);border-radius:20px;padding:28px 24px;width:100%;max-width:360px;text-align:center">
+    <div style="font-size:36px;margin-bottom:8px">🛒</div>
+    <div style="font-size:20px;font-weight:900;color:var(--gold);margin-bottom:6px">نفتح المتجر؟</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px">صوّت الآن — <span id="svote-player-secs" style="color:var(--gold);font-weight:900">15</span> ثانية</div>
+    <div style="display:flex;gap:12px">
+      <button id="svote-yes-btn" onclick="castStoreVote('yes')" style="flex:1;padding:16px 8px;border-radius:14px;border:2px solid #16a34a;background:#16a34a20;color:#4ade80;font-family:inherit;font-size:18px;font-weight:900;cursor:pointer;transition:.2s">آيه ✅</button>
+      <button id="svote-no-btn"  onclick="castStoreVote('no')"  style="flex:1;padding:16px 8px;border-radius:14px;border:2px solid var(--red);background:#ef444420;color:#ef4444;font-family:inherit;font-size:18px;font-weight:900;cursor:pointer;transition:.2s">لا ❌</button>
+    </div>
+    <div id="svote-done-msg" style="display:none;margin-top:16px;font-size:15px;font-weight:700;color:var(--muted)">✅ تم تصويتك! انتظر النتيجة...</div>
+  </div>
+</div>
+
 <div id="color-flash"></div>
 <div id="danger-vignette"></div>
 <div id="ice-overlay"></div>
@@ -2218,6 +2232,46 @@ socket.on('game:reset', () => {
   jokerUsed=false; orderArr=[]; storePurchased={};
   closeStore();
   showScreen('join');
+});
+
+// ─── STORE VOTE ──────────────────────────────────────────────
+let svoteTimer = null;
+let svoteVoted = false;
+
+function castStoreVote(v) {
+  if (svoteVoted) return;
+  svoteVoted = true;
+  socket.emit('player:store-vote', { vote: v });
+  document.getElementById('svote-yes-btn').disabled = true;
+  document.getElementById('svote-no-btn').disabled  = true;
+  document.getElementById('svote-done-msg').style.display = 'block';
+  flashColor(v === 'yes' ? 'green' : 'red');
+}
+
+socket.on('game:store-vote-start', ({ duration }) => {
+  svoteVoted = false;
+  document.getElementById('svote-done-msg').style.display = 'none';
+  document.getElementById('svote-yes-btn').disabled = false;
+  document.getElementById('svote-no-btn').disabled  = false;
+  const overlay = document.getElementById('store-vote-overlay');
+  overlay.style.display = 'flex';
+  let secs = duration;
+  document.getElementById('svote-player-secs').textContent = secs;
+  if (svoteTimer) clearInterval(svoteTimer);
+  svoteTimer = setInterval(() => {
+    secs--;
+    const el = document.getElementById('svote-player-secs');
+    if (el) el.textContent = secs;
+    if (secs <= 0) { clearInterval(svoteTimer); svoteTimer = null; }
+  }, 1000);
+});
+
+socket.on('game:store-vote-result', ({ open }) => {
+  if (svoteTimer) { clearInterval(svoteTimer); svoteTimer = null; }
+  const overlay = document.getElementById('store-vote-overlay');
+  overlay.style.display = 'none';
+  notify(open ? '✅ صوّت الجمهور: المتجر يفتح! 🛒' : '❌ صوّت الجمهور: المتجر مغلق', open ? 'gold' : 'red', 3000);
+  if (open) flashColor('gold');
 });
 
 document.addEventListener('visibilitychange', () => {
