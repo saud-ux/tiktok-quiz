@@ -459,7 +459,7 @@ function startActualQuestion() {
     offer.timeout = setTimeout(() => {
       delete G.reverseOffers[targetId];
       applyAttack(offer.attackerId, offer.type, targetId, offer.immediate, true);
-    }, 2000);
+    }, 5000);
   });
 
   G.timerRef = setInterval(() => {
