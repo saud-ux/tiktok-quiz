@@ -321,22 +321,6 @@ textarea{min-height:70px}
           <button class="btn btn-start" id="btn-start" onclick="startQuestion()">▶ ابدأ السؤال</button>
         </div>
 
-        <!-- Category selector (shown after importing a categorized bank) -->
-        <div class="card" id="category-section" style="display:none">
-          <div class="card-title">📚 اختر تصنيفاً</div>
-          <div class="cat-grid" id="cat-grid"></div>
-          <div id="cat-info" style="margin-top:10px;font-size:13px;color:var(--muted)">اختر تصنيفاً لتحميل أسئلته</div>
-        </div>
-
-        <!-- Question queue (shown after import) -->
-        <div class="card" id="queue-card" style="display:none">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-            <div class="card-title" style="margin-bottom:0">📋 قائمة الأسئلة &nbsp;<span id="queue-counter" style="color:var(--cyan)"></span></div>
-            <button onclick="clearQueue()" style="background:transparent;border:1px solid var(--red);color:var(--red);padding:5px 10px;border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">🗑️ مسح</button>
-          </div>
-          <div class="queue-scroll" id="queue-list"></div>
-        </div>
-
         <!-- Waiting players -->
         <div class="card">
           <div class="card-title">👥 اللاعبون المنتظرون</div>
@@ -454,6 +438,24 @@ textarea{min-height:70px}
 
     <!-- SIDEBAR -->
     <div class="sidebar">
+
+      <!-- Category selector (always visible in sidebar) -->
+      <div class="card" id="category-section" style="display:none">
+        <div class="card-title">📚 اختر تصنيفاً</div>
+        <div class="cat-grid" id="cat-grid"></div>
+        <div id="cat-info" style="margin-top:10px;font-size:13px;color:var(--muted)">اختر تصنيفاً لتحميل أسئلته</div>
+      </div>
+
+      <!-- Question queue (always visible in sidebar) -->
+      <div class="card" id="queue-card" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div class="card-title" style="margin-bottom:0">📋 قائمة الأسئلة &nbsp;<span id="queue-counter" style="color:var(--cyan)"></span></div>
+          <button onclick="clearQueue()" style="background:transparent;border:1px solid var(--red);color:var(--red);padding:5px 10px;border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">🗑️ مسح</button>
+        </div>
+        <div class="queue-scroll" id="queue-list"></div>
+      </div>
+
+      <!-- Leaderboard -->
       <div class="card-title" style="font-size:16px;color:var(--text)">🏆 الليدربورد</div>
       <div id="leaderboard-list">
         <div style="color:var(--muted);font-size:14px;text-align:center;padding:20px">لا يوجد لاعبون بعد</div>
