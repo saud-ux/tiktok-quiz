@@ -247,14 +247,16 @@ function endQuestion() {
     }
   });
 
-  // Phase 2.5 – مضاعفة النقاط للسؤال الأخير ×2
+  // Phase 2.5 – السؤال الأخير: المركز الأخير يحصل على ×3 نقاط
   if (G.isLastQuestion) {
-    Object.keys(results).forEach(pid => {
-      if (results[pid].delta > 0) {
-        results[pid].delta *= 2;
-        results[pid].doubled = true;
+    const sorted = Object.values(G.players).sort((a, b) => a.points - b.points);
+    if (sorted.length >= 1) {
+      const lastPlaceId = sorted[0].id;
+      if (results[lastPlaceId] && results[lastPlaceId].delta > 0) {
+        results[lastPlaceId].delta = Math.floor(results[lastPlaceId].delta * 3);
+        results[lastPlaceId].tripleBoost = true;
       }
-    });
+    }
   }
 
   // Phase 3 – تطبيق النقاط
@@ -545,6 +547,14 @@ io.on('connection', socket => {
   socket.on('host:announce-last-question', () => {
     G.isLastQuestion = true;
     io.emit('game:last-question-announcement');
+
+    // أخبر اللاعب الأخير بميزة ×3
+    const sorted = Object.values(G.players).sort((a, b) => a.points - b.points);
+    if (sorted.length >= 1) {
+      const lastPlayer = sorted[0];
+      io.to(lastPlayer.id).emit('game:triple-boost', { name: lastPlayer.name });
+    }
+
     socket.emit('host:announcement-sent');
   });
 
