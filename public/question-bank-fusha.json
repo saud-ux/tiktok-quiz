@@ -6244,5 +6244,607 @@
       "difficulty": "سهل",
       "hint": "قاعدة BODMAS/PEMDAS"
     }
+  ],
+  "أسئلة الصور": [
+    {
+      "text": "ما هذا المعلم العالمي؟",
+      "options": [
+        "برج إيفل",
+        "برج بيزا",
+        "برج خليفة",
+        "تمثال الحرية"
+      ],
+      "correct": 0,
+      "difficulty": "سهل",
+      "hint": "يقع في باريس",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Tour_Eiffel_Wikimedia_Commons.jpg/400px-Tour_Eiffel_Wikimedia_Commons.jpg"
+    },
+    {
+      "text": "ما هذا المعلم الأثري؟",
+      "options": [
+        "أهرامات الجيزة",
+        "معبد الكرنك",
+        "أبو سمبل",
+        "المسلة المصرية"
+      ],
+      "correct": 0,
+      "difficulty": "سهل",
+      "hint": "من عجائب الدنيا السبع",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Kheops-Pyramid.jpg/400px-Kheops-Pyramid.jpg"
+    },
+    {
+      "text": "لأي دولة تنتمي هذه العلم؟",
+      "options": [
+        "البرازيل",
+        "الأرجنتين",
+        "المكسيك",
+        "كولومبيا"
+      ],
+      "correct": 0,
+      "difficulty": "سهل",
+      "hint": "أكبر دول أمريكا اللاتينية",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Flag_of_Brazil.svg/400px-Flag_of_Brazil.svg.png"
+    },
+    {
+      "text": "لأي دولة تنتمي هذا العلم؟",
+      "options": [
+        "فرنسا",
+        "هولندا",
+        "بلجيكا",
+        "إيطاليا"
+      ],
+      "correct": 0,
+      "difficulty": "سهل",
+      "hint": "عاصمتها باريس",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Flag_of_France.svg/400px-Flag_of_France.svg.png"
+    },
+    {
+      "text": "لأي دولة تنتمي هذا العلم؟",
+      "options": [
+        "ألمانيا",
+        "النمسا",
+        "بلجيكا",
+        "سويسرا"
+      ],
+      "correct": 0,
+      "difficulty": "سهل",
+      "hint": "عاصمتها برلين",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Flag_of_Germany.svg/400px-Flag_of_Germany.svg.png"
+    },
+    {
+      "text": "لأي دولة تنتمي هذا العلم؟",
+      "options": [
+        "الأرجنتين",
+        "أوروغواي",
+        "تشيلي",
+        "البراغواي"
+      ],
+      "correct": 0,
+      "difficulty": "متوسط",
+      "hint": "عاصمتها بوينس آيرس",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Flag_of_Argentina.svg/400px-Flag_of_Argentina.svg.png"
+    },
+    {
+      "text": "لأي دولة تنتمي هذا العلم؟",
+      "options": [
+        "السويد",
+        "النرويج",
+        "الدنمارك",
+        "فنلندا"
+      ],
+      "correct": 0,
+      "difficulty": "متوسط",
+      "hint": "عاصمتها ستوكهولم",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Flag_of_Sweden.svg/400px-Flag_of_Sweden.svg.png"
+    },
+    {
+      "text": "لأي دولة تنتمي هذا العلم؟",
+      "options": [
+        "هولندا",
+        "لوكسمبورغ",
+        "بلجيكا",
+        "فرنسا"
+      ],
+      "correct": 0,
+      "difficulty": "متوسط",
+      "hint": "عاصمتها أمستردام",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Flag_of_the_Netherlands.svg/400px-Flag_of_the_Netherlands.svg.png"
+    },
+    {
+      "text": "لأي دولة تنتمي هذا العلم؟",
+      "options": [
+        "اليابان",
+        "كوريا الجنوبية",
+        "الصين",
+        "تايوان"
+      ],
+      "correct": 0,
+      "difficulty": "سهل",
+      "hint": "بلد الشمس المشرقة",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Flag_of_Japan.svg/400px-Flag_of_Japan.svg.png"
+    },
+    {
+      "text": "ما هذه اللوحة الشهيرة؟",
+      "options": [
+        "الموناليزا",
+        "العشاء الأخير",
+        "خلق آدم",
+        "صرخة مونك"
+      ],
+      "correct": 0,
+      "difficulty": "سهل",
+      "hint": "لرسامها دافنشي",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/300px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg"
+    },
+    {
+      "text": "ما هذه اللوحة الشهيرة؟",
+      "options": [
+        "ليلة النجوم",
+        "الموناليزا",
+        "السيدة بالمظلة",
+        "عباد الشمس"
+      ],
+      "correct": 0,
+      "difficulty": "متوسط",
+      "hint": "للرسام فان غوخ",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/400px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg"
+    },
+    {
+      "text": "ما هذا المعلم الديني؟",
+      "options": [
+        "قبة الصخرة",
+        "المسجد الأقصى",
+        "الكعبة المشرفة",
+        "المسجد النبوي"
+      ],
+      "correct": 0,
+      "difficulty": "متوسط",
+      "hint": "يقع في القدس",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Dome_of_the_rock_by_night.jpg/400px-Dome_of_the_rock_by_night.jpg"
+    },
+    {
+      "text": "لأي دولة تنتمي هذا العلم؟",
+      "options": [
+        "كندا",
+        "أمريكا",
+        "أستراليا",
+        "نيوزيلندا"
+      ],
+      "correct": 0,
+      "difficulty": "سهل",
+      "hint": "رمزها شجرة القيقب",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Flag_of_Canada_%28Pantone%29.svg/400px-Flag_of_Canada_%28Pantone%29.svg.png"
+    },
+    {
+      "text": "لأي دولة تنتمي هذا العلم؟",
+      "options": [
+        "إيطاليا",
+        "فرنسا",
+        "المكسيك",
+        "بلجيكا"
+      ],
+      "correct": 0,
+      "difficulty": "سهل",
+      "hint": "بلد البيتزا والمعكرونة",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Flag_of_Italy.svg/400px-Flag_of_Italy.svg.png"
+    },
+    {
+      "text": "لأي دولة تنتمي هذا العلم؟",
+      "options": [
+        "إسبانيا",
+        "البرتغال",
+        "المكسيك",
+        "الأرجنتين"
+      ],
+      "correct": 0,
+      "difficulty": "سهل",
+      "hint": "عاصمتها مدريد",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Flag_of_Spain.svg/400px-Flag_of_Spain.svg.png"
+    },
+    {
+      "text": "لأي دولة تنتمي هذا العلم؟",
+      "options": [
+        "البرتغال",
+        "إسبانيا",
+        "البرازيل",
+        "أنغولا"
+      ],
+      "correct": 0,
+      "difficulty": "متوسط",
+      "hint": "عاصمتها لشبونة",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Flag_of_Portugal.svg/400px-Flag_of_Portugal.svg.png"
+    },
+    {
+      "text": "لأي دولة تنتمي هذا العلم؟",
+      "options": [
+        "روسيا",
+        "صربيا",
+        "هولندا",
+        "كرواتيا"
+      ],
+      "correct": 0,
+      "difficulty": "صعب",
+      "hint": "أكبر دولة في العالم مساحة",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Flag_of_Russia.svg/400px-Flag_of_Russia.svg.png"
+    },
+    {
+      "text": "لأي دولة تنتمي هذا العلم؟",
+      "options": [
+        "الصين",
+        "كوريا الشمالية",
+        "فيتنام",
+        "لاوس"
+      ],
+      "correct": 0,
+      "difficulty": "متوسط",
+      "hint": "أكثر دول العالم سكانًا",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Flag_of_the_People%27s_Republic_of_China.svg/400px-Flag_of_the_People%27s_Republic_of_China.svg.png"
+    },
+    {
+      "text": "لأي دولة تنتمي هذا العلم؟",
+      "options": [
+        "المكسيك",
+        "إيطاليا",
+        "البرتغال",
+        "كولومبيا"
+      ],
+      "correct": 0,
+      "difficulty": "متوسط",
+      "hint": "عاصمتها مكسيكو سيتي",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Flag_of_Mexico.svg/400px-Flag_of_Mexico.svg.png"
+    },
+    {
+      "text": "لأي دولة تنتمي هذا العلم؟",
+      "options": [
+        "تركيا",
+        "تونس",
+        "ليبيا",
+        "باكستان"
+      ],
+      "correct": 0,
+      "difficulty": "سهل",
+      "hint": "عاصمتها أنقرة",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Flag_of_Turkey.svg/400px-Flag_of_Turkey.svg.png"
+    }
+  ],
+  "أسئلة الترتيب": [
+    {
+      "text": "رتّب هذه الدول من الأكبر مساحةً إلى الأصغر",
+      "type": "order",
+      "options": [
+        "روسيا",
+        "كندا",
+        "الولايات المتحدة",
+        "الصين"
+      ],
+      "correct": 0,
+      "difficulty": "متوسط",
+      "hint": "روسيا وحدها أكثر من 17 مليون كم²"
+    },
+    {
+      "text": "رتّب هذه الكواكب من الأقرب للشمس إلى الأبعد",
+      "type": "order",
+      "options": [
+        "عطارد",
+        "الزهرة",
+        "الأرض",
+        "المريخ"
+      ],
+      "correct": 0,
+      "difficulty": "سهل",
+      "hint": "عطارد هو الأقرب للشمس"
+    },
+    {
+      "text": "رتّب هذه الأحداث التاريخية من الأقدم إلى الأحدث",
+      "type": "order",
+      "options": [
+        "فتح مكة",
+        "الهجرة النبوية",
+        "غزوة بدر",
+        "صلح الحديبية"
+      ],
+      "correct": 0,
+      "difficulty": "صعب",
+      "hint": "الهجرة كانت أول هذه الأحداث"
+    },
+    {
+      "text": "رتّب هذه الأرقام تصاعديًا",
+      "type": "order",
+      "options": [
+        "١٢",
+        "٥",
+        "٩٩",
+        "٤٧"
+      ],
+      "correct": 0,
+      "difficulty": "سهل",
+      "hint": "من الأصغر للأكبر"
+    },
+    {
+      "text": "رتّب هذه الفصول الأربعة كما تأتي بدءًا من الربيع",
+      "type": "order",
+      "options": [
+        "الربيع",
+        "الصيف",
+        "الخريف",
+        "الشتاء"
+      ],
+      "correct": 0,
+      "difficulty": "سهل",
+      "hint": "بدءًا من الربيع دورةً كاملة"
+    },
+    {
+      "text": "رتّب هذه المدن السعودية من الأكثر سكانًا إلى الأقل",
+      "type": "order",
+      "options": [
+        "الرياض",
+        "جدة",
+        "مكة المكرمة",
+        "المدينة المنورة"
+      ],
+      "correct": 0,
+      "difficulty": "متوسط",
+      "hint": "العاصمة هي الأكبر"
+    },
+    {
+      "text": "رتّب هذه العمليات الحسابية من حيث الأولوية",
+      "type": "order",
+      "options": [
+        "الأقواس",
+        "الضرب والقسمة",
+        "الجمع والطرح",
+        "الأسس"
+      ],
+      "correct": 0,
+      "difficulty": "متوسط",
+      "hint": "الأقواس أولًا دائمًا"
+    },
+    {
+      "text": "رتّب هذه المراحل الدراسية من الأولى للأخيرة",
+      "type": "order",
+      "options": [
+        "الابتدائية",
+        "المتوسطة",
+        "الثانوية",
+        "الجامعة"
+      ],
+      "correct": 0,
+      "difficulty": "سهل",
+      "hint": "تبدأ بالابتدائية"
+    },
+    {
+      "text": "رتّب هذه الأنهار من الأطول إلى الأقصر",
+      "type": "order",
+      "options": [
+        "النيل",
+        "الأمازون",
+        "اليانغتسي",
+        "المسيسيبي"
+      ],
+      "correct": 0,
+      "difficulty": "صعب",
+      "hint": "النيل يُعدّ الأطول في أغلب التصنيفات"
+    },
+    {
+      "text": "رتّب هذه الحيوانات من الأسرع إلى الأبطأ",
+      "type": "order",
+      "options": [
+        "الفهد",
+        "الأسد",
+        "الحصان",
+        "الفيل"
+      ],
+      "correct": 0,
+      "difficulty": "متوسط",
+      "hint": "الفهد أسرع حيوان بري"
+    },
+    {
+      "text": "رتّب أركان الإسلام بحسب ترتيبها المعروف",
+      "type": "order",
+      "options": [
+        "الشهادتان",
+        "الصلاة",
+        "الزكاة",
+        "الصوم"
+      ],
+      "correct": 0,
+      "difficulty": "سهل",
+      "hint": "الشهادتان هي الركن الأول"
+    },
+    {
+      "text": "رتّب خلفاء الرسول ﷺ بحسب تسلسل الخلافة",
+      "type": "order",
+      "options": [
+        "أبو بكر الصديق",
+        "عمر بن الخطاب",
+        "عثمان بن عفان",
+        "علي بن أبي طالب"
+      ],
+      "correct": 0,
+      "difficulty": "متوسط",
+      "hint": "أبو بكر أول الخلفاء الراشدين"
+    },
+    {
+      "text": "رتّب هذه الأشهر الهجرية من الأول إلى الأخير",
+      "type": "order",
+      "options": [
+        "محرم",
+        "صفر",
+        "ربيع الأول",
+        "ربيع الثاني"
+      ],
+      "correct": 0,
+      "difficulty": "متوسط",
+      "hint": "محرم هو أول شهور السنة الهجرية"
+    },
+    {
+      "text": "رتّب هذه الكتب السماوية من الأقدم إلى الأحدث",
+      "type": "order",
+      "options": [
+        "التوراة",
+        "الزبور",
+        "الإنجيل",
+        "القرآن الكريم"
+      ],
+      "correct": 0,
+      "difficulty": "متوسط",
+      "hint": "التوراة أُنزلت على موسى عليه السلام"
+    },
+    {
+      "text": "رتّب هذه الإمارات العربية من الأكبر مساحةً",
+      "type": "order",
+      "options": [
+        "أبوظبي",
+        "دبي",
+        "الشارقة",
+        "رأس الخيمة"
+      ],
+      "correct": 0,
+      "difficulty": "صعب",
+      "hint": "أبوظبي تمثل أكثر من 80% من مساحة الدولة"
+    },
+    {
+      "text": "رتّب هذه العواصم الخليجية بحسب تأسيس دولها",
+      "type": "order",
+      "options": [
+        "الرياض (السعودية 1932)",
+        "الكويت (1961)",
+        "أبوظبي (1971)",
+        "المنامة (1971)"
+      ],
+      "correct": 0,
+      "difficulty": "صعب",
+      "hint": "المملكة العربية السعودية هي الأقدم"
+    },
+    {
+      "text": "رتّب هذه الطبقات الجوية من الأدنى للأعلى",
+      "type": "order",
+      "options": [
+        "التروبوسفير",
+        "الستراتوسفير",
+        "الميزوسفير",
+        "الثيرموسفير"
+      ],
+      "correct": 0,
+      "difficulty": "صعب",
+      "hint": "التروبوسفير هو الطبقة الملاصقة للأرض"
+    },
+    {
+      "text": "رتّب هذه الأحداث في تاريخ المملكة",
+      "type": "order",
+      "options": [
+        "توحيد المملكة 1932",
+        "اكتشاف النفط 1938",
+        "تأسيس أرامكو 1944",
+        "انضمام الأمم المتحدة 1945"
+      ],
+      "correct": 0,
+      "difficulty": "متوسط",
+      "hint": "التوحيد جاء أولاً"
+    },
+    {
+      "text": "رتّب هذه الجبال من الأعلى إلى الأقصر",
+      "type": "order",
+      "options": [
+        "إيفرست",
+        "K2",
+        "كانجنجونغا",
+        "لهوتسي"
+      ],
+      "correct": 0,
+      "difficulty": "صعب",
+      "hint": "إيفرست القمة الأعلى في العالم"
+    },
+    {
+      "text": "رتّب هذه المراحل العمرية من الأصغر إلى الأكبر",
+      "type": "order",
+      "options": [
+        "الرضيع",
+        "الطفل",
+        "المراهق",
+        "الشاب"
+      ],
+      "correct": 0,
+      "difficulty": "سهل",
+      "hint": "تبدأ من الولادة"
+    },
+    {
+      "text": "رتّب هذه الدول الخليجية من الأكبر مساحةً إلى الأصغر",
+      "type": "order",
+      "options": [
+        "السعودية",
+        "اليمن",
+        "عُمان",
+        "الإمارات"
+      ],
+      "correct": 0,
+      "difficulty": "متوسط",
+      "hint": "السعودية أكبر دولة عربية"
+    },
+    {
+      "text": "رتّب هذه القارات من الأكثر سكانًا إلى الأقل",
+      "type": "order",
+      "options": [
+        "آسيا",
+        "أفريقيا",
+        "أوروبا",
+        "أمريكا الشمالية"
+      ],
+      "correct": 0,
+      "difficulty": "متوسط",
+      "hint": "آسيا تضم أكثر من نصف البشرية"
+    },
+    {
+      "text": "رتّب هذه المخترعات من الأقدم إلى الأحدث",
+      "type": "order",
+      "options": [
+        "المطبعة",
+        "المحرك البخاري",
+        "الكهرباء",
+        "الإنترنت"
+      ],
+      "correct": 0,
+      "difficulty": "متوسط",
+      "hint": "المطبعة اخترعها غوتنبرغ في القرن 15"
+    },
+    {
+      "text": "رتّب هذه الألوان كما تظهر في قوس قزح من الأعلى",
+      "type": "order",
+      "options": [
+        "الأحمر",
+        "الأصفر",
+        "الأخضر",
+        "الأزرق"
+      ],
+      "correct": 0,
+      "difficulty": "متوسط",
+      "hint": "الأحمر دائمًا في الأعلى"
+    },
+    {
+      "text": "رتّب هذه الوجبات اليومية بحسب ترتيبها",
+      "type": "order",
+      "options": [
+        "الإفطار",
+        "الغداء",
+        "القهوة",
+        "العشاء"
+      ],
+      "correct": 0,
+      "difficulty": "سهل",
+      "hint": "الإفطار أول وجبات اليوم"
+    },
+    {
+      "text": "رتّب هذه المحيطات من الأكبر إلى الأصغر",
+      "type": "order",
+      "options": [
+        "الهادئ",
+        "الأطلسي",
+        "الهندي",
+        "القطب الشمالي"
+      ],
+      "correct": 0,
+      "difficulty": "متوسط",
+      "hint": "المحيط الهادئ أكبر محيطات العالم"
+    }
   ]
 }
