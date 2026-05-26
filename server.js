@@ -15,7 +15,7 @@ app.get('/leaderboard', (_, res) => res.sendFile(path.join(__dirname, 'public', 
 // ─────────────────────────────────────────────────────────────
 // GAME STATE
 // ─────────────────────────────────────────────────────────────
-const DEFAULT_G.questionTime = 20;
+const DEFAULT_QUESTION_TIME = 20;
 
 let G = newState();
 
@@ -25,8 +25,8 @@ function newState() {
     question: null,
     qNum: 0,
     active: false,
-    timeLeft: DEFAULT_G.questionTime,
-    questionTime: DEFAULT_G.questionTime,
+    timeLeft: DEFAULT_QUESTION_TIME,
+    questionTime: DEFAULT_QUESTION_TIME,
     timerRef: null,
     answers: {},
     effects: {},
