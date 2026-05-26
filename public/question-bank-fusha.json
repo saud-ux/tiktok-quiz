@@ -587,7 +587,7 @@
       "correct": 1,
       "difficulty": "سهل",
       "hint": "أكبر دول أمريكا اللاتينية مساحةً",
-      "image": "https://flagcdn.com/w320/br.png"
+      "image": "/images/flag-br.png"
     },
     {
       "text": "ما اسم الدولة صاحبة هذا العلم؟",
@@ -600,7 +600,7 @@
       "correct": 3,
       "difficulty": "سهل",
       "hint": "بلد برج إيفل",
-      "image": "https://flagcdn.com/w320/fr.png"
+      "image": "/images/flag-fr.png"
     },
     {
       "text": "ما اسم الدولة صاحبة هذا العلم؟",
@@ -613,7 +613,7 @@
       "correct": 3,
       "difficulty": "سهل",
       "hint": "بلاد السيارات الفاخرة",
-      "image": "https://flagcdn.com/w320/de.png"
+      "image": "/images/flag-de.png"
     },
     {
       "text": "في أي مدينة يقع هذا البرج الشهير؟",
@@ -626,7 +626,7 @@
       "correct": 3,
       "difficulty": "سهل",
       "hint": "في قلب العاصمة الفرنسية",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Tour_Eiffel_Wikimedia_Commons.jpg/300px-Tour_Eiffel_Wikimedia_Commons.jpg"
+      "image": "/images/Tour_Eiffel_Wikimedia_Commons.jpg"
     },
     {
       "text": "في أي دولة تقع هذه الأهرامات الشهيرة؟",
@@ -639,7 +639,7 @@
       "correct": 3,
       "difficulty": "سهل",
       "hint": "على ضفاف نهر النيل",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Kheops-Pyramid.jpg/400px-Kheops-Pyramid.jpg"
+      "image": "/images/Kheops-Pyramid.jpg"
     },
     {
       "text": "رتّب القارات من الأكبر إلى الأصغر مساحةً:",
@@ -846,7 +846,7 @@
       "correct": 1,
       "difficulty": "سهل",
       "hint": "قرص أحمر على خلفية بيضاء",
-      "image": "https://flagcdn.com/w320/jp.png"
+      "image": "/images/flag-jp.png"
     },
     {
       "text": "ما اسم الدولة صاحبة هذا العلم؟",
@@ -859,7 +859,7 @@
       "correct": 1,
       "difficulty": "سهل",
       "hint": "دولة الساحرة المستديرة",
-      "image": "https://flagcdn.com/w320/br.png"
+      "image": "/images/flag-br.png"
     },
     {
       "text": "ما اسم الدولة صاحبة هذا العلم؟",
@@ -872,7 +872,7 @@
       "correct": 0,
       "difficulty": "متوسط",
       "hint": "علمها أزرق وأصفر",
-      "image": "https://flagcdn.com/w320/se.png"
+      "image": "/images/flag-se.png"
     },
     {
       "text": "ما اسم الدولة صاحبة هذا العلم؟",
@@ -885,7 +885,7 @@
       "correct": 0,
       "difficulty": "سهل",
       "hint": "بلد الزنبق وطواحين الهواء",
-      "image": "https://flagcdn.com/w320/nl.png"
+      "image": "/images/flag-nl.png"
     },
     {
       "text": "رتّب هذه الأنهار من الأطول إلى الأقصر:",
@@ -2808,7 +2808,7 @@
       "correct": 3,
       "difficulty": "سهل",
       "hint": "فازت بكأس العالم 2022",
-      "image": "https://flagcdn.com/w320/ar.png"
+      "image": "/images/flag-ar.png"
     },
     {
       "text": "رتّب هذه الدول من الأكثر إلى الأقل فوزاً بكأس العالم:",
@@ -4222,7 +4222,7 @@
       "correct": 2,
       "difficulty": "متوسط",
       "hint": "ثالث الحرمين الشريفين في القدس",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Dome_of_the_rock_aerial_2007.jpg/400px-Dome_of_the_rock_aerial_2007.jpg"
+      "image": "/images/Dome_of_the_rock_aerial_2007.jpg"
     },
     {
       "text": "ما اسم أطول سور القرآن آية؟",
@@ -4839,7 +4839,7 @@
       "correct": 3,
       "difficulty": "سهل",
       "hint": "عبقري النهضة الإيطالية",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/300px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg"
+      "image": "/images/Mona_Lisa.jpg"
     },
     {
       "text": "ما اسم هذه اللوحة الشهيرة؟",
@@ -4852,7 +4852,7 @@
       "correct": 2,
       "difficulty": "متوسط",
       "hint": "رسمها فان غوخ عام 1889",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/400px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg"
+      "image": "/images/Starry_Night.jpg"
     },
     {
       "text": "ما اسم الفيلم الذي حصل على أكبر عدد من جوائز الأوسكار؟",
@@ -6257,7 +6257,7 @@
       "correct": 0,
       "difficulty": "سهل",
       "hint": "يقع في باريس",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Tour_Eiffel_Wikimedia_Commons.jpg/400px-Tour_Eiffel_Wikimedia_Commons.jpg"
+      "image": "/images/Tour_Eiffel_Wikimedia_Commons.jpg"
     },
     {
       "text": "ما هذا المعلم الأثري؟",
@@ -6270,7 +6270,7 @@
       "correct": 0,
       "difficulty": "سهل",
       "hint": "من عجائب الدنيا السبع",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Kheops-Pyramid.jpg/400px-Kheops-Pyramid.jpg"
+      "image": "/images/Kheops-Pyramid.jpg"
     },
     {
       "text": "لأي دولة تنتمي هذه العلم؟",
@@ -6283,7 +6283,7 @@
       "correct": 0,
       "difficulty": "سهل",
       "hint": "أكبر دول أمريكا اللاتينية",
-      "image": "https://flagcdn.com/w320/br.png"
+      "image": "/images/flag-br.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6296,7 +6296,7 @@
       "correct": 0,
       "difficulty": "سهل",
       "hint": "عاصمتها باريس",
-      "image": "https://flagcdn.com/w320/fr.png"
+      "image": "/images/flag-fr.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6309,7 +6309,7 @@
       "correct": 0,
       "difficulty": "سهل",
       "hint": "عاصمتها برلين",
-      "image": "https://flagcdn.com/w320/de.png"
+      "image": "/images/flag-de.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6322,7 +6322,7 @@
       "correct": 0,
       "difficulty": "متوسط",
       "hint": "عاصمتها بوينس آيرس",
-      "image": "https://flagcdn.com/w320/ar.png"
+      "image": "/images/flag-ar.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6335,7 +6335,7 @@
       "correct": 0,
       "difficulty": "متوسط",
       "hint": "عاصمتها ستوكهولم",
-      "image": "https://flagcdn.com/w320/se.png"
+      "image": "/images/flag-se.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6348,7 +6348,7 @@
       "correct": 0,
       "difficulty": "متوسط",
       "hint": "عاصمتها أمستردام",
-      "image": "https://flagcdn.com/w320/nl.png"
+      "image": "/images/flag-nl.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6361,7 +6361,7 @@
       "correct": 0,
       "difficulty": "سهل",
       "hint": "بلد الشمس المشرقة",
-      "image": "https://flagcdn.com/w320/jp.png"
+      "image": "/images/flag-jp.png"
     },
     {
       "text": "ما هذه اللوحة الشهيرة؟",
@@ -6374,7 +6374,7 @@
       "correct": 0,
       "difficulty": "سهل",
       "hint": "لرسامها دافنشي",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/300px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg"
+      "image": "/images/Mona_Lisa.jpg"
     },
     {
       "text": "ما هذه اللوحة الشهيرة؟",
@@ -6387,7 +6387,7 @@
       "correct": 0,
       "difficulty": "متوسط",
       "hint": "للرسام فان غوخ",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/400px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg"
+      "image": "/images/Starry_Night.jpg"
     },
     {
       "text": "ما هذا المعلم الديني؟",
@@ -6400,7 +6400,7 @@
       "correct": 0,
       "difficulty": "متوسط",
       "hint": "يقع في القدس",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Dome_of_the_rock_by_night.jpg/400px-Dome_of_the_rock_by_night.jpg"
+      "image": "/images/Dome_of_the_rock_by_night.jpg"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6413,7 +6413,7 @@
       "correct": 0,
       "difficulty": "سهل",
       "hint": "رمزها شجرة القيقب",
-      "image": "https://flagcdn.com/w320/ca.png"
+      "image": "/images/flag-ca.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6426,7 +6426,7 @@
       "correct": 0,
       "difficulty": "سهل",
       "hint": "بلد البيتزا والمعكرونة",
-      "image": "https://flagcdn.com/w320/it.png"
+      "image": "/images/flag-it.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6439,7 +6439,7 @@
       "correct": 0,
       "difficulty": "سهل",
       "hint": "عاصمتها مدريد",
-      "image": "https://flagcdn.com/w320/es.png"
+      "image": "/images/flag-es.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6452,7 +6452,7 @@
       "correct": 0,
       "difficulty": "متوسط",
       "hint": "عاصمتها لشبونة",
-      "image": "https://flagcdn.com/w320/pt.png"
+      "image": "/images/flag-pt.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6465,7 +6465,7 @@
       "correct": 0,
       "difficulty": "صعب",
       "hint": "أكبر دولة في العالم مساحة",
-      "image": "https://flagcdn.com/w320/ru.png"
+      "image": "/images/flag-ru.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6478,7 +6478,7 @@
       "correct": 0,
       "difficulty": "متوسط",
       "hint": "أكثر دول العالم سكانًا",
-      "image": "https://flagcdn.com/w320/cn.png"
+      "image": "/images/flag-cn.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6491,7 +6491,7 @@
       "correct": 0,
       "difficulty": "متوسط",
       "hint": "عاصمتها مكسيكو سيتي",
-      "image": "https://flagcdn.com/w320/mx.png"
+      "image": "/images/flag-mx.png"
     },
     {
       "text": "لأي دولة تنتمي هذا العلم؟",
@@ -6504,7 +6504,7 @@
       "correct": 0,
       "difficulty": "سهل",
       "hint": "عاصمتها أنقرة",
-      "image": "https://flagcdn.com/w320/tr.png"
+      "image": "/images/flag-tr.png"
     }
   ],
   "أسئلة الترتيب": [
