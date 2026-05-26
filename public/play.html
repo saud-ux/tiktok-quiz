@@ -1855,7 +1855,7 @@ socket.on('player:joined', ({ id, player }) => {
   showLobby();
 });
 
-socket.on('player:rejoined', ({ id, player, active, question, timeLeft }) => {
+socket.on('player:rejoined', ({ id, player, active, question, timeLeft, questionTime, storeVoteActive, storeVoteSecsLeft, storeVoteTally, alreadyVoted }) => {
   myId     = id; myPlayer = player;
   myName   = player.name; myAvatar = player.avatar;
   myPoints = player.points; myStreak = player.streak;
@@ -1863,10 +1863,40 @@ socket.on('player:rejoined', ({ id, player, active, question, timeLeft }) => {
   abilitiesState = { attack: player.abilities.attack.used, defense: player.abilities.defense.used, general: player.abilities.general.used };
   document.getElementById('lobby-avatar').src = player.avatar || '';
   document.getElementById('lobby-name').textContent = player.name;
+
   if (active && question) {
+    if (questionTime) QUESTION_TIME = questionTime;
     questionActive = true;
     renderQuestion(question);
     document.getElementById('timer-bar').style.width = (timeLeft / QUESTION_TIME * 100) + '%';
+    const lbl = document.getElementById('timer-secs-label');
+    if (lbl) lbl.textContent = timeLeft + 'ث';
+  } else if (storeVoteActive) {
+    showLobby();
+    // restore vote overlay
+    svoteVoted = alreadyVoted || false;
+    const yb = document.getElementById('svote-yes-btn');
+    const nb = document.getElementById('svote-no-btn');
+    yb.disabled = alreadyVoted; nb.disabled = alreadyVoted;
+    yb.style.background='#16a34a20'; yb.style.color='#4ade80'; yb.style.boxShadow='';
+    nb.style.background='#ef444420'; nb.style.color='#ef4444'; nb.style.boxShadow='';
+    document.getElementById('svote-done-msg').style.display = alreadyVoted ? 'block' : 'none';
+    if (storeVoteTally) {
+      document.getElementById('svote-live-yes').textContent   = storeVoteTally.yes;
+      document.getElementById('svote-live-no').textContent    = storeVoteTally.no;
+      document.getElementById('svote-live-voted').textContent = storeVoteTally.voted;
+      document.getElementById('svote-live-total').textContent = storeVoteTally.total;
+    }
+    document.getElementById('store-vote-overlay').style.display = 'flex';
+    let secs = storeVoteSecsLeft;
+    document.getElementById('svote-player-secs').textContent = secs;
+    if (svoteTimer) clearInterval(svoteTimer);
+    svoteTimer = setInterval(() => {
+      secs--;
+      const el = document.getElementById('svote-player-secs');
+      if (el) el.textContent = Math.max(0, secs);
+      if (secs <= 0) { clearInterval(svoteTimer); svoteTimer = null; }
+    }, 1000);
   } else {
     showLobby();
   }

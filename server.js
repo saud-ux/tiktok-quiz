@@ -53,6 +53,7 @@ function newState() {
     storeVoteYes: 0,
     storeVoteNo: 0,
     storeVoteTimer: null,
+    storeVoteEndTime: 0,
   };
 }
 
@@ -701,8 +702,13 @@ io.on('connection', socket => {
       socket.emit('player:rejoined', {
         id: socket.id, player: existing,
         active: G.active, preQ: G.preQ,
-        question: G.active ? { text: G.question.text, options: G.question.options, number: G.qNum } : null,
+        question: G.active ? { text: G.question.text, options: G.question.type === 'order' ? (G.question.shuffledItems || G.question.items) : G.question.options, number: G.qNum, type: G.question.type || 'normal' } : null,
         timeLeft: G.timeLeft,
+        questionTime: G.questionTime,
+        storeVoteActive: G.storeVoteActive,
+        storeVoteSecsLeft: G.storeVoteActive ? Math.max(0, Math.ceil((G.storeVoteEndTime - Date.now()) / 1000)) : 0,
+        storeVoteTally: G.storeVoteActive ? { yes: G.storeVoteYes, no: G.storeVoteNo, total: Object.keys(G.players).length, voted: G.storeVoted.size } : null,
+        alreadyVoted: G.storeVoteActive && G.storeVoted.has(socket.id),
       });
 
       if (G.active && G.escapedPlayers.has(existing.persistentId)) {
@@ -1020,6 +1026,7 @@ io.on('connection', socket => {
     G.storeVoteNo           = 0;
     G._storeVoteHostSocket  = socket;
     const duration          = 15;
+    G.storeVoteEndTime = Date.now() + duration * 1000;
     io.emit('game:store-vote-start', { duration });
     socket.emit('host:store-vote-started');
 
