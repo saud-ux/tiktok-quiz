@@ -39,6 +39,7 @@ function newState() {
     preQEligible: new Set(),
     preQResponded: new Set(),
     preQTimeout: null,
+    preQDecisions: {},
     isLastQuestion: false,
     isDramatic: true, // ← الكشف الدرامي مفعّل افتراضياً
     jokerUsed: {},       // ← من استخدم الجوكر في هذا السؤال
@@ -393,6 +394,31 @@ function startActualQuestion() {
     };
   });
 
+  // Apply deferred pre-question ability decisions (activated at question start, not during selection)
+  Object.entries(G.preQDecisions).forEach(([pid, dec]) => {
+    if (!G.players[pid]) return;
+    const { type, targetId } = dec;
+    if (type === 'immunity') {
+      G.effects[pid].immunity = true;
+      io.to(pid).emit('ability:result', { type: 'immunity', status: 'active' });
+      notify(pid, 'shield-active', '🛡️ الحصانة مفعّلة!');
+    } else if (type === 'ghost') {
+      G.effects[pid].ghost = true;
+      io.to(pid).emit('ability:result', { type: 'ghost', status: 'active' });
+      notify(pid, 'shield-active', '👻 أنت مخفي! لا أحد يستطيع استهدافك');
+      io.emit('game:players-update', publicPlayers());
+    } else if (targetId && G.players[targetId]) {
+      const res = applyAttack(pid, type, targetId, true);
+      if (res.ok && !res.pending) {
+        const st = res.reflected ? 'reflected' : res.blocked ? 'blocked' : 'success';
+        io.to(pid).emit('ability:result', { type, status: st, target: G.players[targetId]?.name });
+      } else if (res.ok && res.pending) {
+        io.to(pid).emit('ability:result', { type, status: 'success', target: G.players[targetId]?.name });
+      }
+    }
+  });
+  G.preQDecisions = {};
+
   const playerQ = {
     text:    G.question.text,
     options: G.question.type === 'order'
@@ -520,7 +546,7 @@ io.on('connection', socket => {
         G.preQ = false;
         startActualQuestion();
       }
-    }, 4000);
+    }, 10000);
   });
 
   socket.on('host:end-question', () => endQuestion());
@@ -534,29 +560,17 @@ io.on('connection', socket => {
       const p = G.players[socket.id];
       if (p) {
         const ab = p.abilities[category];
-        if (ab && !ab.used && ab.type === type && ['freeze','cut','immunity'].includes(ab.type)) {
-          if (ab.type === 'immunity') {
+        const validTypes = ['freeze', 'cut', 'immunity', 'ghost'];
+        if (ab && !ab.used && ab.type === type && validTypes.includes(ab.type)) {
+          if (ab.type !== 'ghost' && ab.type !== 'immunity' && (!targetId || !G.players[targetId] || targetId === socket.id)) {
+            // attack without valid target — skip
+          } else {
             ab.used = true;
-            if (!G.effects[socket.id]) G.effects[socket.id] = {};
-            G.effects[socket.id].immunity = true;
-            io.to(socket.id).emit('ability:result', { type: 'immunity', status: 'active' });
-            notify(socket.id, 'shield-active', '🛡️ الحصانة مفعّلة!');
-          } else if (ab.type === 'ghost') {
-            ab.used = true;
-            if (!G.effects[socket.id]) G.effects[socket.id] = {};
-            G.effects[socket.id].ghost = true;
-            io.to(socket.id).emit('ability:result', { type: 'ghost', status: 'active' });
-            notify(socket.id, 'shield-active', '👻 أنت مخفي! لا أحد يستطيع استهدافك');
+            G.preQDecisions[socket.id] = { category, type, targetId };
+            // Confirm selection (not activation) so the client marks it as used
+            io.to(socket.id).emit('ability:result', { type: ab.type, status: 'selected' });
             io.emit('game:players-update', publicPlayers());
-          } else if (targetId && G.players[targetId] && targetId !== socket.id) {
-            const res = applyAttack(socket.id, ab.type, targetId, true);
-            if (res.ok) {
-              ab.used = true;
-              const st = res.reflected ? 'reflected' : res.blocked ? 'blocked' : 'success';
-              io.to(socket.id).emit('ability:result', { type: ab.type, status: st, target: G.players[targetId]?.name });
-            }
           }
-          io.emit('game:players-update', publicPlayers());
         }
       }
     }
