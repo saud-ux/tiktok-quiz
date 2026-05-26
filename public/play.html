@@ -820,6 +820,11 @@ document.getElementById('frozen-screen').addEventListener('click', function(e) {
       isCut = false;
       const grid = document.getElementById('answer-grid');
       if (grid) grid.classList.remove('cut-locked');
+      document.querySelectorAll('.ans-btn').forEach(b => {
+        const pos = parseInt(b.id.replace('ans-', ''));
+        b.disabled = false;
+        b.onclick = () => submitAnswer(pos);
+      });
     }, 200);
   }
 });
