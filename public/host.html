@@ -35,6 +35,9 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 .btn-dramatic{padding:9px 14px;border-radius:10px;border:2px solid var(--purple);background:#16a34a18;color:var(--green);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s}
 .btn-dramatic:hover{filter:brightness(1.1)}
 .btn-dramatic.off{border-color:var(--border);background:var(--surface);color:var(--muted)}
+.dur-btn{padding:8px 14px;border-radius:10px;border:2px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s;flex:1;min-width:48px}
+.dur-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.dur-btn.dur-active{border-color:var(--cyan);background:#06b6d420;color:var(--cyan);box-shadow:0 0 10px #06b6d430}
 
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px}
 .card-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px}
@@ -299,6 +302,17 @@ textarea{min-height:70px}
             </div>
           </div>
 
+          <!-- question duration -->
+          <div style="margin-bottom:12px">
+            <label style="font-size:13px;font-weight:700;color:var(--muted);display:block;margin-bottom:8px">⏱ وقت السؤال</label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap" id="duration-btns">
+              <button onclick="setDuration(7)"  class="dur-btn" id="dur-7">7 ث</button>
+              <button onclick="setDuration(10)" class="dur-btn" id="dur-10">10 ث</button>
+              <button onclick="setDuration(15)" class="dur-btn" id="dur-15">15 ث</button>
+              <button onclick="setDuration(20)" class="dur-btn dur-active" id="dur-20">20 ث</button>
+              <button onclick="setDuration(30)" class="dur-btn" id="dur-30">30 ث</button>
+            </div>
+          </div>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
             <button class="btn-last-q" id="btn-last-q" onclick="toggleLastQuestion()">🏁 السؤال الأخير (الأخير ×3)</button>
             <span id="last-q-status" style="font-size:12px;color:var(--muted)">غير مفعّل</span>
@@ -476,6 +490,14 @@ const socket = io();
 let players = {};
 let currentQuestion = null;
 let qNum = 0;
+let selectedDuration = 20;
+
+function setDuration(secs) {
+  selectedDuration = secs;
+  document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('dur-active'));
+  const btn = document.getElementById('dur-' + secs);
+  if (btn) btn.classList.add('dur-active');
+}
 let questionQueue = [];
 let currentQueueIndex = -1;
 let categoriesData = null;
@@ -598,7 +620,7 @@ function startQuestion() {
   if (questionType === 'order') {
     const items = [0,1,2,3].map(i => document.getElementById('ord-' + i).value.trim());
     if (items.some(it => !it)) { toast('⚠️ أدخل جميع بنود الترتيب'); return; }
-    currentQuestion = { text, type: 'order', items, correctOrder: [0,1,2,3], options: items, hint: hint || null, image, isLastQuestion, isDramatic };
+    currentQuestion = { text, type: 'order', items, correctOrder: [0,1,2,3], options: items, hint: hint || null, image, isLastQuestion, isDramatic, duration: selectedDuration };
     socket.emit('host:start-question', currentQuestion);
     return;
   }
@@ -609,7 +631,7 @@ function startQuestion() {
   const correctEl = document.querySelector('input[name="correct"]:checked');
   if (!correctEl) { toast('⚠️ اختر الإجابة الصحيحة'); return; }
 
-  currentQuestion = { text, options, correctAnswer: parseInt(correctEl.value), hint: hint || null, image, isLastQuestion, isDramatic };
+  currentQuestion = { text, options, correctAnswer: parseInt(correctEl.value), hint: hint || null, image, isLastQuestion, isDramatic, duration: selectedDuration };
   socket.emit('host:start-question', currentQuestion);
 }
 

@@ -492,7 +492,10 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
     <div id="streak-badge" class="streak-badge" style="display:none">🔥0</div>
     <div style="font-size:13px;color:var(--muted)" id="q-counter">سؤال #1</div>
   </div>
-  <div class="timer-bar-wrap"><div class="timer-bar" id="timer-bar"></div></div>
+  <div class="timer-bar-wrap" style="position:relative">
+    <div class="timer-bar" id="timer-bar"></div>
+    <span id="timer-secs-label" style="position:absolute;left:6px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:900;color:var(--muted);pointer-events:none"></span>
+  </div>
 
   <!-- بانر السؤال الأخير -->
   <div class="last-q-banner" id="last-q-banner">🔥 السؤال الأخير! المركز الأخير يحصل على ×3 — استغل خصائصك الآن!</div>
@@ -688,7 +691,7 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const QUESTION_TIME = 20;
+let QUESTION_TIME = 20;
 
 // ─── ABILITIES DATA ───────────────────────────────────────────
 const ABILITIES = {
@@ -1881,13 +1884,17 @@ socket.on('game:leaderboard', lb => {
   lb.forEach(p => { if (allPlayers[p.id]) { allPlayers[p.id].points = p.points; allPlayers[p.id].streak = p.streak; } });
 });
 
-socket.on('game:question-start', ({ question, isLastQuestion }) => {
+socket.on('game:question-start', ({ question, isLastQuestion, questionTime }) => {
+  if (questionTime) {
+    QUESTION_TIME = questionTime;
+    const lbl = document.getElementById('timer-secs-label');
+    if (lbl) lbl.textContent = questionTime + 'ث';
+  }
   questionActive = true;
   closePreQModal(); hideWaitingOverlay();
   closeStore();
   hideReverseHalo();
   renderQuestion(question);
-  // ← بانر السؤال الأخير
   if (isLastQuestion) {
     document.getElementById('last-q-banner').classList.add('show');
     notify('🔥 السؤال الأخير! المركز الأخير يحصل على ×3', 'gold', 5000);
@@ -1906,6 +1913,8 @@ socket.on('game:timer', t => {
   const bar  = document.getElementById('timer-bar');
   const wrap = document.getElementById('screen-game').querySelector('.timer-bar-wrap');
   bar.style.width = (t / QUESTION_TIME * 100) + '%';
+  const lbl = document.getElementById('timer-secs-label');
+  if (lbl) lbl.textContent = t > 0 ? t + 'ث' : '';
 
   // وميض واهتزاز في آخر 5 ثواني
   if (t <= 5 && t > 0) {
@@ -2254,8 +2263,18 @@ function castStoreVote(v) {
   if (svoteVoted) return;
   svoteVoted = true;
   socket.emit('player:store-vote', { vote: v });
-  document.getElementById('svote-yes-btn').disabled = true;
-  document.getElementById('svote-no-btn').disabled  = true;
+  const yBtn = document.getElementById('svote-yes-btn');
+  const nBtn = document.getElementById('svote-no-btn');
+  yBtn.disabled = true; nBtn.disabled = true;
+  if (v === 'yes') {
+    yBtn.style.background = '#16a34a';
+    yBtn.style.color = '#fff';
+    yBtn.style.boxShadow = '0 0 16px #16a34a80';
+  } else {
+    nBtn.style.background = '#ef4444';
+    nBtn.style.color = '#fff';
+    nBtn.style.boxShadow = '0 0 16px #ef444480';
+  }
   document.getElementById('svote-done-msg').style.display = 'block';
   flashColor(v === 'yes' ? 'green' : 'red');
 }
@@ -2263,8 +2282,11 @@ function castStoreVote(v) {
 socket.on('game:store-vote-start', ({ duration }) => {
   svoteVoted = false;
   document.getElementById('svote-done-msg').style.display = 'none';
-  document.getElementById('svote-yes-btn').disabled = false;
-  document.getElementById('svote-no-btn').disabled  = false;
+  const yb = document.getElementById('svote-yes-btn');
+  const nb = document.getElementById('svote-no-btn');
+  yb.disabled = false; nb.disabled = false;
+  yb.style.background='#16a34a20'; yb.style.color='#4ade80'; yb.style.boxShadow='';
+  nb.style.background='#ef444420'; nb.style.color='#ef4444'; nb.style.boxShadow='';
   document.getElementById('svote-live-yes').textContent   = '0';
   document.getElementById('svote-live-no').textContent    = '0';
   document.getElementById('svote-live-voted').textContent = '0';

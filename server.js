@@ -15,7 +15,7 @@ app.get('/leaderboard', (_, res) => res.sendFile(path.join(__dirname, 'public', 
 // ─────────────────────────────────────────────────────────────
 // GAME STATE
 // ─────────────────────────────────────────────────────────────
-const QUESTION_TIME = 20; // ← تم تغييره من 30 إلى 20
+const DEFAULT_G.questionTime = 20;
 
 let G = newState();
 
@@ -25,7 +25,8 @@ function newState() {
     question: null,
     qNum: 0,
     active: false,
-    timeLeft: QUESTION_TIME,
+    timeLeft: DEFAULT_G.questionTime,
+    questionTime: DEFAULT_G.questionTime,
     timerRef: null,
     answers: {},
     effects: {},
@@ -207,7 +208,7 @@ function endQuestion() {
 
     if (correct) {
       const base  = 100;
-      const speed = ans ? Math.floor((ans.timeLeft / QUESTION_TIME) * 50) : 0;
+      const speed = ans ? Math.floor((ans.timeLeft / G.questionTime) * 50) : 0;
       let pts = base + speed;
       if (p.streak >= 5)      pts = Math.floor(pts * 2);
       else if (p.streak >= 3) pts = Math.floor(pts * 1.5);
@@ -222,7 +223,7 @@ function endQuestion() {
       if (!eff.revival) p.streak = 0;
     }
 
-    results[p.id] = { isCorrect: correct, delta, choice: ans?.choice ?? null, streak: p.streak, timeTaken: ans ? (QUESTION_TIME - ans.timeLeft) : null };
+    results[p.id] = { isCorrect: correct, delta, choice: ans?.choice ?? null, streak: p.streak, timeTaken: ans ? (G.questionTime - ans.timeLeft) : null };
   });
 
   // Phase 2 – معالجة خاصية السرقة
@@ -365,7 +366,7 @@ function startActualQuestion() {
   G.preQ = false;
   G.active    = true;
   G.escapedPlayers = new Set();
-  G.timeLeft  = QUESTION_TIME;
+  G.timeLeft  = G.questionTime;
   G.answers   = {};
   G.retryPending   = {};
   G.revivalPending = {};
@@ -435,7 +436,8 @@ function startActualQuestion() {
   };
   io.emit('game:question-start', {
     question: playerQ,
-    timeLeft: QUESTION_TIME,
+    timeLeft: G.questionTime,
+    questionTime: G.questionTime,
     isLastQuestion: G.isLastQuestion,
   });
 
@@ -501,9 +503,10 @@ io.on('connection', socket => {
     if (G.active || G.preQ) return;
     clearInterval(G.timerRef);
 
-    G.question = qData;
+    G.question     = qData;
     G.qNum++;
-    G.isLastQuestion = qData.isLastQuestion || false;
+    G.isLastQuestion  = qData.isLastQuestion || false;
+    G.questionTime    = [7,10,15,20,30].includes(qData.duration) ? qData.duration : DEFAULT_QUESTION_TIME;
     if (qData.isDramatic !== undefined) G.isDramatic = qData.isDramatic;
 
     Object.keys(G.players).forEach(pid => {
