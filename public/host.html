@@ -330,6 +330,30 @@ textarea{min-height:70px}
             <div style="color:var(--muted);font-size:14px">في انتظار انضمام اللاعبين...</div>
           </div>
         </div>
+
+        <!-- Store vote -->
+        <div class="card">
+          <div class="card-title">🛒 المتجر</div>
+          <button onclick="startStoreVote()" style="width:100%;padding:12px;border-radius:12px;border:2px solid var(--gold);background:#f59e0b15;color:var(--gold);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:.2s" id="btn-store-vote-setup">🗳️ نفتح المتجر؟ (تصويت 15 ثانية)</button>
+          <button onclick="openStore()" style="width:100%;margin-top:8px;padding:10px;border-radius:12px;border:2px solid #94a3b830;background:transparent;color:#94a3b8;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s" id="btn-open-store-setup">🛒 افتح المتجر مباشرة</button>
+          <div id="store-vote-panel-setup" style="display:none;margin-top:10px;background:#0f172a;border:1px solid var(--gold);border-radius:12px;padding:12px;text-align:center">
+            <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:8px">🗳️ تصويت جارٍ — <span id="svote-secs-setup">15</span>s</div>
+            <div style="display:flex;gap:8px;justify-content:center">
+              <div style="flex:1;background:#16a34a20;border:1px solid #16a34a;border-radius:10px;padding:8px">
+                <div style="font-size:22px;font-weight:900;color:#4ade80" id="svote-yes-setup">0</div>
+                <div style="font-size:11px;color:#86efac">آيه ✅</div>
+              </div>
+              <div style="flex:1;background:#ef444420;border:1px solid #ef4444;border-radius:10px;padding:8px">
+                <div style="font-size:22px;font-weight:900;color:#ef4444" id="svote-no-setup">0</div>
+                <div style="font-size:11px;color:#fca5a5">لا ❌</div>
+              </div>
+              <div style="flex:1;background:#1e293b;border:1px solid #334155;border-radius:10px;padding:8px">
+                <div style="font-size:22px;font-weight:900;color:#94a3b8" id="svote-total-setup">0</div>
+                <div style="font-size:11px;color:#64748b">صوّتوا</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- ACTIVE PANEL -->
@@ -459,51 +483,48 @@ function previewImage(url) {
 
 function openStore() {
   socket.emit('host:open-store');
-  const btn = document.getElementById('btn-open-store');
-  if (btn) { btn.disabled = true; btn.textContent = '🔒 المتجر مفتوح (30 ثانية)'; }
-  setTimeout(() => {
-    if (btn) { btn.disabled = false; btn.textContent = '🛒 افتح المتجر مباشرة'; }
-  }, 31000);
+  ['btn-open-store','btn-open-store-setup'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) { btn.disabled = true; btn.textContent = '🔒 المتجر مفتوح (30 ثانية)'; }
+    setTimeout(() => { if (btn) { btn.disabled = false; btn.textContent = '🛒 افتح المتجر مباشرة'; } }, 31000);
+  });
 }
 
 let svoteInterval = null;
 function startStoreVote() {
-  const btn = document.getElementById('btn-store-vote');
-  if (btn) btn.disabled = true;
+  ['btn-store-vote','btn-store-vote-setup'].forEach(id => { const b=document.getElementById(id); if(b) b.disabled=true; });
   socket.emit('host:start-store-vote');
 }
 
 socket.on('host:store-vote-started', () => {
-  document.getElementById('store-vote-panel').style.display = 'block';
+  ['store-vote-panel','store-vote-panel-setup'].forEach(id => { const el=document.getElementById(id); if(el) el.style.display='block'; });
   let secs = 15;
-  document.getElementById('svote-secs').textContent = secs;
+  ['svote-secs','svote-secs-setup'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent=secs; });
   if (svoteInterval) clearInterval(svoteInterval);
   svoteInterval = setInterval(() => {
     secs--;
-    const el = document.getElementById('svote-secs');
-    if (el) el.textContent = secs;
+    ['svote-secs','svote-secs-setup'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent=secs; });
     if (secs <= 0) { clearInterval(svoteInterval); svoteInterval = null; }
   }, 1000);
 });
 
 socket.on('host:store-vote-tally', ({ yes, no, voted }) => {
-  document.getElementById('svote-yes').textContent   = yes;
-  document.getElementById('svote-no').textContent    = no;
-  document.getElementById('svote-total').textContent = voted;
+  ['svote-yes','svote-yes-setup'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=yes;});
+  ['svote-no','svote-no-setup'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=no;});
+  ['svote-total','svote-total-setup'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=voted;});
 });
 
 socket.on('host:store-vote-result', ({ yes, no, open }) => {
   if (svoteInterval) { clearInterval(svoteInterval); svoteInterval = null; }
-  document.getElementById('store-vote-panel').style.display = 'none';
-  const btn = document.getElementById('btn-store-vote');
-  if (btn) btn.disabled = false;
+  ['store-vote-panel','store-vote-panel-setup'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  ['btn-store-vote','btn-store-vote-setup'].forEach(id=>{const b=document.getElementById(id);if(b)b.disabled=false;});
   toast(open ? `✅ فاز الآيه (${yes} vs ${no}) — المتجر يفتح!` : `❌ فاز اللا (${no} vs ${yes}) — المتجر مغلق`, 4000);
   if (open) {
-    const ob = document.getElementById('btn-open-store');
-    if (ob) { ob.disabled = true; ob.textContent = '🔒 المتجر مفتوح (30 ثانية)'; }
-    setTimeout(() => {
-      if (ob) { ob.disabled = false; ob.textContent = '🛒 افتح المتجر مباشرة'; }
-    }, 31000);
+    ['btn-open-store','btn-open-store-setup'].forEach(id => {
+      const ob = document.getElementById(id);
+      if (ob) { ob.disabled = true; ob.textContent = '🔒 المتجر مفتوح (30 ثانية)'; }
+      setTimeout(() => { if (ob) { ob.disabled = false; ob.textContent = '🛒 افتح المتجر مباشرة'; } }, 31000);
+    });
   }
 });
 
