@@ -331,11 +331,17 @@ textarea{min-height:70px}
           </div>
         </div>
 
-        <!-- Store vote -->
-        <div class="card">
+        <!-- Store card -->
+        <div class="card" id="store-card">
           <div class="card-title">🛒 المتجر</div>
-          <button onclick="startStoreVote()" style="width:100%;padding:12px;border-radius:12px;border:2px solid var(--gold);background:#f59e0b15;color:var(--gold);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:.2s" id="btn-store-vote-setup">🗳️ نفتح المتجر؟ (تصويت 15 ثانية)</button>
-          <button onclick="openStore()" style="width:100%;margin-top:8px;padding:10px;border-radius:12px;border:2px solid #94a3b830;background:transparent;color:#94a3b8;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s" id="btn-open-store-setup">🛒 افتح المتجر مباشرة</button>
+
+          <!-- buttons -->
+          <div id="store-btns">
+            <button onclick="startStoreVote()" style="width:100%;padding:12px;border-radius:12px;border:2px solid var(--gold);background:#f59e0b15;color:var(--gold);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:.2s" id="btn-store-vote-setup">🗳️ نفتح المتجر؟ (تصويت 15 ثانية)</button>
+            <button onclick="openStore()" style="width:100%;margin-top:8px;padding:10px;border-radius:12px;border:2px solid #94a3b830;background:transparent;color:#94a3b8;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s" id="btn-open-store-setup">🛒 افتح المتجر مباشرة</button>
+          </div>
+
+          <!-- vote tally -->
           <div id="store-vote-panel-setup" style="display:none;margin-top:10px;background:#0f172a;border:1px solid var(--gold);border-radius:12px;padding:12px;text-align:center">
             <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:8px">🗳️ تصويت جارٍ — <span id="svote-secs-setup">15</span>s</div>
             <div style="display:flex;gap:8px;justify-content:center">
@@ -351,6 +357,17 @@ textarea{min-height:70px}
                 <div style="font-size:22px;font-weight:900;color:#94a3b8" id="svote-total-setup">0</div>
                 <div style="font-size:11px;color:#64748b">صوّتوا</div>
               </div>
+            </div>
+          </div>
+
+          <!-- store open status -->
+          <div id="store-open-status" style="display:none;margin-top:10px;background:#16a34a15;border:2px solid #16a34a;border-radius:12px;padding:14px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <div style="font-size:14px;font-weight:900;color:#4ade80">🛒 المتجر مفتوح — <span id="store-countdown">30</span>s</div>
+              <button onclick="closeStore()" style="padding:6px 14px;border-radius:8px;border:1px solid var(--red);background:#ef444415;color:#ef4444;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">❌ أغلق الآن</button>
+            </div>
+            <div id="store-purchases-list" style="font-size:13px;color:#86efac;display:flex;flex-direction:column;gap:4px">
+              <div style="color:#4ade8070;font-size:12px">لا يوجد مشتريات بعد...</div>
             </div>
           </div>
         </div>
@@ -481,13 +498,34 @@ function previewImage(url) {
   else preview.style.display = 'none';
 }
 
+let storeCountdownInterval = null;
 function openStore() {
   socket.emit('host:open-store');
-  ['btn-open-store','btn-open-store-setup'].forEach(id => {
-    const btn = document.getElementById(id);
-    if (btn) { btn.disabled = true; btn.textContent = '🔒 المتجر مفتوح (30 ثانية)'; }
-    setTimeout(() => { if (btn) { btn.disabled = false; btn.textContent = '🛒 افتح المتجر مباشرة'; } }, 31000);
-  });
+}
+
+function closeStore() {
+  socket.emit('host:close-store');
+}
+
+function showStoreOpen(duration) {
+  document.getElementById('store-btns').style.display = 'none';
+  document.getElementById('store-open-status').style.display = 'block';
+  document.getElementById('store-purchases-list').innerHTML = '<div style="color:#4ade8070;font-size:12px">لا يوجد مشتريات بعد...</div>';
+  let secs = duration;
+  document.getElementById('store-countdown').textContent = secs;
+  if (storeCountdownInterval) clearInterval(storeCountdownInterval);
+  storeCountdownInterval = setInterval(() => {
+    secs--;
+    const el = document.getElementById('store-countdown');
+    if (el) el.textContent = secs;
+    if (secs <= 0) { clearInterval(storeCountdownInterval); storeCountdownInterval = null; }
+  }, 1000);
+}
+
+function showStoreClosed() {
+  if (storeCountdownInterval) { clearInterval(storeCountdownInterval); storeCountdownInterval = null; }
+  document.getElementById('store-btns').style.display = 'block';
+  document.getElementById('store-open-status').style.display = 'none';
 }
 
 let svoteInterval = null;
@@ -519,13 +557,7 @@ socket.on('host:store-vote-result', ({ yes, no, open }) => {
   ['store-vote-panel','store-vote-panel-setup'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   ['btn-store-vote','btn-store-vote-setup'].forEach(id=>{const b=document.getElementById(id);if(b)b.disabled=false;});
   toast(open ? `✅ فاز الآيه (${yes} vs ${no}) — المتجر يفتح!` : `❌ فاز اللا (${no} vs ${yes}) — المتجر مغلق`, 4000);
-  if (open) {
-    ['btn-open-store','btn-open-store-setup'].forEach(id => {
-      const ob = document.getElementById(id);
-      if (ob) { ob.disabled = true; ob.textContent = '🔒 المتجر مفتوح (30 ثانية)'; }
-      setTimeout(() => { if (ob) { ob.disabled = false; ob.textContent = '🛒 افتح المتجر مباشرة'; } }, 31000);
-    });
-  }
+  if (open) showStoreOpen(30);
 });
 
 // ── HELPERS ──────────────────────────────────────────────────
@@ -1007,8 +1039,25 @@ socket.on('game:reveal-sequence', ({ sequence, correctAnswer, options }) => {
   setTimeout(() => overlay.classList.remove('open'), totalDelay - 200);
 });
 
-socket.on('host:store-opened', () => {
-  toast('🛒 تم فتح المتجر للاعبين — 30 ثانية', 3000);
+socket.on('host:store-opened', ({ duration } = {}) => {
+  showStoreOpen(duration || 30);
+  toast('🛒 المتجر مفتوح للاعبين!', 2000);
+});
+
+socket.on('host:store-closed-confirm', () => {
+  showStoreClosed();
+  toast('🔒 تم إغلاق المتجر', 2000);
+});
+
+socket.on('host:store-purchase', ({ playerName, icon, itemId }) => {
+  const list = document.getElementById('store-purchases-list');
+  if (!list) return;
+  const empty = list.querySelector('div[style*="4ade8070"]');
+  if (empty) empty.remove();
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #16a34a20';
+  row.innerHTML = `<span>${icon}</span><span style="font-weight:700">${playerName}</span><span style="color:#4ade8090;font-size:12px">اشترى ${itemId==='hint'?'تلميح':itemId==='eliminate'?'حذف خيار':'مضاعف نقاط'}</span>`;
+  list.appendChild(row);
 });
 
 socket.on('game:final', ({ top3, leaderboard: lb }) => {

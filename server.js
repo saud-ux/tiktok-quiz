@@ -996,7 +996,15 @@ io.on('connection', socket => {
       G.storeOpen = false;
       io.emit('game:store-closed');
     }, 30000);
-    socket.emit('host:store-opened');
+    socket.emit('host:store-opened', { duration: 30 });
+  });
+
+  socket.on('host:close-store', () => {
+    if (!G.storeOpen) return;
+    if (G.storeTimer) clearTimeout(G.storeTimer);
+    G.storeOpen = false;
+    io.emit('game:store-closed');
+    socket.emit('host:store-closed-confirm');
   });
 
   socket.on('host:start-store-vote', () => {
@@ -1030,7 +1038,8 @@ io.on('connection', socket => {
           { id: 'multiplier', icon: '⚡', name: 'مضاعف النقاط ×1.5', desc: 'نقاطك ×1.5 إذا أجبت صح',           cost: 250 },
         ];
         io.emit('game:store-open', { items: storeItems, duration: 30 });
-        G.storeTimer = setTimeout(() => { G.storeOpen = false; io.emit('game:store-closed'); }, 30000);
+        G._storeVoteHostSocket?.emit('host:store-opened', { duration: 30 });
+        G.storeTimer = setTimeout(() => { G.storeOpen = false; io.emit('game:store-closed'); G._storeVoteHostSocket?.emit('host:store-closed-confirm'); }, 30000);
       }
     }
 
@@ -1067,6 +1076,8 @@ io.on('connection', socket => {
     p.points -= cost;
     G.storePurchases[socket.id][itemId] = true;
     socket.emit('game:store-purchased', { itemId, newPoints: p.points, cost });
+    const icons = { hint: '💡', eliminate: '🗑️', multiplier: '⚡' };
+    G._storeVoteHostSocket?.emit('host:store-purchase', { playerName: p.name, itemId, icon: icons[itemId] || '🛒', cost });
     io.emit('game:leaderboard', leaderboard());
     io.emit('game:players-update', publicPlayers());
   });
