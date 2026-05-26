@@ -1276,6 +1276,40 @@ socket.on('game:last-question-announcement', () => {
   document.getElementById('last-q-banner').classList.add('show');
 });
 
+socket.on('game:reveal-sequence', ({ sequence }) => {
+  // أظهر شاشة انتظار بسيطة أثناء كشف الإجابات
+  const myEntry = sequence.find(p => p.id === myId);
+  const myPos   = sequence.findIndex(p => p.id === myId);
+
+  // أضف بانر "جاري الكشف"
+  let banner = document.getElementById('reveal-wait-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'reveal-wait-banner';
+    banner.style.cssText = `
+      position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+      background:#1e1b4b;border:1px solid #7c3aed;color:#e2e8f0;
+      padding:12px 24px;border-radius:14px;font-size:15px;font-weight:700;
+      z-index:200;text-align:center;animation:fadeIn .3s ease
+    `;
+    document.body.appendChild(banner);
+  }
+  banner.textContent = '🎭 جاري الكشف عن الإجابات...';
+
+  // حين يجي دوره اظهر اشعار
+  if (myEntry) {
+    setTimeout(() => {
+      banner.textContent = myEntry.isCorrect ? '✅ إجابتك صحيحة!' : '❌ إجابتك خاطئة';
+      banner.style.borderColor = myEntry.isCorrect ? '#22c55e' : '#ef4444';
+      banner.style.background  = myEntry.isCorrect ? '#052e16' : '#1f0707';
+    }, myPos * 1400 + 600);
+  }
+
+  // اخفِ البانر حين تأتي النتائج الرسمية
+  const total = Math.min(sequence.length * 1400 + 1200, 18000);
+  setTimeout(() => { if (banner) banner.remove(); }, total - 100);
+});
+
 socket.on('game:triple-boost', () => {
   // أظهر إشعاراً خاصاً للاعب الأخير
   const el = document.createElement('div');

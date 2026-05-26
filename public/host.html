@@ -137,6 +137,20 @@ textarea{min-height:70px}
 .queue-scroll::-webkit-scrollbar{width:4px}
 .queue-scroll::-webkit-scrollbar-thumb{background:var(--purple);border-radius:2px}
 
+/* Reveal overlay */
+.reveal-overlay{position:fixed;inset:0;background:#000000dd;z-index:150;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px}
+.reveal-overlay.open{display:flex}
+.reveal-title{font-size:20px;font-weight:900;color:var(--text);margin-bottom:6px;letter-spacing:1px;text-transform:uppercase}
+.reveal-card{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:12px 20px;display:flex;align-items:center;gap:14px;width:420px;max-width:90vw;opacity:0;transform:translateX(80px);transition:all .45s cubic-bezier(.34,1.56,.64,1)}
+.reveal-card.show{opacity:1;transform:translateX(0)}
+.reveal-card.correct{border-color:var(--green);background:#10b98112}
+.reveal-card.wrong{border-color:var(--red);background:#ef444412}
+.reveal-icon{font-size:26px;flex-shrink:0}
+.reveal-name{flex:1;font-size:16px;font-weight:800}
+.reveal-pts{font-size:15px;font-weight:900;color:var(--purple-light)}
+@keyframes revealPulse{0%{box-shadow:0 0 0 0 #22c55e60}70%{box-shadow:0 0 0 12px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.reveal-card.correct.show{animation:revealPulse .6s ease}
+
 /* Preview modal */
 .preview-overlay{position:fixed;inset:0;background:#00000085;z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
 .preview-overlay.open{display:flex}
@@ -293,6 +307,12 @@ textarea{min-height:70px}
       </div>
     </div>
   </div>
+</div>
+
+<!-- DRAMATIC REVEAL OVERLAY -->
+<div class="reveal-overlay" id="reveal-overlay">
+  <div class="reveal-title">🎭 كشف الإجابات</div>
+  <div id="reveal-cards" style="display:flex;flex-direction:column;gap:8px;width:420px;max-width:90vw"></div>
 </div>
 
 <!-- QUESTION PREVIEW MODAL -->
@@ -674,6 +694,35 @@ socket.on('game:reset', () => {
   document.getElementById('btn-start').disabled = false;
   showSetup();
   toast('🔄 تم إعادة تشغيل اللعبة');
+});
+
+socket.on('game:reveal-sequence', ({ sequence, correctAnswer, options }) => {
+  const overlay = document.getElementById('reveal-overlay');
+  const container = document.getElementById('reveal-cards');
+  container.innerHTML = '';
+  overlay.classList.add('open');
+
+  sequence.forEach((p, i) => {
+    const card = document.createElement('div');
+    card.className = 'reveal-card ' + (p.isCorrect ? 'correct' : 'wrong');
+    const sign = p.delta > 0 ? '+' : '';
+    const extra = p.tripleBoost ? ' ×3🔥🔥' : p.holed ? ' 🪙' : '';
+    card.innerHTML = `
+      <span class="reveal-icon">${p.isCorrect ? '✅' : '❌'}</span>
+      ${renderAvatar(p.avatar, 36)}
+      <span class="reveal-name">${p.name}</span>
+      <span class="reveal-pts">${sign}${p.delta}${extra}</span>
+    `;
+    container.appendChild(card);
+
+    setTimeout(() => {
+      card.classList.add('show');
+    }, i * 1400 + 300);
+  });
+
+  // أغلق الـ overlay عند انتهاء الكشف
+  const totalDelay = Math.min(sequence.length * 1400 + 1200, 18000);
+  setTimeout(() => overlay.classList.remove('open'), totalDelay - 200);
 });
 
 socket.on('game:final', ({ top3, leaderboard: lb }) => {

@@ -273,14 +273,40 @@ function endQuestion() {
   G.effects      = newEff;
   G.nextEffects  = {};
 
-  io.emit('game:question-end', {
+  // Phase 4.5 – تسلسل الكشف الدرامي (الخطأ أولاً، الصح آخراً)
+  const revealSequence = Object.entries(results)
+    .filter(([pid]) => G.players[pid])
+    .map(([pid, r]) => ({
+      id:          pid,
+      name:        G.players[pid]?.name,
+      avatar:      G.players[pid]?.avatar,
+      isCorrect:   r.isCorrect,
+      delta:       r.delta,
+      choice:      r.choice,
+      tripleBoost: r.tripleBoost || false,
+      holed:       r.holed       || false,
+    }))
+    .sort((a, b) => a.isCorrect - b.isCorrect); // الخطأ أولاً
+
+  const revealDelay = Math.min(revealSequence.length * 1400 + 1200, 18000);
+
+  io.emit('game:reveal-sequence', {
+    sequence:      revealSequence,
     correctAnswer: q.correctAnswer,
-    results,
-    leaderboard: leaderboard(),
-    qNum: G.qNum,
-    wasLastQuestion: G.isLastQuestion,
+    options:       q.options,
   });
-  io.emit('game:leaderboard', leaderboard());
+
+  const endPayload = {
+    correctAnswer:   q.correctAnswer,
+    results,
+    leaderboard:     leaderboard(),
+    qNum:            G.qNum,
+    wasLastQuestion: G.isLastQuestion,
+  };
+  setTimeout(() => {
+    io.emit('game:question-end', endPayload);
+    io.emit('game:leaderboard', leaderboard());
+  }, revealDelay);
 
   // Phase 5 – الفرصة الأخيرة: كل سؤالين يحصل الأخير على خاصية مجانية
   if (G.qNum % 4 === 0 && !G.isLastQuestion) {
