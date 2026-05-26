@@ -1393,6 +1393,7 @@ socket.on('game:revival-available', () => {
 socket.on('game:question-end', data => {
   questionActive = false;
   clearDanger();
+  document.getElementById('frozen-screen').classList.remove('show');
   document.getElementById('last-second-btn')?.remove();
   document.getElementById('screen-game').querySelector('.timer-bar-wrap').classList.remove('danger');
   if (data.leaderboard) {
