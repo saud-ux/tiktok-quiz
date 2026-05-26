@@ -968,9 +968,9 @@ io.on('connection', socket => {
     G.storeOpen = true;
     G.storePurchases = {};
     const storeItems = [
-      { id: 'hint',       icon: '💡', name: 'تلميح تلقائي',    desc: 'يُكشف تلميح السؤال القادم تلقائياً',        cost: 150 },
-      { id: 'eliminate',  icon: '🗑️', name: 'حذف خيار خاطئ',  desc: 'يُحذف خيار خاطئ في السؤال القادم',         cost: 100 },
-      { id: 'multiplier', icon: '⚡', name: 'مضاعف النقاط ×1.5', desc: 'نقاطك في السؤال القادم ×1.5 إذا أجبت صح', cost: 200 },
+      { id: 'hint',       icon: '💡', name: 'تلميح تلقائي',    desc: 'يُكشف تلميح السؤال القادم تلقائياً',        cost: 200 },
+      { id: 'eliminate',  icon: '🗑️', name: 'حذف خيار خاطئ',  desc: 'يُحذف خيار خاطئ في السؤال القادم',         cost: 300 },
+      { id: 'multiplier', icon: '⚡', name: 'مضاعف النقاط ×1.5', desc: 'نقاطك في السؤال القادم ×1.5 إذا أجبت صح', cost: 250 },
     ];
     io.emit('game:store-open', { items: storeItems, duration: 30 });
     G.storeTimer = setTimeout(() => {
@@ -984,7 +984,7 @@ io.on('connection', socket => {
     if (!G.storeOpen) { socket.emit('game:notify', { type: 'error', msg: '⚠️ المتجر مغلق الآن' }); return; }
     const p = G.players[socket.id];
     if (!p) return;
-    const costs = { hint: 150, eliminate: 100, multiplier: 200 };
+    const costs = { hint: 200, eliminate: 300, multiplier: 250 };
     const cost  = costs[itemId];
     if (!cost) return;
     if (!G.storePurchases[socket.id]) G.storePurchases[socket.id] = {};
