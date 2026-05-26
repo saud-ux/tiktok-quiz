@@ -495,7 +495,7 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
   <div class="timer-bar-wrap"><div class="timer-bar" id="timer-bar"></div></div>
 
   <!-- بانر السؤال الأخير -->
-  <div class="last-q-banner" id="last-q-banner">🔥 السؤال الأخير! النقاط مضاعفة ×2 — استغل خصائصك الآن!</div>
+  <div class="last-q-banner" id="last-q-banner">🔥 السؤال الأخير! المركز الأخير يحصل على ×3 — استغل خصائصك الآن!</div>
 
   <!-- عداد الإجابات المباشر -->
   <div class="live-counter" id="live-counter" style="display:none">
@@ -601,7 +601,7 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
   <span class="lqa-fire">🔥</span>
   <div class="lqa-title">السؤال الأخير!</div>
   <div class="lqa-sub">استعد — هذا هو الحسم</div>
-  <div class="lqa-pts">⚡ النقاط مضاعفة ×2</div>
+  <div class="lqa-pts">⚡ المركز الأخير يحصل على ×3!</div>
   <div class="lqa-countdown" id="lqa-countdown">يختفي خلال 4 ثوانٍ...</div>
 </div>
 
@@ -1890,7 +1890,7 @@ socket.on('game:question-start', ({ question, isLastQuestion }) => {
   // ← بانر السؤال الأخير
   if (isLastQuestion) {
     document.getElementById('last-q-banner').classList.add('show');
-    notify('🔥 السؤال الأخير! النقاط مضاعفة ×2', 'gold', 5000);
+    notify('🔥 السؤال الأخير! المركز الأخير يحصل على ×3', 'gold', 5000);
   }
 });
 
