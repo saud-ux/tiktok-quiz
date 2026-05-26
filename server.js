@@ -39,7 +39,8 @@ function newState() {
     preQEligible: new Set(),
     preQResponded: new Set(),
     preQTimeout: null,
-    isLastQuestion: false, // ← جديد: السؤال الأخير
+    isLastQuestion: false,
+    isDramatic: true, // ← الكشف الدرامي مفعّل افتراضياً
   };
 }
 
@@ -273,29 +274,6 @@ function endQuestion() {
   G.effects      = newEff;
   G.nextEffects  = {};
 
-  // Phase 4.5 – تسلسل الكشف الدرامي (الخطأ أولاً، الصح آخراً)
-  const revealSequence = Object.entries(results)
-    .filter(([pid]) => G.players[pid])
-    .map(([pid, r]) => ({
-      id:          pid,
-      name:        G.players[pid]?.name,
-      avatar:      G.players[pid]?.avatar,
-      isCorrect:   r.isCorrect,
-      delta:       r.delta,
-      choice:      r.choice,
-      tripleBoost: r.tripleBoost || false,
-      holed:       r.holed       || false,
-    }))
-    .sort((a, b) => a.isCorrect - b.isCorrect); // الخطأ أولاً
-
-  const revealDelay = Math.min(revealSequence.length * 1400 + 1200, 18000);
-
-  io.emit('game:reveal-sequence', {
-    sequence:      revealSequence,
-    correctAnswer: q.correctAnswer,
-    options:       q.options,
-  });
-
   const endPayload = {
     correctAnswer:   q.correctAnswer,
     results,
@@ -303,10 +281,34 @@ function endQuestion() {
     qNum:            G.qNum,
     wasLastQuestion: G.isLastQuestion,
   };
-  setTimeout(() => {
+
+  if (G.isDramatic) {
+    // Phase 4.5 – تسلسل الكشف الدرامي (الخطأ أولاً، الصح آخراً)
+    const revealSequence = Object.entries(results)
+      .filter(([pid]) => G.players[pid])
+      .map(([pid, r]) => ({
+        id:          pid,
+        name:        G.players[pid]?.name,
+        avatar:      G.players[pid]?.avatar,
+        isCorrect:   r.isCorrect,
+        delta:       r.delta,
+        choice:      r.choice,
+        tripleBoost: r.tripleBoost || false,
+        holed:       r.holed       || false,
+      }))
+      .sort((a, b) => a.isCorrect - b.isCorrect);
+
+    const revealDelay = Math.min(revealSequence.length * 1400 + 1200, 18000);
+    io.emit('game:reveal-sequence', { sequence: revealSequence, correctAnswer: q.correctAnswer, options: q.options });
+    setTimeout(() => {
+      io.emit('game:question-end', endPayload);
+      io.emit('game:leaderboard', leaderboard());
+    }, revealDelay);
+  } else {
+    // عرض فوري بدون كشف درامي
     io.emit('game:question-end', endPayload);
     io.emit('game:leaderboard', leaderboard());
-  }, revealDelay);
+  }
 
   // Phase 5 – الفرصة الأخيرة: كل سؤالين يحصل الأخير على خاصية مجانية
   if (G.qNum % 4 === 0 && !G.isLastQuestion) {
@@ -414,6 +416,7 @@ io.on('connection', socket => {
     G.question = qData;
     G.qNum++;
     G.isLastQuestion = qData.isLastQuestion || false;
+    if (qData.isDramatic !== undefined) G.isDramatic = qData.isDramatic;
 
     Object.keys(G.players).forEach(pid => {
       if (!G.effects[pid]) G.effects[pid] = {};

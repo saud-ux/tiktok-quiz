@@ -32,6 +32,9 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 .btn-last-q{padding:9px 14px;border-radius:10px;border:2px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s}
 .btn-last-q:hover{border-color:var(--gold);color:var(--gold)}
 .btn-last-q.on{border-color:var(--gold);background:#f59e0b20;color:var(--gold);box-shadow:0 0 12px #f59e0b40}
+.btn-dramatic{padding:9px 14px;border-radius:10px;border:2px solid var(--purple);background:#16a34a18;color:var(--green);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s}
+.btn-dramatic:hover{filter:brightness(1.1)}
+.btn-dramatic.off{border-color:var(--border);background:var(--surface);color:var(--muted)}
 
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px}
 .card-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px}
@@ -254,9 +257,10 @@ textarea{min-height:70px}
             <input type="text" id="q-hint" placeholder="أضف تلميحاً للاعبين الذين يملكون خاصية التلميح">
           </div>
 
-          <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
             <button class="btn-last-q" id="btn-last-q" onclick="toggleLastQuestion()">🏁 السؤال الأخير (الأخير ×3)</button>
             <span id="last-q-status" style="font-size:12px;color:var(--muted)">غير مفعّل</span>
+            <button class="btn-dramatic" id="btn-dramatic" onclick="toggleDramatic()">🎭 كشف درامي: مفعّل</button>
           </div>
           <button class="btn btn-start" id="btn-start" onclick="startQuestion()">▶ ابدأ السؤال</button>
         </div>
@@ -414,7 +418,7 @@ function startQuestion() {
 
   const hint = document.getElementById('q-hint').value.trim();
 
-  currentQuestion = { text, options, correctAnswer: parseInt(correctEl.value), hint: hint || null };
+  currentQuestion = { text, options, correctAnswer: parseInt(correctEl.value), hint: hint || null, isLastQuestion, isDramatic };
   socket.emit('host:start-question', currentQuestion);
 }
 
@@ -430,6 +434,20 @@ function resetGame() {
 function endGame() {
   if (!confirm('إنهاء اللعبة وعرض المراكز الثلاثة الأولى؟')) return;
   socket.emit('host:end-game');
+}
+
+let isDramatic = true;
+function toggleDramatic() {
+  isDramatic = !isDramatic;
+  const btn = document.getElementById('btn-dramatic');
+  if (isDramatic) {
+    btn.classList.remove('off');
+    btn.textContent = '🎭 كشف درامي: مفعّل';
+  } else {
+    btn.classList.add('off');
+    btn.textContent = '⚡ كشف درامي: موقوف';
+  }
+  toast(isDramatic ? '🎭 الكشف الدرامي مفعّل' : '⚡ النتائج ستظهر فوراً', 2000);
 }
 
 let isLastQuestion = false;
