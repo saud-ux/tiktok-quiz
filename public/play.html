@@ -402,6 +402,16 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 /* ── ATTACK LAUNCH ── */
 @keyframes launchPop{0%{transform:scale(0) rotate(-20deg);opacity:0}60%{transform:scale(1.2) rotate(4deg)}100%{transform:scale(1) rotate(0);opacity:1}}
 @keyframes launchFade{0%{opacity:0}15%{opacity:1}75%{opacity:1}100%{opacity:0}}
+
+/* ── SCREEN CRACKS (غلط) ── */
+@keyframes crackGrow{to{width:110px}}
+@keyframes cracksFade{0%{opacity:0}10%{opacity:1}60%{opacity:1}100%{opacity:0}}
+
+/* ── REVERSE HALO ── */
+#reverse-halo{position:fixed;inset:0;pointer-events:none;z-index:495;border:2px solid #22c55e;opacity:0;transition:opacity .3s}
+#reverse-halo.active{opacity:1;animation:haloBreath 1.3s ease-in-out infinite alternate}
+@keyframes haloBreath{from{box-shadow:0 0 12px #22c55e50,inset 0 0 12px #22c55e10}to{box-shadow:0 0 32px #22c55e90,inset 0 0 26px #22c55e20}}
+@keyframes haloFire{0%{opacity:1;box-shadow:0 0 70px #4ade80,inset 0 0 60px #22c55e40}100%{opacity:0;box-shadow:none}}
 </style>
 </head>
 <body>
@@ -620,6 +630,7 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 <div id="danger-vignette"></div>
 <div id="ice-overlay"></div>
 <div id="shield-burst"></div>
+<div id="reverse-halo"></div>
 <div id="frozen-screen">
   <div class="frozen-big-icon">❄️</div>
   <div id="frozen-tap-counter">15</div>
@@ -880,6 +891,42 @@ function showAttackLaunched(icon, targetName) {
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 1200);
   flashColor('red');
+}
+
+function showScreenCracks() {
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9997;animation:cracksFade .95s ease forwards';
+  const angles = [10, 50, 95, 140, 170, 210, 255, 310];
+  angles.forEach((angle, i) => {
+    const line = document.createElement('div');
+    line.style.cssText = `position:absolute;left:50%;top:48%;width:0;height:2px;background:linear-gradient(90deg,#ef4444cc,transparent);transform-origin:left center;transform:rotate(${angle}deg);box-shadow:0 0 5px #ef444470;animation:crackGrow .28s ease ${i * 0.03}s forwards`;
+    wrap.appendChild(line);
+  });
+  document.body.appendChild(wrap);
+  setTimeout(() => wrap.remove(), 1050);
+}
+
+function showReverseHalo() {
+  const el = document.getElementById('reverse-halo');
+  el.style.animation = '';
+  el.style.opacity   = '';
+  void el.offsetWidth;
+  el.className = 'active';
+}
+
+function fireReverseHalo() {
+  const el = document.getElementById('reverse-halo');
+  el.className = '';
+  el.style.opacity   = '1';
+  el.style.animation = 'haloFire .45s ease forwards';
+  setTimeout(() => { el.style.animation = ''; el.style.opacity = ''; }, 500);
+}
+
+function hideReverseHalo() {
+  const el = document.getElementById('reverse-halo');
+  el.className = '';
+  el.style.animation = '';
+  el.style.opacity   = '';
 }
 
 function triggerDanger(t) {
@@ -1811,7 +1858,8 @@ socket.on('game:leaderboard', lb => {
 socket.on('game:question-start', ({ question, isLastQuestion }) => {
   questionActive = true;
   closePreQModal(); hideWaitingOverlay();
-  closeStore(); // أغلق المتجر تلقائياً عند بدء السؤال
+  closeStore();
+  hideReverseHalo();
   renderQuestion(question);
   // ← بانر السؤال الأخير
   if (isLastQuestion) {
@@ -1899,7 +1947,7 @@ socket.on('player:answer-accepted', ({ choice, correct, isRetry, isLastSecond, i
   const btnPos = shuffleMap ? shuffleMap.indexOf(choice) : choice;
   const btn = document.getElementById('ans-' + btnPos);
   if (btn) { btn.classList.remove('selected'); btn.classList.add(correct ? 'correct' : 'wrong'); }
-  if (correct) playCorrect(); else playWrong();
+  if (correct) playCorrect(); else { playWrong(); showScreenCracks(); }
   if (!isRetry) {
     const msg = isLastSecond ? (correct ? '⚡ غيّرت وأجبت صح! ✅' : '⚡ غيّرت وأجبت غلط ❌') : (correct ? '✅ إجابة صحيحة!' : '❌ إجابة خاطئة');
     notify(msg, correct ? 'green' : 'red');
@@ -1930,6 +1978,7 @@ socket.on('game:revival-available', () => {
 socket.on('game:question-end', data => {
   questionActive = false;
   clearDanger();
+  hideReverseHalo();
   frozenClicksLeft = 0;
   document.getElementById('frozen-screen').classList.remove('show');
   document.getElementById('last-second-btn')?.remove();
@@ -1981,6 +2030,7 @@ socket.on('game:notify', ({ type, msg }) => {
   if (type === 'immunity-saved' || type === 'reverse-fired') {
     showShieldBurst(type === 'immunity-saved');
     flashColor('green');
+    if (type === 'reverse-fired') fireReverseHalo();
   }
   if (type === 'theft-success') flashColor('gold');
 
@@ -2035,7 +2085,7 @@ socket.on('ability:result', ({ type, status }) => {
   // تأثيرات بصرية عند التفعيل
   if (status === 'active' || status === 'used') {
     if (type === 'immunity')   { showShieldBurst(true);  flashColor('gold');  }
-    if (type === 'reverse')    { showShieldBurst(false); flashColor('green'); }
+    if (type === 'reverse')    { showShieldBurst(false); flashColor('green'); showReverseHalo(); }
     if (type === 'ghost') {
       const g = document.getElementById('screen-game');
       g.classList.add('ghosting');
