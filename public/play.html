@@ -266,6 +266,28 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 @keyframes shieldBurst{0%{opacity:.9;transform:scale(.94)}65%{opacity:.5;transform:scale(1.05)}100%{opacity:0;transform:scale(1.12)}}
 #shield-burst.show     {animation:shieldBurst .55s ease forwards}
 #shield-burst.gold-show{animation:shieldBurst .55s ease forwards;border-color:var(--gold)}
+
+/* ── FROZEN SCREEN ── */
+#frozen-screen{position:fixed;inset:0;z-index:88;display:none;align-items:center;justify-content:center;flex-direction:column;gap:8px;pointer-events:none;
+  background:linear-gradient(135deg,#0ea5e922 0%,#06b6d42e 40%,#0284c722 100%);
+  box-shadow:inset 0 0 120px #06b6d455,inset 0 0 50px #0ea5e928;
+  border:2px solid #06b6d455;
+  backdrop-filter:blur(2px) brightness(.68) saturate(.32) hue-rotate(8deg);
+  -webkit-backdrop-filter:blur(2px) brightness(.68) saturate(.32) hue-rotate(8deg);
+}
+#frozen-screen::before{content:'';position:absolute;inset:0;
+  background:
+    linear-gradient(23deg,transparent 47%,#06b6d420 48%,transparent 49%),
+    linear-gradient(-38deg,transparent 54%,#0ea5e918 55%,transparent 56%),
+    linear-gradient(71deg,transparent 33%,#06b6d415 34%,transparent 35%),
+    linear-gradient(-82deg,transparent 68%,#0ea5e912 69%,transparent 70%),
+    linear-gradient(55deg,transparent 77%,#06b6d410 78%,transparent 79%);
+}
+#frozen-screen.show{display:flex;animation:frozenAppear .45s ease forwards}
+@keyframes frozenAppear{0%{opacity:0}100%{opacity:1}}
+.frozen-big-icon{font-size:110px;filter:drop-shadow(0 0 25px #06b6d4) drop-shadow(0 0 55px #0ea5e9);animation:frozenFloat 2.5s ease-in-out infinite;position:relative;z-index:1}
+@keyframes frozenFloat{0%,100%{transform:scale(1) translateY(0);opacity:.5}50%{transform:scale(1.12) translateY(-8px);opacity:.85}}
+.frozen-label{font-size:18px;font-weight:900;color:#b3e5fc;letter-spacing:6px;text-shadow:0 0 20px #06b6d4,0 0 40px #0ea5e9;opacity:.75;position:relative;z-index:1}
 </style>
 </head>
 <body>
@@ -475,6 +497,10 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 <div id="danger-vignette"></div>
 <div id="ice-overlay"></div>
 <div id="shield-burst"></div>
+<div id="frozen-screen">
+  <div class="frozen-big-icon">❄️</div>
+  <div class="frozen-label">م ج م د</div>
+</div>
 <div id="notif"></div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -880,6 +906,7 @@ function renderLobbyPlayers() {
 function renderQuestion(q) {
   currentQ = q; hasAnswered = false; myAnswer = null; isCut = false;
   shuffleMap = null; isLastSecondChange = false;
+  document.getElementById('frozen-screen').classList.remove('show');
   document.getElementById('q-counter').textContent  = `سؤال #${q.number}`;
   document.getElementById('q-num-label').textContent = `السؤال ${q.number}`;
   document.getElementById('q-text').textContent     = q.text;
@@ -1422,17 +1449,16 @@ socket.on('game:notify', ({ type, msg }) => {
     if (type === 'escaped-active') {
       cutEl.textContent = '🚫 غادرت الشاشة أثناء السؤال!';
     } else if (type === 'frozen-active') {
-      cutEl.innerHTML = '❄️ أنت مجمد! لا يمكنك الإجابة أو استخدام الخصائص';
-      cutEl.style.borderColor = '#06b6d4';
-      cutEl.style.color = '#67e8f9';
-      cutEl.style.background = '#06b6d415';
+      document.getElementById('frozen-screen').classList.add('show');
+      showIceOverlay();
+      cutEl.style.display = 'none';
     } else {
       cutEl.textContent = '✂️ أنت مقطوع! لا يمكنك الإجابة على هذا السؤال';
       cutEl.style.borderColor = '';
       cutEl.style.color = '';
       cutEl.style.background = '';
     }
-    cutEl.style.display = 'block';
+    if (type !== 'frozen-active') cutEl.style.display = 'block';
     const grid = document.getElementById('answer-grid');
     if (grid) grid.classList.add('cut-locked');
     document.querySelectorAll('.ans-btn').forEach(b => { b.disabled = true; b.onclick = null; });

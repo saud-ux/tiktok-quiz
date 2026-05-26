@@ -281,7 +281,7 @@ function endQuestion() {
   io.emit('game:leaderboard', leaderboard());
 
   // Phase 5 – الفرصة الأخيرة: كل سؤالين يحصل الأخير على خاصية مجانية
-  if (G.qNum % 2 === 0 && !G.isLastQuestion) {
+  if (G.qNum % 4 === 0 && !G.isLastQuestion) {
     const sorted = Object.values(G.players).sort((a, b) => a.points - b.points);
     if (sorted.length >= 2) {
       const lastPlace = sorted[0];
