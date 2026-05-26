@@ -58,6 +58,7 @@ function leaderboard() {
 function publicPlayers() {
   return Object.values(G.players).map(p => ({
     id: p.id, name: p.name, avatar: p.avatar, points: p.points, streak: p.streak,
+    isGhost: G.effects[p.id]?.ghost || false,
   }));
 }
 
@@ -108,6 +109,10 @@ function applyAttack(attackerId, type, targetId, immediate = false, skipReverseO
       if (type === 'cut')    G.nextEffects[attackerId] = { ...(G.nextEffects[attackerId] || {}), cut: true };
     }
     if (type === 'hole') G.effects[targetId] = { ...(G.effects[targetId] || {}), holeTarget: attackerId };
+    if (type === 'blur' && !G.answers[attackerId]) {
+      const shuffle = [0,1,2,3].sort(() => Math.random() - 0.5);
+      io.to(attackerId).emit('game:shuffle-options', { shuffle, attackerName: target.name });
+    }
     notify(attackerId, 'attack-reflected', `🔄 ${target.name} عكس هجومك!`);
     notify(targetId,   'reverse-fired',    '🔄 درع الانعكاس انطلق على المهاجم!');
     return { ok: true, reflected: true };
@@ -117,6 +122,11 @@ function applyAttack(attackerId, type, targetId, immediate = false, skipReverseO
     tEff.immunity = false;
     notify(attackerId, 'attack-blocked', `${target.name} محصن!`);
     notify(targetId,   'immunity-saved',  '🛡️ الحصانة أنقذتك!');
+    return { ok: true, blocked: true };
+  }
+
+  if (tEff.ghost) {
+    notify(attackerId, 'attack-blocked', `👻 ${target.name} مختفٍ! لا يمكن استهدافه`);
     return { ok: true, blocked: true };
   }
 
@@ -139,6 +149,14 @@ function applyAttack(attackerId, type, targetId, immediate = false, skipReverseO
       G.nextEffects[targetId] = { ...(G.nextEffects[targetId] || {}), cut: true };
       notify(targetId, 'cut-incoming', `✂️ ${attacker.name} قطعك! لا إجابة في السؤال القادم`);
     }
+  } else if (type === 'blur') {
+    if (G.answers[targetId]) {
+      notify(attackerId, 'error', `❌ ${target.name} أجاب بالفعل!`);
+      return { ok: false };
+    }
+    const shuffle = [0,1,2,3].sort(() => Math.random() - 0.5);
+    io.to(targetId).emit('game:shuffle-options', { shuffle, attackerName: attacker.name });
+    notify(targetId, 'blur-incoming', `🌀 ${attacker.name} أربك خياراتك!`);
   }
 
   return { ok: true, success: true };
@@ -294,6 +312,8 @@ function startActualQuestion() {
       frozen:    G.effects[pid]?.frozen || false,
       immunity:  G.effects[pid]?.immunity || false,
       reverse:   G.effects[pid]?.reverse  || false,
+      ghost:     G.effects[pid]?.ghost    || false,
+      spyTarget: null,
       doubleRisk:false,
       revival:   false,
       retry:     false,
@@ -366,7 +386,7 @@ io.on('connection', socket => {
 
     socket.emit('host:question-confirmed', { question: qData, number: G.qNum });
 
-    const preTypes = ['freeze','cut','immunity'];
+    const preTypes = ['freeze','cut','immunity','ghost'];
     const eligible = Object.values(G.players).filter(p => {
       return ['attack','defense'].some(cat => {
         const ab = p.abilities[cat];
@@ -426,6 +446,13 @@ io.on('connection', socket => {
             G.effects[socket.id].immunity = true;
             io.to(socket.id).emit('ability:result', { type: 'immunity', status: 'active' });
             notify(socket.id, 'shield-active', '🛡️ الحصانة مفعّلة!');
+          } else if (ab.type === 'ghost') {
+            ab.used = true;
+            if (!G.effects[socket.id]) G.effects[socket.id] = {};
+            G.effects[socket.id].ghost = true;
+            io.to(socket.id).emit('ability:result', { type: 'ghost', status: 'active' });
+            notify(socket.id, 'shield-active', '👻 أنت مخفي! لا أحد يستطيع استهدافك');
+            io.emit('game:players-update', publicPlayers());
           } else if (targetId && G.players[targetId] && targetId !== socket.id) {
             const res = applyAttack(socket.id, ab.type, targetId, true);
             if (res.ok) {
@@ -564,15 +591,16 @@ io.on('connection', socket => {
     if (G.players[socket.id]) return;
 
     G.players[socket.id] = {
-      id:           socket.id,
-      persistentId: persistentId || socket.id,
-      name:         String(name).trim().slice(0, 20),
+      id:                socket.id,
+      persistentId:      persistentId || socket.id,
+      name:              String(name).trim().slice(0, 20),
       avatar,
-      points:       0,
-      streak:       0,
-      lastStreak:   0,
-      offline:      false,
-      bonusAbility: null,
+      points:            0,
+      streak:            0,
+      lastStreak:        0,
+      offline:           false,
+      bonusAbility:      null,
+      hasUsedLastSecond: false,
       abilities: {
         attack:  { type: abilities.attack,  used: false },
         defense: { type: abilities.defense, used: false },
@@ -622,6 +650,18 @@ io.on('connection', socket => {
     const correct = choice === G.question.correctAnswer;
     socket.emit('player:answer-accepted', { choice, correct });
 
+    // إبلاغ الجواسيس
+    Object.entries(G.effects).forEach(([spyId, spyEff]) => {
+      if (spyEff.spyTarget === socket.id && spyId !== socket.id && G.players[spyId]) {
+        io.to(spyId).emit('game:spy-result', {
+          targetName: G.players[socket.id]?.name,
+          choice,
+          choiceText: G.question.options[choice],
+          correct,
+        });
+      }
+    });
+
     if (!correct) {
       const p = G.players[socket.id];
       if (p) {
@@ -645,6 +685,37 @@ io.on('connection', socket => {
     const total    = Object.keys(G.players).length;
     io.emit('host:answer-stats', { answered, total });
     // ← جديد: إرسال التقدم لكل اللاعبين
+    io.emit('game:answer-progress', { answered, total, lb: leaderboard() });
+  });
+
+  socket.on('player:change-answer', ({ choice }) => {
+    if (!G.active || G.timeLeft <= 0) return;
+    const p = G.players[socket.id];
+    if (!p || p.hasUsedLastSecond) return;
+    const eff = G.effects[socket.id] || {};
+    if (eff.cut || eff.frozen) return;
+    if (!G.answers[socket.id]) return;
+
+    p.hasUsedLastSecond = true;
+    G.answers[socket.id] = { choice, timeLeft: G.timeLeft, isLastSecond: true };
+    const correct = choice === G.question.correctAnswer;
+    socket.emit('player:answer-accepted', { choice, correct, isLastSecond: true });
+
+    // إبلاغ الجواسيس بالتغيير
+    Object.entries(G.effects).forEach(([spyId, spyEff]) => {
+      if (spyEff.spyTarget === socket.id && spyId !== socket.id && G.players[spyId]) {
+        io.to(spyId).emit('game:spy-result', {
+          targetName: p.name,
+          choice,
+          choiceText: G.question.options[choice],
+          correct,
+          changed: true,
+        });
+      }
+    });
+
+    const answered = Object.keys(G.answers).length;
+    const total    = Object.keys(G.players).length;
     io.emit('game:answer-progress', { answered, total, lb: leaderboard() });
   });
 
@@ -684,7 +755,7 @@ io.on('connection', socket => {
     let used = false;
 
     switch (ability.type) {
-      case 'hole': case 'freeze': case 'cut': {
+      case 'hole': case 'freeze': case 'cut': case 'blur': {
         if (!targetId || !G.players[targetId] || targetId === socket.id) {
           socket.emit('game:notify', { type: 'error', msg: '⚠️ اختر لاعباً!' }); return;
         }
@@ -731,6 +802,16 @@ io.on('connection', socket => {
         socket.emit('ability:result', { type: 'revival', status: 'active' });
         notify(socket.id, 'ability-active', '✨ الإنعاش جاهز!');
         break;
+      case 'spy': {
+        if (!targetId || !G.players[targetId] || targetId === socket.id) {
+          socket.emit('game:notify', { type: 'error', msg: '⚠️ اختر لاعباً!' }); return;
+        }
+        G.effects[socket.id].spyTarget = targetId;
+        used = true;
+        socket.emit('ability:result', { type: 'spy', status: 'active' });
+        notify(socket.id, 'ability-active', `🔍 تجسسك على ${G.players[targetId]?.name} مفعّل!`);
+        break;
+      }
     }
 
     if (used) {

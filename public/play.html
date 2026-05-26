@@ -46,7 +46,7 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 .ability-category{margin-bottom:16px}
 .cat-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 .cat-icon{font-size:20px}.cat-name{font-size:15px;font-weight:800}
-.ability-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.ability-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .ability-card{background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:10px 8px;cursor:pointer;transition:.2s;text-align:center;position:relative}
 .ability-card:hover{border-color:var(--purple-light)}
 .ability-card.selected{border-color:var(--purple);background:#7c3aed20}
@@ -224,6 +224,48 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 .shaking{animation:shake .4s ease}
 @keyframes revealGlow{0%,100%{transform:scale(1)}40%{transform:scale(1.06);box-shadow:0 0 40px #4ade8070}}
 .ans-btn.reveal-correct{animation:revealGlow .7s ease}
+
+/* ── COLOR FLASH OVERLAY ── */
+#color-flash{position:fixed;inset:0;z-index:499;pointer-events:none;opacity:0}
+@keyframes flashRed  {0%{background:#ef444432;opacity:1}100%{background:transparent;opacity:0}}
+@keyframes flashBlue {0%{background:#06b6d432;opacity:1}100%{background:transparent;opacity:0}}
+@keyframes flashGold {0%{background:#f59e0b32;opacity:1}100%{background:transparent;opacity:0}}
+@keyframes flashGreen{0%{background:#22c55e32;opacity:1}100%{background:transparent;opacity:0}}
+#color-flash.fr {animation:flashRed   .35s ease forwards}
+#color-flash.fb {animation:flashBlue  .35s ease forwards}
+#color-flash.fg {animation:flashGold  .35s ease forwards}
+#color-flash.fgn{animation:flashGreen .35s ease forwards}
+
+/* ── DANGER VIGNETTE (last 5 sec) ── */
+#danger-vignette{position:fixed;inset:0;z-index:2;pointer-events:none;box-shadow:inset 0 0 100px #ef444465;opacity:0;transition:opacity .3s}
+#danger-vignette.show{opacity:1}
+@keyframes vigPulse    {0%,100%{opacity:.3}50%{opacity:.8}}
+@keyframes vigPulseFast{0%,100%{opacity:.5}50%{opacity:1}}
+#danger-vignette.pulse     {animation:vigPulse     .6s ease-in-out infinite}
+#danger-vignette.fast-pulse{animation:vigPulseFast .28s ease-in-out infinite}
+
+/* ── BIG SHAKE ── */
+@keyframes bigShake{0%,100%{transform:translate(0)}15%{transform:translate(-13px,-4px) rotate(-1deg)}30%{transform:translate(13px,4px) rotate(1deg)}50%{transform:translate(-10px,2px)}70%{transform:translate(10px,-2px)}90%{transform:translate(-5px,0)}}
+.big-shaking{animation:bigShake .55s ease!important}
+
+/* ── ICE OVERLAY (تجميد) ── */
+#ice-overlay{position:fixed;inset:0;z-index:448;pointer-events:none;background:linear-gradient(135deg,#0ea5e918,#06b6d425,transparent);border:2px solid #06b6d455;display:none}
+@keyframes iceIn{0%{opacity:0;transform:scale(1.04)}25%{opacity:1}85%{opacity:.6}100%{opacity:0;transform:scale(1)}}
+#ice-overlay.show{display:block;animation:iceIn 1s ease forwards}
+
+/* ── BLUR SPIN (إرباك received) ── */
+@keyframes blurSpin{0%,100%{filter:blur(0) rotate(0deg)}30%{filter:blur(4px) rotate(-5deg)}70%{filter:blur(4px) rotate(5deg)}}
+#screen-game.blur-spinning{animation:blurSpin .7s ease!important}
+
+/* ── GHOST PULSE (تخفي activated) ── */
+@keyframes ghostPulse{0%,100%{opacity:1;filter:none}40%,60%{opacity:.18;filter:blur(1px) brightness(.55)}}
+#screen-game.ghosting{animation:ghostPulse .65s ease}
+
+/* ── SHIELD BURST (دفاع activated) ── */
+#shield-burst{position:fixed;inset:6px;z-index:497;pointer-events:none;border:3px solid var(--green);border-radius:20px;opacity:0}
+@keyframes shieldBurst{0%{opacity:.9;transform:scale(.94)}65%{opacity:.5;transform:scale(1.05)}100%{opacity:0;transform:scale(1.12)}}
+#shield-burst.show     {animation:shieldBurst .55s ease forwards}
+#shield-burst.gold-show{animation:shieldBurst .55s ease forwards;border-color:var(--gold)}
 </style>
 </head>
 <body>
@@ -429,6 +471,10 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
   <div class="waiting-text">جاري اختيار الخصائص...</div>
 </div>
 
+<div id="color-flash"></div>
+<div id="danger-vignette"></div>
+<div id="ice-overlay"></div>
+<div id="shield-burst"></div>
 <div id="notif"></div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -438,19 +484,22 @@ const QUESTION_TIME = 20;
 // ─── ABILITIES DATA ───────────────────────────────────────────
 const ABILITIES = {
   attack: [
-    { type:'hole',   icon:'🪙', name:'سرقة',  desc:'اسرق نقاط السؤال من لاعب إذا أجاب صح' },
-    { type:'freeze', icon:'❄️', name:'تجميد', desc:'امنع لاعب من خصائصه السؤال القادم' },
-    { type:'cut',    icon:'✂️', name:'قطع',    desc:'امنع لاعب من الإجابة السؤال القادم' },
+    { type:'hole',   icon:'🪙', name:'سرقة',   desc:'اسرق نقاط السؤال من لاعب إذا أجاب صح' },
+    { type:'freeze', icon:'❄️', name:'تجميد',  desc:'امنع لاعب من خصائصه السؤال القادم' },
+    { type:'cut',    icon:'✂️', name:'قطع',     desc:'امنع لاعب من الإجابة السؤال القادم' },
+    { type:'blur',   icon:'🌀', name:'إرباك',   desc:'اخلط ترتيب خيارات لاعب في السؤال الحالي' },
   ],
   defense: [
-    { type:'reverse',  icon:'🔄', name:'عكس',   desc:'يرجع أي هجوم لصاحبه تلقائياً' },
-    { type:'immunity', icon:'🛡️', name:'حصانة', desc:'حماية كاملة من أي هجوم لسؤال' },
-    { type:'retry',    icon:'↩️', name:'إعادة', desc:'لو غلطت تقدر تجاوب مرة ثانية' },
+    { type:'reverse',  icon:'🔄', name:'عكس',    desc:'يرجع أي هجوم لصاحبه تلقائياً' },
+    { type:'immunity', icon:'🛡️', name:'حصانة',  desc:'حماية كاملة من أي هجوم لسؤال' },
+    { type:'retry',    icon:'↩️', name:'إعادة',  desc:'لو غلطت تقدر تجاوب مرة ثانية' },
+    { type:'ghost',    icon:'👻', name:'تخفي',   desc:'اختفِ من قائمة الأهداف للسؤال القادم' },
   ],
   general: [
     { type:'revival',    icon:'✨', name:'إنعاش',      desc:'استرجع ستريك خسرته عند الخطأ' },
     { type:'doubleRisk', icon:'×2', name:'مضاعف خطر', desc:'صح=دبل النقاط، غلط=خسارة' },
     { type:'hint',       icon:'💡', name:'تلميح',      desc:'اكشف تلميحاً للسؤال' },
+    { type:'spy',        icon:'🔍', name:'تجسس',       desc:'اعرف إجابة لاعب معين فور ما يجاوب' },
   ],
 };
 const LETTERS = ['أ','ب','ج','د'];
@@ -582,6 +631,49 @@ function playBonusChime() {
   });
 }
 
+// ─── VISUAL EFFECTS ──────────────────────────────────────────
+function flashColor(col) {
+  const el = document.getElementById('color-flash');
+  el.className = '';
+  void el.offsetWidth;
+  el.className = { red:'fr', blue:'fb', gold:'fg', green:'fgn' }[col] || 'fr';
+}
+
+function showIceOverlay() {
+  const el = document.getElementById('ice-overlay');
+  el.className = '';
+  void el.offsetWidth;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 1050);
+}
+
+function showShieldBurst(gold = false) {
+  const el = document.getElementById('shield-burst');
+  el.className = '';
+  void el.offsetWidth;
+  el.classList.add(gold ? 'gold-show' : 'show');
+  setTimeout(() => el.classList.remove('show', 'gold-show'), 600);
+}
+
+function triggerDanger(t) {
+  const v = document.getElementById('danger-vignette');
+  v.className = t <= 3 ? 'show fast-pulse' : 'show pulse';
+}
+
+function clearDanger() {
+  document.getElementById('danger-vignette').className = '';
+}
+
+function gameScreenShake(big = false) {
+  const el = document.getElementById('screen-game');
+  if (!el.classList.contains('active')) return;
+  const cls = big ? 'big-shaking' : 'shaking';
+  el.classList.remove('shaking', 'big-shaking');
+  void el.offsetWidth;
+  el.classList.add(cls);
+  setTimeout(() => el.classList.remove(cls), big ? 560 : 430);
+}
+
 // ─── BIG COUNTDOWN ───────────────────────────────────────────
 function showBigCountdown(n) {
   const wrap = document.getElementById('big-countdown');
@@ -630,10 +722,11 @@ function dramaticReveal(data) {
   setTimeout(() => {
     playReveal();
     const ci = data.correctAnswer;
+    const correctPos = shuffleMap ? shuffleMap.indexOf(ci) : ci;
     [0,1,2,3].forEach(i => {
       const b = document.getElementById('ans-' + i);
       if (!b) return;
-      if (i === ci) {
+      if (i === correctPos) {
         b.classList.remove('wrong', 'selected');
         b.classList.add('correct', 'reveal-correct');
       } else if (!b.classList.contains('correct')) {
@@ -660,8 +753,11 @@ let myPoints = 0, myStreak = 0;
 let allPlayers = {}, currentQ = null;
 let hasAnswered = false, myAnswer = null, isCut = false;
 let abilitiesState = { attack: false, defense: false, general: false };
-let myBonusAbility = null; // ← جديد: الخاصية المجانية
+let myBonusAbility = null;
 let questionActive = false;
+let shuffleMap = null;         // ترتيب الخيارات بعد الإرباك
+let hasUsedLastSecond = false; // قرار الثانية الأخيرة (مرة واحدة في اللعبة)
+let isLastSecondChange = false;// هل اللاعب الآن يغيّر إجابته
 const socket = io();
 
 // ─── SCREEN NAV ──────────────────────────────────────────────
@@ -783,6 +879,7 @@ function renderLobbyPlayers() {
 // ─── GAME SCREEN ─────────────────────────────────────────────
 function renderQuestion(q) {
   currentQ = q; hasAnswered = false; myAnswer = null; isCut = false;
+  shuffleMap = null; isLastSecondChange = false;
   document.getElementById('q-counter').textContent  = `سؤال #${q.number}`;
   document.getElementById('q-num-label').textContent = `السؤال ${q.number}`;
   document.getElementById('q-text').textContent     = q.text;
@@ -818,16 +915,17 @@ function renderAbilitiesBar() {
     const isAttack   = cat === 'attack';
     const isUsed     = abilitiesState[cat];
     const isReactive = (a.type === 'retry' || a.type === 'revival');
-    const preQOnly   = (a.type === 'freeze' || a.type === 'cut' || a.type === 'immunity');
+    const preQOnly   = (a.type === 'freeze' || a.type === 'cut' || a.type === 'immunity' || a.type === 'ghost');
     const lockedByQuestion = questionActive && preQOnly;
-    const allowedAfterAnswer = (a.type === 'hole' || a.type === 'retry' || a.type === 'revival');
+    const allowedAfterAnswer = (a.type === 'hole' || a.type === 'retry' || a.type === 'revival' || a.type === 'blur' || a.type === 'spy');
     const lockedByAnswer = hasAnswered && !allowedAfterAnswer;
     const isDisabled = isUsed || isReactive || lockedByAnswer || lockedByQuestion;
     const isLocked   = lockedByAnswer || lockedByQuestion;
+    const needsTarget = isAttack || a.type === 'spy';
     return `
       <button class="abil-btn ${isAttack?'attack':''} ${isUsed?'used':''} ${isLocked?'used':''}"
         id="abil-btn-${cat}"
-        onclick="${isDisabled?'':isAttack?`pickTarget('${cat}','${a.type}','${a.name}')`:`useAbility('${cat}')`}"
+        onclick="${isDisabled?'':needsTarget?`pickTarget('${cat}','${a.type}','${a.name}')`:`useAbility('${cat}')`}"
         ${isDisabled?'disabled':''}
         title="${lockedByQuestion?'تُستخدم قبل السؤال':lockedByAnswer?'لا يمكن بعد الإجابة':''}">
         <span class="abil-icon">${a.icon}</span>${a.name}
@@ -851,17 +949,39 @@ function renderAbilitiesBar() {
   bar.innerHTML = html;
 }
 
-function submitAnswer(choice) {
+function submitAnswer(btnPos) {
   if (hasAnswered || isCut) return;
-  socket.emit('player:answer', { choice });
+  const actualChoice = shuffleMap ? shuffleMap[btnPos] : btnPos;
+  const event = isLastSecondChange ? 'player:change-answer' : 'player:answer';
+  socket.emit(event, { choice: actualChoice });
+  isLastSecondChange = false;
   hasAnswered = true;
   [0,1,2,3].forEach(i => {
     const b = document.getElementById('ans-' + i);
+    if (!b) return;
     b.disabled = true;
-    if (i !== choice) b.style.opacity = '0.4';
+    if (i !== btnPos) b.style.opacity = '0.4';
   });
-  document.getElementById('ans-' + choice).classList.add('selected');
+  document.getElementById('ans-' + btnPos)?.classList.add('selected');
   renderAbilitiesBar();
+}
+
+function activateLastSecondChange() {
+  if (hasUsedLastSecond || !hasAnswered) return;
+  hasUsedLastSecond = true;
+  isLastSecondChange = true;
+  document.getElementById('last-second-btn')?.remove();
+  hasAnswered = false;
+  [0,1,2,3].forEach(i => {
+    const b = document.getElementById('ans-' + i);
+    if (!b) return;
+    b.disabled = false;
+    b.style.opacity = '1';
+    b.classList.remove('correct','wrong','selected');
+    b.style.borderColor = OPT_COLORS[i].border + '40';
+  });
+  renderAbilitiesBar();
+  notify('⚡ اختر إجابتك الجديدة!', 'gold', 3000);
 }
 
 function useAbility(cat) {
@@ -883,7 +1003,7 @@ function useBonus() {
 
 function pickTarget(cat, type, name) {
   if (abilitiesState[cat]) return;
-  const others = Object.values(allPlayers).filter(p => p.id !== myId);
+  const others = Object.values(allPlayers).filter(p => p.id !== myId && !p.isGhost);
   if (!others.length) { notify('⚠️ لا يوجد لاعبون آخرون', 'red'); return; }
   const iconMap = { hole:'🕳️', freeze:'❄️', cut:'✂️' };
   document.getElementById('target-modal-title').textContent = `${iconMap[type]||'⚔️'} اختر هدف — ${name}`;
@@ -913,7 +1033,7 @@ function showPreQuestionModal(abilities) {
   const list = document.getElementById('pre-q-abilities-list');
   list.innerHTML = abilities.map(({ category, type }) => {
     const a = ABILITIES[category].find(x => x.type === type);
-    const onclick = type === 'immunity'
+    const onclick = (type === 'immunity' || type === 'ghost')
       ? `usePreQAbility('${category}','${type}',null)`
       : `pickPreQTarget('${category}','${type}','${a.name}')`;
     return `
@@ -945,7 +1065,7 @@ function pickPreQTarget(category, type, name) {
 }
 
 function showPreQTargetPicker(category, type, name) {
-  const others = Object.values(allPlayers).filter(p => p.id !== myId);
+  const others = Object.values(allPlayers).filter(p => p.id !== myId && !p.isGhost);
   if (!others.length) { socket.emit('player:pre-question-decision', { use: false }); return; }
   const iconMap = { freeze:'❄️', cut:'✂️' };
   document.getElementById('target-modal-title').textContent = `${iconMap[type]||''} اختر هدف — ${name}`;
@@ -1159,10 +1279,36 @@ socket.on('game:timer', t => {
   const bar  = document.getElementById('timer-bar');
   const wrap = document.getElementById('screen-game').querySelector('.timer-bar-wrap');
   bar.style.width = (t / QUESTION_TIME * 100) + '%';
+
+  // وميض واهتزاز في آخر 5 ثواني
+  if (t <= 5 && t > 0) {
+    triggerDanger(t);
+    flashColor('red');
+    if (t === 3) gameScreenShake(false);
+    if (t === 1) gameScreenShake(true);
+  } else if (t > 5) {
+    clearDanger();
+  }
+
+  // زر قرار الثانية الأخيرة
+  if (t === 3 && hasAnswered && !hasUsedLastSecond && questionActive && !isCut) {
+    const offers = document.getElementById('reactive-offers');
+    if (offers && !document.getElementById('last-second-btn')) {
+      const btn = document.createElement('button');
+      btn.id = 'last-second-btn';
+      btn.className = 'offer-btn';
+      btn.style.cssText = 'background:#7c3aed20;border:2px solid var(--purple);color:var(--purple-light);animation:goldPulse 0.5s ease-in-out infinite alternate';
+      btn.innerHTML = '⚡ غيّر إجابتك! <span style="font-size:11px;opacity:.7">(مرة واحدة في اللعبة)</span>';
+      btn.onclick = activateLastSecondChange;
+      offers.appendChild(btn);
+    }
+  }
+  if (t <= 0) document.getElementById('last-second-btn')?.remove();
+
   if (t <= 5) {
     bar.style.background = 'var(--red)';
     wrap.classList.add('danger');
-    playTick(900 + (5 - t) * 50); // تيك يرتفع مع الوقت
+    playTick(900 + (5 - t) * 50);
     showBigCountdown(t);
   } else if (t <= 10) {
     bar.style.background = 'var(--gold)';
@@ -1184,12 +1330,16 @@ socket.on('game:answer-progress', ({ answered, total, lb }) => {
   if (lb) lb.forEach(p => { if (allPlayers[p.id]) { allPlayers[p.id].points = p.points; allPlayers[p.id].streak = p.streak; } });
 });
 
-socket.on('player:answer-accepted', ({ choice, correct, isRetry }) => {
+socket.on('player:answer-accepted', ({ choice, correct, isRetry, isLastSecond }) => {
   [0,1,2,3].forEach(i => { const b=document.getElementById('ans-'+i); if(b) b.disabled=true; });
-  const btn = document.getElementById('ans-' + choice);
+  const btnPos = shuffleMap ? shuffleMap.indexOf(choice) : choice;
+  const btn = document.getElementById('ans-' + btnPos);
   if (btn) { btn.classList.remove('selected'); btn.classList.add(correct ? 'correct' : 'wrong'); }
   if (correct) playCorrect(); else playWrong();
-  if (!isRetry) notify(correct ? '✅ إجابة صحيحة!' : '❌ إجابة خاطئة', correct ? 'green' : 'red');
+  if (!isRetry) {
+    const msg = isLastSecond ? (correct ? '⚡ غيّرت وأجبت صح! ✅' : '⚡ غيّرت وأجبت غلط ❌') : (correct ? '✅ إجابة صحيحة!' : '❌ إجابة خاطئة');
+    notify(msg, correct ? 'green' : 'red');
+  }
 });
 
 socket.on('game:retry-available', () => {
@@ -1215,6 +1365,8 @@ socket.on('game:revival-available', () => {
 
 socket.on('game:question-end', data => {
   questionActive = false;
+  clearDanger();
+  document.getElementById('last-second-btn')?.remove();
   document.getElementById('screen-game').querySelector('.timer-bar-wrap').classList.remove('danger');
   if (data.leaderboard) {
     data.leaderboard.forEach(p => { if(allPlayers[p.id]){allPlayers[p.id].points=p.points;allPlayers[p.id].streak=p.streak;} });
@@ -1230,20 +1382,39 @@ socket.on('game:notify', ({ type, msg }) => {
     'shield-active':'green','ability-active':'gold','revival-active':'green',
     'holed':'red','attack-reflected':'gold','reverse-fired':'green','immunity-saved':'green',
     'cut-active':'red','frozen-active':'red','hole-incoming':'gold','frozen-incoming':'red',
-    'cut-incoming':'red','error':'red',
+    'cut-incoming':'red','blur-incoming':'red','error':'red',
     'theft-success':'gold','theft-failed':'red',
   };
   notify(msg, colorMap[type] || '');
 
   // ← ميزة 2: إشعار هجوم درامي مع اهتزاز وأنيميشن
-  if (['cut-active','cut-incoming','frozen-incoming','frozen-active','hole-incoming'].includes(type)) {
-    const iconMap = { 'cut-active':'✂️', 'cut-incoming':'✂️', 'frozen-active':'❄️', 'frozen-incoming':'❄️', 'hole-incoming':'🕳️' };
+  if (['cut-active','cut-incoming','frozen-incoming','frozen-active','hole-incoming','blur-incoming'].includes(type)) {
+    const iconMap = { 'cut-active':'✂️', 'cut-incoming':'✂️', 'frozen-active':'❄️', 'frozen-incoming':'❄️', 'hole-incoming':'🕳️', 'blur-incoming':'🌀' };
     showAttackHit(iconMap[type] || '⚔️', msg);
   }
 
+  // تأثيرات بصرية خاصة لكل هجوم
+  if (type === 'frozen-incoming' || type === 'frozen-active') {
+    showIceOverlay();
+    flashColor('blue');
+  }
+  if (type === 'blur-incoming') {
+    const g = document.getElementById('screen-game');
+    g.classList.add('blur-spinning');
+    setTimeout(() => g.classList.remove('blur-spinning'), 750);
+    flashColor('red');
+  }
+  if (type === 'cut-active' || type === 'cut-incoming') flashColor('red');
+  if (type === 'hole-incoming') flashColor('gold');
   if (type === 'holed') {
     showAttackHit('💀', msg);
+    flashColor('red');
   }
+  if (type === 'immunity-saved' || type === 'reverse-fired') {
+    showShieldBurst(type === 'immunity-saved');
+    flashColor('green');
+  }
+  if (type === 'theft-success') flashColor('gold');
 
   if (type === 'cut-active' || type === 'escaped-active' || type === 'frozen-active') {
     isCut = true;
@@ -1270,18 +1441,19 @@ socket.on('game:notify', ({ type, msg }) => {
 });
 
 socket.on('ability:result', ({ type, status }) => {
-  const catMap = { hole:'attack',freeze:'attack',cut:'attack',reverse:'defense',immunity:'defense',retry:'defense',doubleRisk:'general',hint:'general',revival:'general' };
+  const catMap = { hole:'attack',freeze:'attack',cut:'attack',blur:'attack',reverse:'defense',immunity:'defense',retry:'defense',ghost:'defense',doubleRisk:'general',hint:'general',revival:'general',spy:'general' };
   const cat = catMap[type];
 
   // ← إصلاح: عند الانعكاس أو الحجب، لا نستهلك الخاصية بل نُعيدها
   if (status === 'reflected') {
     notify('🔄 هجومك انعكس! الخاصية لم تُستهلك', 'gold', 3000);
-    // الخاصية لا تزال متاحة
+    flashColor('gold');
     renderAbilitiesBar();
     return;
   }
   if (status === 'blocked') {
     notify('🛡️ الهدف محصّن! الخاصية لم تُستهلك', 'gold', 3000);
+    flashColor('gold');
     renderAbilitiesBar();
     return;
   }
@@ -1289,6 +1461,21 @@ socket.on('ability:result', ({ type, status }) => {
   // الخاصية استُخدمت بنجاح
   if (cat) abilitiesState[cat] = true;
   renderAbilitiesBar();
+
+  // تأثيرات بصرية عند التفعيل
+  if (status === 'active' || status === 'used') {
+    if (type === 'immunity')   { showShieldBurst(true);  flashColor('gold');  }
+    if (type === 'reverse')    { showShieldBurst(false); flashColor('green'); }
+    if (type === 'ghost') {
+      const g = document.getElementById('screen-game');
+      g.classList.add('ghosting');
+      setTimeout(() => g.classList.remove('ghosting'), 700);
+      flashColor('green');
+    }
+    if (type === 'doubleRisk') flashColor('gold');
+    if (type === 'spy')        flashColor('gold');
+    if (type === 'blur' && status === 'success') flashColor('red');
+  }
 
   if (['reverse','immunity','retry','doubleRisk','revival'].includes(type) && status === 'active') {
     const btn = document.getElementById('abil-btn-' + cat);
@@ -1316,6 +1503,25 @@ socket.on('game:bonus-ability', ({ type, icon, name, desc }) => {
   // تحديث شريط الخصائص لو على شاشة اللعبة
   const onGame = document.getElementById('screen-game').classList.contains('active');
   if (onGame) renderAbilitiesBar();
+});
+
+socket.on('game:shuffle-options', ({ shuffle, attackerName }) => {
+  if (hasAnswered) return;
+  shuffleMap = shuffle;
+  showAttackHit('🌀', `${attackerName} أربك خياراتك!`);
+  notify(`🌀 ${attackerName} خلط الخيارات عليك!`, 'red', 3000);
+  if (!currentQ) return;
+  const grid = document.getElementById('answer-grid');
+  grid.innerHTML = shuffle.map((optIdx, pos) => `
+    <button class="ans-btn" id="ans-${pos}" style="border-color:${OPT_COLORS[pos].border}40;animation:shake .4s ease" onclick="submitAnswer(${pos})">
+      <span class="ans-letter">${LETTERS[pos]}</span>${currentQ.options[optIdx]}
+    </button>`).join('');
+});
+
+socket.on('game:spy-result', ({ targetName, choiceText, correct, changed }) => {
+  const icon = correct ? '✅' : '❌';
+  const tag  = changed ? ' (غيّر إجابته)' : '';
+  notify(`🔍 ${targetName} اختار: "${choiceText}" ${icon}${tag}`, correct ? 'gold' : 'red', 5000);
 });
 
 socket.on('game:final', ({ top3, leaderboard: lb }) => {
@@ -1360,6 +1566,7 @@ socket.on('game:reset', () => {
   myId=null; myPlayer=null; myPoints=0; myStreak=0;
   allPlayers={}; abilitiesState={attack:false,defense:false,general:false};
   questionActive=false; myBonusAbility=null;
+  shuffleMap=null; hasUsedLastSecond=false; isLastSecondChange=false;
   showScreen('join');
 });
 
