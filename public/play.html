@@ -637,6 +637,18 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
       <button id="svote-no-btn"  onclick="castStoreVote('no')"  style="flex:1;padding:16px 8px;border-radius:14px;border:2px solid var(--red);background:#ef444420;color:#ef4444;font-family:inherit;font-size:18px;font-weight:900;cursor:pointer;transition:.2s">لا ❌</button>
     </div>
     <div id="svote-done-msg" style="display:none;margin-top:16px;font-size:15px;font-weight:700;color:var(--muted)">✅ تم تصويتك! انتظر النتيجة...</div>
+    <!-- live tally -->
+    <div style="margin-top:16px;display:flex;gap:10px">
+      <div style="flex:1;background:#16a34a20;border:1px solid #16a34a40;border-radius:12px;padding:10px;text-align:center">
+        <div style="font-size:28px;font-weight:900;color:#4ade80" id="svote-live-yes">0</div>
+        <div style="font-size:12px;color:#86efac">آيه ✅</div>
+      </div>
+      <div style="flex:1;background:#ef444420;border:1px solid #ef444440;border-radius:12px;padding:10px;text-align:center">
+        <div style="font-size:28px;font-weight:900;color:#ef4444" id="svote-live-no">0</div>
+        <div style="font-size:12px;color:#fca5a5">لا ❌</div>
+      </div>
+    </div>
+    <div style="margin-top:8px;font-size:12px;color:var(--muted);text-align:center"><span id="svote-live-voted">0</span> من <span id="svote-live-total">0</span> صوّتوا</div>
   </div>
 </div>
 
@@ -2253,6 +2265,10 @@ socket.on('game:store-vote-start', ({ duration }) => {
   document.getElementById('svote-done-msg').style.display = 'none';
   document.getElementById('svote-yes-btn').disabled = false;
   document.getElementById('svote-no-btn').disabled  = false;
+  document.getElementById('svote-live-yes').textContent   = '0';
+  document.getElementById('svote-live-no').textContent    = '0';
+  document.getElementById('svote-live-voted').textContent = '0';
+  document.getElementById('svote-live-total').textContent = '0';
   const overlay = document.getElementById('store-vote-overlay');
   overlay.style.display = 'flex';
   let secs = duration;
@@ -2264,6 +2280,13 @@ socket.on('game:store-vote-start', ({ duration }) => {
     if (el) el.textContent = secs;
     if (secs <= 0) { clearInterval(svoteTimer); svoteTimer = null; }
   }, 1000);
+});
+
+socket.on('game:store-vote-tally', ({ yes, no, voted, total }) => {
+  document.getElementById('svote-live-yes').textContent   = yes;
+  document.getElementById('svote-live-no').textContent    = no;
+  document.getElementById('svote-live-voted').textContent = voted;
+  document.getElementById('svote-live-total').textContent = total;
 });
 
 socket.on('game:store-vote-result', ({ open }) => {

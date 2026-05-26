@@ -1052,7 +1052,9 @@ io.on('connection', socket => {
     if (!G.players[socket.id]) return;
     G.storeVoted.add(socket.id);
     if (vote === 'yes') G.storeVoteYes++; else G.storeVoteNo++;
-    G._storeVoteHostSocket?.emit('host:store-vote-tally', { yes: G.storeVoteYes, no: G.storeVoteNo, total: Object.keys(G.players).length, voted: G.storeVoted.size });
+    const tally = { yes: G.storeVoteYes, no: G.storeVoteNo, total: Object.keys(G.players).length, voted: G.storeVoted.size };
+    G._storeVoteHostSocket?.emit('host:store-vote-tally', tally);
+    io.emit('game:store-vote-tally', tally);
   });
 
   socket.on('player:buy-store-item', ({ itemId }) => {
