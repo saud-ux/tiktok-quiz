@@ -1063,6 +1063,10 @@ socket.on('game:leaderboard', renderLeaderboard);
 
 socket.on('host:question-confirmed', ({ question, number }) => {
   qNum = number;
+  if (currentQueueIndex >= 0 && questionQueue[currentQueueIndex]) {
+    questionQueue[currentQueueIndex].used = true;
+    renderQueue();
+  }
   document.getElementById('live-badge').style.display = 'inline';
   document.getElementById('btn-start').disabled = true;
   document.getElementById('stat-total').textContent = Object.keys(players).length;
