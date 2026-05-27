@@ -474,15 +474,16 @@ function startActualQuestion() {
 
   // Send blur shuffle AFTER question-start so renderQuestion() doesn't clear shuffleMap
   if (pendingBlurs.length > 0) {
-    const opts = G.question.options || [];
     setTimeout(() => {
       pendingBlurs.forEach(({ attackerId, targetId }) => {
-        if (!G.players[targetId]) return;
-        const shuffled = [...opts].sort(() => Math.random() - 0.5);
-        const shuffleMap = opts.map(o => shuffled.indexOf(o));
-        io.to(targetId).emit('game:shuffle-options', { options: shuffled, shuffleMap });
+        if (!G.players[targetId] || !G.players[attackerId]) return;
+        const attacker = G.players[attackerId];
+        const arr = [0,1,2,3].sort(() => Math.random() - 0.5);
+        if (arr.every((v, i) => v === i)) { [arr[0], arr[1]] = [arr[1], arr[0]]; }
+        io.to(targetId).emit('game:shuffle-options', { shuffle: arr, attackerName: attacker.name });
+        notify(targetId,   'blur-incoming', `🌀 ${attacker.name} أربك خياراتك!`);
+        notify(attackerId, 'blur-success',  `🌀 ربّكت ${G.players[targetId].name}! الخيارات اختلطت عليه`);
         io.to(attackerId).emit('ability:result', { type: 'blur', status: 'success', target: G.players[targetId]?.name });
-        notify(targetId, 'blur-active', '😵 إرباك! الخيارات اختلطت عليك');
       });
     }, 400);
   }
