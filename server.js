@@ -11,6 +11,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/host', (_, res) => res.sendFile(path.join(__dirname, 'public', 'host.html')));
 app.get('/play', (_, res) => res.sendFile(path.join(__dirname, 'public', 'play.html')));
 app.get('/leaderboard', (_, res) => res.sendFile(path.join(__dirname, 'public', 'leaderboard.html')));
+app.get('/download/fusha', (_, res) => res.download(path.join(__dirname, 'public', 'question-bank-fusha.json'), 'question-bank-fusha.json'));
+app.get('/download/questions', (_, res) => res.download(path.join(__dirname, 'public', 'question-bank.json'), 'question-bank.json'));
 
 // ─────────────────────────────────────────────────────────────
 // GAME STATE
