@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>تحدي الأسئلة</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -418,6 +418,28 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 #reverse-halo.active{opacity:1;animation:haloBreath 1.3s ease-in-out infinite alternate}
 @keyframes haloBreath{from{box-shadow:0 0 12px #22c55e50,inset 0 0 12px #22c55e10}to{box-shadow:0 0 32px #22c55e90,inset 0 0 26px #22c55e20}}
 @keyframes haloFire{0%{opacity:1;box-shadow:0 0 70px #4ade80,inset 0 0 60px #22c55e40}100%{opacity:0;box-shadow:none}}
+
+/* ── MOBILE ── */
+@media (max-width: 480px) {
+  .screen { padding: 14px; gap: 12px; }
+  .q-text { font-size: 16px; }
+  .answer-grid { grid-template-columns: 1fr; gap: 8px; }
+  .ans-btn { padding: 14px 12px; font-size: 14px; }
+  .abilities-bar { flex-wrap: wrap; }
+  .abil-btn { min-width: calc(50% - 4px); }
+  .avatar-circle { width: 90px; height: 90px; }
+  .podium-block { width: 80px; }
+  .p1 .podium-block { height: 90px; }
+  .p2 .podium-block { height: 60px; }
+  .p3 .podium-block { height: 45px; }
+  .p1 .podium-avatar { width: 60px; height: 60px; }
+  .p2 .podium-avatar { width: 50px; height: 50px; }
+  .p3 .podium-avatar { width: 44px; height: 44px; }
+  .q-image { height: 140px; }
+  .result-title { font-size: 18px; }
+  .result-pts { font-size: 24px; }
+  .btn { padding: 14px; font-size: 15px; }
+}
 </style>
 </head>
 <body>
