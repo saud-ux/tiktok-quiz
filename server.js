@@ -618,7 +618,7 @@ io.on('connection', socket => {
       const p = G.players[socket.id];
       if (p) {
         const ab = p.abilities[category];
-        const validTypes = ['freeze', 'cut', 'immunity', 'ghost'];
+        const validTypes = ['freeze', 'cut', 'immunity', 'ghost', 'blur'];
         if (ab && !ab.used && ab.type === type && validTypes.includes(ab.type)) {
           if (ab.type !== 'ghost' && ab.type !== 'immunity' && (!targetId || !G.players[targetId] || targetId === socket.id)) {
             // attack without valid target — skip
