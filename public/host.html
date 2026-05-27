@@ -209,11 +209,54 @@ textarea{min-height:70px}
 .btn-preview-start{flex:1;padding:13px;border-radius:12px;border:none;background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px #16a34a40}
 .btn-preview-start:hover{filter:brightness(1.1)}
 .btn-preview-close{padding:13px 18px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;font-size:15px;font-weight:700;cursor:pointer}
+
+/* ── MOBILE ── */
+@media (max-width: 768px) {
+  .layout {
+    grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
+  }
+  .main { overflow-y: visible; padding: 12px; }
+  .sidebar {
+    border-right: none;
+    border-top: 1px solid var(--border);
+    padding: 12px;
+  }
+  .header {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+  .logo { font-size: 17px; }
+  .btn-end-game, .btn-reset {
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+  #player-count { font-size: 12px; }
+  .q-options { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .preview-opts { grid-template-columns: 1fr; }
+  .stats-row { gap: 8px; }
+  .dur-btn { padding: 7px 10px; font-size: 12px; }
+  .cat-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+  .correct-radio { gap: 6px; }
+  .btn-last-q, .btn-dramatic { font-size: 12px; padding: 7px 10px; }
+  .card { padding: 14px; }
+  .timer-ring { width: 96px; height: 96px; }
+  .timer-ring svg { width: 96px; height: 96px; }
+  .timer-ring .num { font-size: 28px; }
+  .stat-num { font-size: 22px; }
+  .preview-modal { padding: 20px 16px; }
+}
+@media (max-width: 768px) {
+  .outer-wrap { grid-template-rows: auto auto !important; min-height: unset; }
+}
 </style>
 </head>
 <body>
 
-<div style="display:grid;grid-template-rows:auto 1fr">
+<div class="outer-wrap" style="display:grid;grid-template-rows:auto 1fr;min-height:100vh">
   <div class="header">
     <div style="display:flex;align-items:center;gap:12px">
       <div class="logo">🎮 كويز لايف</div>
