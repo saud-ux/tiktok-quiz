@@ -1654,14 +1654,9 @@ function useAbility(cat) {
 
 function useBonus() {
   if (!myBonusAbility || myBonusAbility.used) return;
-  const b = myBonusAbility;
-  if (b.type === 'hint') {
-    socket.emit('player:use-ability', { category: 'bonus' });
-  } else if (b.type === 'immunity') {
-    socket.emit('player:use-ability', { category: 'bonus' });
-  } else if (b.type === 'retry') {
-    socket.emit('player:use-ability', { category: 'bonus' });
-  }
+  socket.emit('player:use-ability', { category: 'bonus' });
+  myBonusAbility.used = true;
+  renderAbilitiesBar();
 }
 
 function pickTarget(cat, type, name) {
