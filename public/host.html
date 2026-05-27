@@ -280,6 +280,7 @@ textarea{min-height:70px}
             <div class="card-title" style="margin-bottom:0">✏️ السؤال</div>
             <div style="display:flex;gap:8px">
               <button class="btn-template" onclick="downloadTemplate()" title="تحميل نموذج JSON">⬇️ نموذج</button>
+              <button class="btn-import" onclick="loadFushaBank()" title="تحميل بنك الفصحى">📖 فصحى</button>
               <button class="btn-import" onclick="document.getElementById('file-import').click()">📂 استيراد</button>
               <input type="file" id="file-import" accept=".json,.csv" style="display:none" onchange="importFile(this)">
             </div>
@@ -962,6 +963,18 @@ function clearQueue() {
     if (sec) sec.style.display = 'none';
   }
   toast('🗑️ تم مسح القائمة');
+}
+
+async function loadFushaBank() {
+  try {
+    toast('⏳ جارٍ تحميل بنك الفصحى...');
+    const res = await fetch('/question-bank-fusha.json');
+    if (!res.ok) throw new Error('فشل التحميل');
+    const data = await res.json();
+    parseJSON(JSON.stringify(data));
+  } catch(e) {
+    toast('⚠️ تعذّر تحميل بنك الفصحى');
+  }
 }
 
 function downloadTemplate() {
