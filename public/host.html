@@ -702,6 +702,14 @@ function startQuestion() {
   const hint  = document.getElementById('q-hint').value.trim();
   const image = document.getElementById('q-image').value.trim() || null;
 
+  // ← سؤال من الطابور من نوع نص مفتوح
+  if (currentQueueIndex >= 0 && questionQueue[currentQueueIndex]?.type === 'text') {
+    const qItem = questionQueue[currentQueueIndex];
+    currentQuestion = { text, type: 'text', answer: qItem.answer, acceptedAnswers: qItem.acceptedAnswers || [], options: [], hint: hint || null, image, isLastQuestion, isDramatic, duration: selectedDuration };
+    socket.emit('host:start-question', currentQuestion);
+    return;
+  }
+
   if (questionType === 'order') {
     const items = [0,1,2,3].map(i => document.getElementById('ord-' + i).value.trim());
     if (items.some(it => !it)) { toast('⚠️ أدخل جميع بنود الترتيب'); return; }
@@ -812,12 +820,14 @@ function parseJSON(text) {
     activeCategory = null;
     document.getElementById('category-section').style.display = 'none';
     questionQueue = data.map(q => ({
-      text:          q.text || q.question || q['سؤال'] || '',
-      type:          q.type || 'normal',
-      options:       q.options || [q['أ']||'', q['ب']||'', q['ج']||'', q['د']||''],
-      correctAnswer: q.correct ?? q.correctAnswer ?? 0,
-      hint:          q.hint || q['تلميح'] || '',
-      image:         q.image || '',
+      text:            q.text || q.question || q['سؤال'] || '',
+      type:            q.type || 'normal',
+      options:         q.options || [q['أ']||'', q['ب']||'', q['ج']||'', q['د']||''],
+      correctAnswer:   q.correct ?? q.correctAnswer ?? 0,
+      answer:          q.answer || '',
+      acceptedAnswers: q.acceptedAnswers || [],
+      hint:            q.hint || q['تلميح'] || '',
+      image:           q.image || '',
       used: false,
     })).filter(q => q.text);
     currentQueueIndex = -1;
@@ -881,11 +891,15 @@ function previewQuestion(index) {
   const letters = ['أ','ب','ج','د'];
   document.getElementById('preview-qnum').textContent = `سؤال ${index + 1} من ${questionQueue.length}`;
   document.getElementById('preview-qtext').textContent = q.text;
-  document.getElementById('preview-opts').innerHTML = q.options.map((o, i) => `
-    <div class="preview-opt ${i === q.correctAnswer ? 'correct' : ''}">
-      <strong>${letters[i]}.</strong> ${o}
-    </div>
-  `).join('');
+  if (q.type === 'text') {
+    document.getElementById('preview-opts').innerHTML = `<div class="preview-opt correct" style="font-size:15px">✏️ سؤال مفتوح — الإجابة: <strong>${q.answer}</strong></div>`;
+  } else {
+    document.getElementById('preview-opts').innerHTML = q.options.map((o, i) => `
+      <div class="preview-opt ${i === q.correctAnswer ? 'correct' : ''}">
+        <strong>${letters[i]}.</strong> ${o}
+      </div>
+    `).join('');
+  }
   const hintEl = document.getElementById('preview-hint');
   if (q.hint) { hintEl.textContent = '💡 تلميح: ' + q.hint; hintEl.style.display = 'block'; }
   else { hintEl.style.display = 'none'; }
@@ -913,6 +927,10 @@ function loadQuestion(index) {
     document.getElementById('type-order').checked = true;
     setQType('order');
     [0,1,2,3].forEach(i => { const el = document.getElementById('ord-'+i); if (el) el.value = q.options[i] || ''; });
+  } else if (q.type === 'text') {
+    document.getElementById('type-normal').checked = true;
+    setQType('normal');
+    [0,1,2,3].forEach(i => { const el = document.getElementById('opt-'+i); if (el) el.value = ''; });
   } else {
     document.getElementById('type-normal').checked = true;
     setQType('normal');
@@ -959,13 +977,15 @@ function loadCategory(name) {
   });
 
   rawCategoryQuestions = (categoriesData[name] || []).map(q => ({
-    text:          q.text || '',
-    type:          q.type || 'normal',
-    options:       q.options || [],
-    correctAnswer: q.correct ?? q.correctAnswer ?? 0,
-    hint:          q.hint || '',
-    image:         q.image || '',
-    difficulty:    q.difficulty || '',
+    text:            q.text || '',
+    type:            q.type || 'normal',
+    options:         q.options || [],
+    correctAnswer:   q.correct ?? q.correctAnswer ?? 0,
+    answer:          q.answer || '',
+    acceptedAnswers: q.acceptedAnswers || [],
+    hint:            q.hint || '',
+    image:           q.image || '',
+    difficulty:      q.difficulty || '',
     used: false,
   })).filter(q => q.text);
 
@@ -1083,16 +1103,20 @@ function renderWaitingPlayers() {
 
 function renderActiveQuestion(q) {
   const el = document.getElementById('active-q-display');
+  const isText = q.type === 'text';
   el.innerHTML = `
     <div class="q-num">سؤال #${q.number || qNum}</div>
     <div class="q-text">${q.text}</div>
-    <div class="q-options">
-      ${q.options.map((o, i) => `
-        <div class="q-opt ${currentQuestion && i === currentQuestion.correctAnswer ? 'correct' : ''}">
-          <strong>${LETTERS[i]}.</strong> ${o}
-        </div>
-      `).join('')}
-    </div>
+    ${isText
+      ? `<div class="q-options"><div class="q-opt correct" style="font-size:18px">✏️ سؤال مفتوح — الإجابة: <strong>${currentQuestion?.answer || ''}</strong></div></div>`
+      : `<div class="q-options">
+          ${q.options.map((o, i) => `
+            <div class="q-opt ${currentQuestion && i === currentQuestion.correctAnswer ? 'correct' : ''}">
+              <strong>${LETTERS[i]}.</strong> ${o}
+            </div>
+          `).join('')}
+        </div>`
+    }
   `;
 }
 
@@ -1140,17 +1164,20 @@ socket.on('host:answer-stats', ({ answered, total }) => {
   document.getElementById('stat-total').textContent = total;
 });
 
-socket.on('game:question-end', ({ correctAnswer, results, leaderboard: lb }) => {
+socket.on('game:question-end', ({ correctAnswer, textAnswer, results, leaderboard: lb }) => {
   document.getElementById('live-badge').style.display = 'none';
   document.getElementById('btn-start').disabled = false;
   renderLeaderboard(lb);
 
   // Build results display
   const opts = currentQuestion?.options || [];
+  const answerDisplay = textAnswer
+    ? `<div style="font-size:16px;font-weight:700">✏️ ${textAnswer}</div>`
+    : `<div style="font-size:16px;font-weight:700">${LETTERS[correctAnswer]}. ${opts[correctAnswer] || ''}</div>`;
   document.getElementById('correct-answer-display').innerHTML = `
     <div style="background:#10b98120;border:1px solid var(--green);border-radius:10px;padding:12px;margin-bottom:12px">
       <div style="font-size:12px;color:var(--green);font-weight:700;margin-bottom:4px">✅ الإجابة الصحيحة</div>
-      <div style="font-size:16px;font-weight:700">${LETTERS[correctAnswer]}. ${opts[correctAnswer] || ''}</div>
+      ${answerDisplay}
     </div>
   `;
 

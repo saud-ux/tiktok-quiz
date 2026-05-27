@@ -541,6 +541,18 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
     <div class="cut-overlay" id="cut-overlay" style="display:none">✂️ أنت مقطوع! لا يمكنك الإجابة على هذا السؤال</div>
     <div class="hint-box" id="hint-box"></div>
     <div class="answer-grid" id="answer-grid"></div>
+    <div id="text-answer-area" style="display:none;margin-top:12px">
+      <input type="text" id="text-answer-input" dir="rtl"
+        placeholder="اكتب إجابتك هنا..."
+        autocomplete="off" autocorrect="off" spellcheck="false"
+        style="width:100%;padding:14px 16px;font-size:16px;font-family:inherit;border:2px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);outline:none;box-sizing:border-box;text-align:right"
+        onkeydown="if(event.key==='Enter')submitTextAnswer()">
+      <button id="btn-submit-text" onclick="submitTextAnswer()"
+        style="width:100%;margin-top:10px;padding:14px;font-size:16px;font-family:inherit;font-weight:700;border:none;border-radius:12px;background:var(--cyan);color:#000;cursor:pointer">
+        ✅ إرسال الإجابة
+      </button>
+      <div id="text-result-box" style="display:none;margin-top:10px;padding:12px;border-radius:10px;font-size:15px;font-weight:700;text-align:center"></div>
+    </div>
     <div class="reactive-offers" id="reactive-offers"></div>
   </div>
   <div class="card">
@@ -1514,10 +1526,21 @@ function renderQuestion(q) {
   else { imgEl.src = ''; imgEl.style.display = 'none'; }
 
   const grid = document.getElementById('answer-grid');
+  const textArea = document.getElementById('text-answer-area');
+  const textInput = document.getElementById('text-answer-input');
+  const textResultBox = document.getElementById('text-result-box');
+  grid.style.display = '';
+  textArea.style.display = 'none';
+  if (textInput) { textInput.value = ''; textInput.disabled = false; }
+  if (textResultBox) textResultBox.style.display = 'none';
 
   if (q.type === 'order') {
     // ← سؤال الترتيب
     renderOrderQuestion(q.options);
+  } else if (q.type === 'text') {
+    grid.style.display = 'none';
+    textArea.style.display = 'block';
+    document.getElementById('btn-submit-text').disabled = false;
   } else {
     grid.innerHTML = q.options.map((opt, i) => `
       <button class="ans-btn" id="ans-${i}" style="border-color:${OPT_COLORS[i].border}40" onclick="submitAnswer(${i})">
@@ -1591,6 +1614,18 @@ function submitAnswer(btnPos) {
     if (i !== btnPos) b.style.opacity = '0.4';
   });
   document.getElementById('ans-' + btnPos)?.classList.add('selected');
+  renderAbilitiesBar();
+}
+
+function submitTextAnswer() {
+  if (hasAnswered || isCut) return;
+  const input = document.getElementById('text-answer-input');
+  const textAnswer = input ? input.value.trim() : '';
+  if (!textAnswer) return;
+  socket.emit('player:answer', { textAnswer });
+  hasAnswered = true;
+  if (input) input.disabled = true;
+  document.getElementById('btn-submit-text').disabled = true;
   renderAbilitiesBar();
 }
 
@@ -2119,13 +2154,25 @@ socket.on('game:answer-progress', ({ answered, total, lb }) => {
   if (lb) lb.forEach(p => { if (allPlayers[p.id]) { allPlayers[p.id].points = p.points; allPlayers[p.id].streak = p.streak; } });
 });
 
-socket.on('player:answer-accepted', ({ choice, correct, isRetry, isLastSecond, isOrder }) => {
+socket.on('player:answer-accepted', ({ choice, correct, isRetry, isLastSecond, isOrder, isText }) => {
   if (isOrder) {
-    // ← سؤال الترتيب: تعطيل زر الإرسال فقط
     const submitBtn = document.getElementById('btn-submit-order');
     if (submitBtn) submitBtn.disabled = true;
     if (correct) playCorrect(); else playWrong();
     notify(correct ? '✅ ترتيبك صحيح!' : '❌ ترتيب خاطئ', correct ? 'green' : 'red');
+    return;
+  }
+  if (isText) {
+    const box = document.getElementById('text-result-box');
+    if (box) {
+      box.style.display = 'block';
+      box.style.background = correct ? '#16a34a30' : '#ef444430';
+      box.style.border = `1px solid ${correct ? '#16a34a' : '#ef4444'}`;
+      box.style.color = correct ? '#4ade80' : '#f87171';
+      box.textContent = correct ? '✅ إجابة صحيحة!' : '❌ إجابة خاطئة';
+    }
+    if (correct) playCorrect(); else { playWrong(); showScreenCracks(); }
+    notify(correct ? '✅ إجابة صحيحة!' : '❌ إجابة خاطئة', correct ? 'green' : 'red');
     return;
   }
   [0,1,2,3].forEach(i => { const b=document.getElementById('ans-'+i); if(b) b.disabled=true; });
@@ -2173,6 +2220,17 @@ socket.on('game:question-end', data => {
   document.getElementById('last-second-btn')?.remove();
   document.getElementById('screen-game').querySelector('.timer-bar-wrap').classList.remove('danger');
   document.getElementById('joker-bar').style.display = 'none';
+  // show correct text answer if it's a text question
+  if (data.textAnswer) {
+    const box = document.getElementById('text-result-box');
+    if (box) {
+      box.style.display = 'block';
+      box.style.background = '#1e293b';
+      box.style.border = '1px solid var(--border)';
+      box.style.color = 'var(--text)';
+      box.textContent = `الإجابة الصحيحة: ${data.textAnswer}`;
+    }
+  }
   if (data.leaderboard) {
     data.leaderboard.forEach(p => { if(allPlayers[p.id]){allPlayers[p.id].points=p.points;allPlayers[p.id].streak=p.streak;} });
     if (myId && allPlayers[myId]) { myPoints = allPlayers[myId].points; myStreak = allPlayers[myId].streak; }

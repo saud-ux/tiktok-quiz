@@ -8,6 +8,18 @@ const httpServer = createServer(app);
 const io = new Server(httpServer);
 
 app.use(express.static(path.join(__dirname, 'public')));
+
+function normalizeArabic(str) {
+  if (!str) return '';
+  return str
+    .trim()
+    .replace(/[ً-ٰٟ]/g, '') // strip diacritics
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/ة/g, 'ه')
+    .replace(/^ال/, '')
+    .toLowerCase();
+}
+
 app.get('/host', (_, res) => res.sendFile(path.join(__dirname, 'public', 'host.html')));
 app.get('/play', (_, res) => res.sendFile(path.join(__dirname, 'public', 'play.html')));
 app.get('/leaderboard', (_, res) => res.sendFile(path.join(__dirname, 'public', 'leaderboard.html')));
@@ -205,10 +217,12 @@ function endQuestion() {
   Object.values(G.players).forEach(p => {
     const ans  = G.answers[p.id];
     const eff  = G.effects[p.id] || {};
-    // ← دعم أسئلة الترتيب
+    // ← دعم أسئلة الترتيب والنص
     const correct = (q.type === 'order' && ans?.isOrderCorrect !== undefined)
       ? ans.isOrderCorrect
-      : (ans && ans.choice === q.correctAnswer);
+      : q.type === 'text'
+        ? (ans?.isTextCorrect || false)
+        : (ans && ans.choice === q.correctAnswer);
     let delta = 0;
 
     if (correct) {
@@ -309,6 +323,7 @@ function endQuestion() {
 
   const endPayload = {
     correctAnswer:   q.correctAnswer,
+    textAnswer:      q.type === 'text' ? q.answer : undefined,
     results,
     leaderboard:     leaderboard(),
     qNum:            G.qNum,
@@ -452,7 +467,7 @@ function startActualQuestion() {
     if (purchases.hint && G.question.hint) {
       io.to(pid).emit('game:hint', { hint: G.question.hint });
     }
-    if (purchases.eliminate && G.question.correctAnswer !== undefined && G.question.type !== 'order') {
+    if (purchases.eliminate && G.question.correctAnswer !== undefined && G.question.type !== 'order' && G.question.type !== 'text') {
       const wrongs = [0,1,2,3].filter(i => i !== G.question.correctAnswer);
       const elim   = wrongs[Math.floor(Math.random() * wrongs.length)];
       io.to(pid).emit('game:eliminate-option', { eliminate: elim });
@@ -765,13 +780,28 @@ io.on('connection', socket => {
     socket.emit('game:notify', { type: 'escaped-active', msg: '🚫 غادرت الشاشة أثناء السؤال!' });
   });
 
-  socket.on('player:answer', ({ choice, orderAnswer }) => {
+  socket.on('player:answer', ({ choice, orderAnswer, textAnswer }) => {
     if (!G.active) return;
     const eff = G.effects[socket.id] || {};
     if (eff.cut)    { socket.emit('game:notify', { type: 'cut-active',    msg: '✂️ لا يمكنك الإجابة!' }); return; }
     if (eff.frozen) { socket.emit('game:notify', { type: 'frozen-active', msg: '❄️ أنت مجمد! لا يمكنك الإجابة أو استخدام الخصائص' }); return; }
 
     const existing = G.answers[socket.id];
+
+    // ← سؤال النص المفتوح
+    if (G.question.type === 'text' && textAnswer !== undefined) {
+      if (existing) return;
+      const accepted = G.question.acceptedAnswers || [G.question.answer];
+      const norm = normalizeArabic(textAnswer);
+      const isTextCorrect = accepted.some(a => normalizeArabic(a) === norm) || normalizeArabic(G.question.answer) === norm;
+      G.answers[socket.id] = { textAnswer, isTextCorrect, timeLeft: G.timeLeft };
+      socket.emit('player:answer-accepted', { correct: isTextCorrect, isText: true });
+      const answered = Object.keys(G.answers).length;
+      const total    = Object.keys(G.players).length;
+      io.emit('host:answer-stats', { answered, total });
+      io.emit('game:answer-progress', { answered, total, lb: leaderboard() });
+      return;
+    }
 
     // ← سؤال الترتيب
     if (G.question.type === 'order' && orderAnswer) {
