@@ -1635,6 +1635,13 @@ function renderAbilitiesBar() {
   bar.innerHTML = html;
 }
 
+function stopFloatingChaos() {
+  [0,1,2,3].forEach(i => {
+    const b = document.getElementById('ans-' + i);
+    if (b) b.classList.remove('floating-chaos-0','floating-chaos-1','floating-chaos-2','floating-chaos-3');
+  });
+}
+
 function submitAnswer(btnPos) {
   if (hasAnswered || isCut) return;
   const actualChoice = shuffleMap ? shuffleMap[btnPos] : btnPos;
@@ -1642,6 +1649,7 @@ function submitAnswer(btnPos) {
   socket.emit(event, { choice: actualChoice });
   isLastSecondChange = false;
   hasAnswered = true;
+  stopFloatingChaos();
   [0,1,2,3].forEach(i => {
     const b = document.getElementById('ans-' + i);
     if (!b) return;
@@ -2246,6 +2254,7 @@ socket.on('game:question-end', data => {
   questionActive = false;
   isCut = false;
   clearDanger();
+  stopFloatingChaos();
   hideReverseHalo();
   document.querySelectorAll('.ans-btn').forEach(b => b.classList.remove('slashed'));
   document.getElementById('cut-overlay').style.display = 'none';
