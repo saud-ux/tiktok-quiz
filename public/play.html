@@ -1608,9 +1608,9 @@ function renderAbilitiesBar() {
     const isAttack   = cat === 'attack';
     const isUsed     = abilitiesState[cat];
     const isReactive = (a.type === 'retry' || a.type === 'revival');
-    const preQOnly   = (a.type === 'freeze' || a.type === 'cut' || a.type === 'immunity' || a.type === 'ghost');
+    const preQOnly   = (a.type === 'freeze' || a.type === 'cut' || a.type === 'immunity' || a.type === 'ghost' || a.type === 'blur');
     const lockedByQuestion = questionActive && preQOnly;
-    const allowedAfterAnswer = (a.type === 'hole' || a.type === 'retry' || a.type === 'revival' || a.type === 'blur' || a.type === 'spy');
+    const allowedAfterAnswer = (a.type === 'hole' || a.type === 'retry' || a.type === 'revival' || a.type === 'spy');
     const lockedByAnswer = hasAnswered && !allowedAfterAnswer;
     const isDisabled = isUsed || isReactive || lockedByAnswer || lockedByQuestion;
     const isLocked   = lockedByAnswer || lockedByQuestion;
