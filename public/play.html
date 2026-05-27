@@ -1815,10 +1815,15 @@ function showResults(data) {
   document.getElementById('streak-display').textContent = myStreak >= 3 ? `🔥 ستريك ${myStreak}×!` : '';
   document.getElementById('result-time').textContent = myResult.timeTaken != null ? `⏱️ أجبت خلال ${myResult.timeTaken} ثانية` : '';
   const opts = currentQ?.options || [];
-  document.getElementById('correct-ans-display').innerHTML = `
-    <div style="background:#10b98120;border:1px solid #10b98140;border-radius:10px;padding:12px">
-      <strong style="color:var(--green)">${LETTERS[data.correctAnswer]}. ${opts[data.correctAnswer]||''}</strong>
-    </div>`;
+  const isTextQ = currentQ?.type === 'text' || data.textAnswer;
+  document.getElementById('correct-ans-display').innerHTML = isTextQ
+    ? `<div style="background:#10b98120;border:1px solid #10b98140;border-radius:10px;padding:12px">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px">🧩 الإجابة الصحيحة</div>
+        <strong style="color:var(--green);font-size:18px">${data.textAnswer || ''}</strong>
+       </div>`
+    : `<div style="background:#10b98120;border:1px solid #10b98140;border-radius:10px;padding:12px">
+        <strong style="color:var(--green)">${LETTERS[data.correctAnswer]}. ${opts[data.correctAnswer]||''}</strong>
+       </div>`;
   document.getElementById('result-leaderboard').innerHTML = (data.leaderboard||[]).slice(0,7).map(p=>`
     <div class="lb-mini-item" style="${p.id===myId?'border-color:var(--purple);background:#7c3aed15':''}">
       <span style="font-size:13px;font-weight:900;color:${p.rank<=3?'var(--gold)':'var(--muted)'};width:22px">${p.rank<=3?['🥇','🥈','🥉'][p.rank-1]:'#'+p.rank}</span>
