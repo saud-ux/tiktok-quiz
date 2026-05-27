@@ -421,6 +421,7 @@ function startActualQuestion() {
   });
 
   // Apply deferred pre-question ability decisions (activated at question start, not during selection)
+  const pendingBlurs = []; // blur must be sent AFTER game:question-start to avoid renderQuestion() clearing shuffleMap
   Object.entries(G.preQDecisions).forEach(([pid, dec]) => {
     if (!G.players[pid]) return;
     const { type, targetId } = dec;
@@ -433,6 +434,16 @@ function startActualQuestion() {
       io.to(pid).emit('ability:result', { type: 'ghost', status: 'active' });
       notify(pid, 'shield-active', '👻 أنت مخفي! لا أحد يستطيع استهدافك');
       io.emit('game:players-update', publicPlayers());
+    } else if (type === 'blur' && targetId && G.players[targetId]) {
+      // Check immunity/ghost on target before queuing
+      const tEff = G.effects[targetId] || {};
+      if (tEff.immunity) {
+        io.to(pid).emit('ability:result', { type: 'blur', status: 'blocked', target: G.players[targetId]?.name });
+      } else if (tEff.ghost) {
+        io.to(pid).emit('ability:result', { type: 'blur', status: 'blocked', target: G.players[targetId]?.name });
+      } else {
+        pendingBlurs.push({ attackerId: pid, targetId });
+      }
     } else if (targetId && G.players[targetId]) {
       const res = applyAttack(pid, type, targetId, true);
       if (res.ok && !res.pending) {
@@ -460,6 +471,21 @@ function startActualQuestion() {
     questionTime: G.questionTime,
     isLastQuestion: G.isLastQuestion,
   });
+
+  // Send blur shuffle AFTER question-start so renderQuestion() doesn't clear shuffleMap
+  if (pendingBlurs.length > 0) {
+    const opts = G.question.options || [];
+    setTimeout(() => {
+      pendingBlurs.forEach(({ attackerId, targetId }) => {
+        if (!G.players[targetId]) return;
+        const shuffled = [...opts].sort(() => Math.random() - 0.5);
+        const shuffleMap = opts.map(o => shuffled.indexOf(o));
+        io.to(targetId).emit('game:shuffle-options', { options: shuffled, shuffleMap });
+        io.to(attackerId).emit('ability:result', { type: 'blur', status: 'success', target: G.players[targetId]?.name });
+        notify(targetId, 'blur-active', '😵 إرباك! الخيارات اختلطت عليك');
+      });
+    }, 400);
+  }
 
   // ← تطبيق مشتريات المتجر (تلميح + حذف خيار)
   Object.entries(G.storePurchases).forEach(([pid, purchases]) => {
@@ -538,7 +564,7 @@ io.on('connection', socket => {
 
     socket.emit('host:question-confirmed', { question: qData, number: G.qNum });
 
-    const preTypes = ['freeze','cut','immunity','ghost'];
+    const preTypes = ['freeze','cut','immunity','ghost','blur'];
     const eligible = Object.values(G.players).filter(p => {
       return ['attack','defense'].some(cat => {
         const ab = p.abilities[cat];
