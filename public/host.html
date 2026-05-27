@@ -169,7 +169,9 @@ textarea{min-height:70px}
 
 /* Question queue */
 .queue-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:var(--surface);border:1px solid var(--border);margin-bottom:8px;transition:.2s;cursor:pointer}
-.queue-item.used{opacity:.4;cursor:default;pointer-events:none}
+.queue-item.used{cursor:default;pointer-events:none;background:#16a34a18;border-color:#16a34a50;opacity:1}
+.queue-item.used .queue-text{text-decoration:line-through;color:var(--muted)}
+.queue-item.used .queue-num{background:#16a34a;color:#fff}
 .queue-item.active-q{border-color:var(--cyan);background:#22c55e10}
 .queue-item:not(.used):hover{border-color:var(--cyan);background:#22c55e08;transform:translateX(-2px)}
 .queue-num{width:26px;height:26px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:var(--muted);flex-shrink:0}
