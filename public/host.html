@@ -123,6 +123,14 @@ textarea{min-height:70px}
 .panel.active{display:block}
 #panel-active .card{margin-bottom:12px}
 
+/* Difficulty filter */
+.diff-btn{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:.2s}
+.diff-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.diff-btn.diff-active{border-color:var(--cyan);color:var(--cyan);background:#22c55e15}
+.diff-btn.diff-easy-active{border-color:#22c55e;color:#22c55e;background:#22c55e15}
+.diff-btn.diff-med-active{border-color:#f59e0b;color:#f59e0b;background:#f59e0b15}
+.diff-btn.diff-hard-active{border-color:#ef4444;color:#ef4444;background:#ef444415}
+
 /* Category selector */
 .cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:4px}
 .cat-btn{
@@ -489,6 +497,15 @@ textarea{min-height:70px}
       <div class="card" id="category-section" style="display:none">
         <div class="card-title">📚 اختر تصنيفاً</div>
         <div class="cat-grid" id="cat-grid"></div>
+        <div id="diff-filter" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+          <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px">🎯 درجة الصعوبة</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="diff-btn diff-active" id="diff-all" onclick="setDifficulty(null)">الكل</button>
+            <button class="diff-btn" id="diff-easy" onclick="setDifficulty('سهل')">🟢 سهل</button>
+            <button class="diff-btn" id="diff-med" onclick="setDifficulty('متوسط')">🟡 متوسط</button>
+            <button class="diff-btn" id="diff-hard" onclick="setDifficulty('صعب')">🔴 صعب</button>
+          </div>
+        </div>
         <div id="cat-info" style="margin-top:10px;font-size:13px;color:var(--muted)">اختر تصنيفاً لتحميل أسئلته</div>
       </div>
 
@@ -539,6 +556,8 @@ let players = {};
 let currentQuestion = null;
 let qNum = 0;
 let selectedDuration = 20;
+let activeDifficulty = null;
+let rawCategoryQuestions = [];
 
 function setDuration(secs) {
   selectedDuration = secs;
@@ -934,29 +953,64 @@ function showCategorySelector(cats) {
 function loadCategory(name) {
   if (!categoriesData || !categoriesData[name]) return;
   activeCategory = name;
+  activeDifficulty = null;
   document.querySelectorAll('.cat-btn').forEach(btn => {
     btn.classList.toggle('active', btn.textContent.trim().startsWith(name));
   });
-  questionQueue = (categoriesData[name] || []).map(q => ({
+
+  rawCategoryQuestions = (categoriesData[name] || []).map(q => ({
     text:          q.text || '',
     type:          q.type || 'normal',
     options:       q.options || [],
     correctAnswer: q.correct ?? q.correctAnswer ?? 0,
     hint:          q.hint || '',
     image:         q.image || '',
+    difficulty:    q.difficulty || '',
     used: false,
   })).filter(q => q.text);
+
+  // Show difficulty filter with counts
+  const counts = { 'سهل': 0, 'متوسط': 0, 'صعب': 0 };
+  rawCategoryQuestions.forEach(q => { if (counts[q.difficulty] !== undefined) counts[q.difficulty]++; });
+  document.getElementById('diff-all').textContent  = `الكل (${rawCategoryQuestions.length})`;
+  document.getElementById('diff-easy').textContent = `🟢 سهل (${counts['سهل']})`;
+  document.getElementById('diff-med').textContent  = `🟡 متوسط (${counts['متوسط']})`;
+  document.getElementById('diff-hard').textContent = `🔴 صعب (${counts['صعب']})`;
+  document.getElementById('diff-filter').style.display = 'block';
+  document.querySelectorAll('.diff-btn').forEach(b => b.className = 'diff-btn');
+  document.getElementById('diff-all').classList.add('diff-active');
+
+  questionQueue = rawCategoryQuestions.map(q => ({ ...q, used: false }));
   currentQueueIndex = -1;
   renderQueue();
-  loadQuestion(0);
+  if (questionQueue.length) loadQuestion(0);
   document.getElementById('cat-info').textContent = `تم تحميل ${questionQueue.length} سؤال من "${name}"`;
   toast(`📚 "${name}" — ${questionQueue.length} سؤال`);
+}
+
+function setDifficulty(diff) {
+  activeDifficulty = diff;
+  document.querySelectorAll('.diff-btn').forEach(b => b.className = 'diff-btn');
+  const map = { null: ['diff-all','diff-active'], 'سهل': ['diff-easy','diff-easy-active'], 'متوسط': ['diff-med','diff-med-active'], 'صعب': ['diff-hard','diff-hard-active'] };
+  const [id, cls] = map[diff] || map[null];
+  document.getElementById(id).classList.add(cls);
+
+  const filtered = diff ? rawCategoryQuestions.filter(q => q.difficulty === diff) : rawCategoryQuestions;
+  questionQueue = filtered.map(q => ({ ...q, used: false }));
+  currentQueueIndex = -1;
+  renderQueue();
+  if (questionQueue.length) loadQuestion(0);
+  const label = diff ? `${filtered.length} سؤال — ${diff}` : `${questionQueue.length} سؤال`;
+  document.getElementById('cat-info').textContent = label;
+  toast(diff ? `🎯 ${diff} — ${filtered.length} سؤال` : `📚 الكل — ${questionQueue.length} سؤال`);
 }
 
 function clearQueue() {
   if (!confirm('هل تريد مسح قائمة الأسئلة؟')) return;
   questionQueue = []; currentQueueIndex = -1; activeCategory = null;
+  activeDifficulty = null; rawCategoryQuestions = [];
   document.getElementById('queue-card').style.display = 'none';
+  document.getElementById('diff-filter').style.display = 'none';
   if (categoriesData) {
     document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('cat-info').textContent = 'اختر تصنيفاً لتحميل أسئلته';
