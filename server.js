@@ -55,6 +55,7 @@ function newState() {
     preQResponded: new Set(),
     preQTimeout: null,
     preQDecisions: {},
+    pendingQuestionStart: null,
     isLastQuestion: false,
     isDramatic: true, // ← الكشف الدرامي مفعّل افتراضياً
     jokerUsed: {},       // ← من استخدم الجوكر في هذا السؤال
@@ -95,6 +96,16 @@ function notify(targetId, type, msg) {
   io.to(targetId).emit('game:notify', { type, msg });
 }
 
+function checkPendingQuestionStart() {
+  if (!G.pendingQuestionStart) return;
+  const preQPending = Object.values(G.reverseOffers).some(o => o.preQ);
+  if (!preQPending) {
+    const fn = G.pendingQuestionStart;
+    G.pendingQuestionStart = null;
+    fn();
+  }
+}
+
 // ─────────────────────────────────────────────────────────────
 // APPLY ATTACK
 // ─────────────────────────────────────────────────────────────
@@ -113,6 +124,7 @@ function applyAttack(attackerId, type, targetId, immediate = false, skipReverseO
         timeout: setTimeout(() => {
           delete G.reverseOffers[targetId];
           applyAttack(attackerId, type, targetId, immediate, true);
+          checkPendingQuestionStart();
         }, 5000),
       };
       io.to(targetId).emit('game:reverse-offer', { attackerName: attacker.name, type });
@@ -421,6 +433,7 @@ function startActualQuestion() {
   });
 
   // Apply deferred pre-question ability decisions (activated at question start, not during selection)
+  const prevRevKeys = new Set(Object.keys(G.reverseOffers));
   const pendingBlurs = []; // blur must be sent AFTER game:question-start to avoid renderQuestion() clearing shuffleMap
   Object.entries(G.preQDecisions).forEach(([pid, dec]) => {
     if (!G.players[pid]) return;
@@ -456,65 +469,81 @@ function startActualQuestion() {
   });
   G.preQDecisions = {};
 
-  const playerQ = {
-    text:    G.question.text,
-    options: G.question.type === 'order'
-      ? (G.question.shuffledItems || G.question.items)
-      : G.question.options,
-    number:  G.qNum,
-    image:   G.question.image || null,
-    type:    G.question.type  || 'normal',
-  };
-  io.emit('game:question-start', {
-    question: playerQ,
-    timeLeft: G.questionTime,
-    questionTime: G.questionTime,
-    isLastQuestion: G.isLastQuestion,
+  // Mark reverse offers created during the pre-Q decisions loop
+  let preQRevCount = 0;
+  Object.keys(G.reverseOffers).forEach(k => {
+    if (!prevRevKeys.has(k)) { G.reverseOffers[k].preQ = true; preQRevCount++; }
   });
 
-  // Send blur shuffle AFTER question-start so renderQuestion() doesn't clear shuffleMap
-  if (pendingBlurs.length > 0) {
-    setTimeout(() => {
-      pendingBlurs.forEach(({ attackerId, targetId }) => {
-        if (!G.players[targetId] || !G.players[attackerId]) return;
-        const attacker = G.players[attackerId];
-        const arr = [0,1,2,3].sort(() => Math.random() - 0.5);
-        if (arr.every((v, i) => v === i)) { [arr[0], arr[1]] = [arr[1], arr[0]]; }
-        io.to(targetId).emit('game:shuffle-options', { shuffle: arr, attackerName: attacker.name });
-        notify(targetId,   'blur-incoming', `🌀 ${attacker.name} أربك خياراتك!`);
-        notify(attackerId, 'blur-success',  `🌀 ربّكت ${G.players[targetId].name}! الخيارات اختلطت عليه`);
-        io.to(attackerId).emit('ability:result', { type: 'blur', status: 'success', target: G.players[targetId]?.name });
-      });
-    }, 400);
+  function fireQuestion() {
+    const playerQ = {
+      text:    G.question.text,
+      options: G.question.type === 'order'
+        ? (G.question.shuffledItems || G.question.items)
+        : G.question.options,
+      number:  G.qNum,
+      image:   G.question.image || null,
+      type:    G.question.type  || 'normal',
+    };
+    io.emit('game:question-start', {
+      question: playerQ,
+      timeLeft: G.questionTime,
+      questionTime: G.questionTime,
+      isLastQuestion: G.isLastQuestion,
+    });
+
+    // Send blur shuffle AFTER question-start so renderQuestion() doesn't clear shuffleMap
+    if (pendingBlurs.length > 0) {
+      setTimeout(() => {
+        pendingBlurs.forEach(({ attackerId, targetId }) => {
+          if (!G.players[targetId] || !G.players[attackerId]) return;
+          const attacker = G.players[attackerId];
+          const arr = [0,1,2,3].sort(() => Math.random() - 0.5);
+          if (arr.every((v, i) => v === i)) { [arr[0], arr[1]] = [arr[1], arr[0]]; }
+          io.to(targetId).emit('game:shuffle-options', { shuffle: arr, attackerName: attacker.name });
+          notify(targetId,   'blur-incoming', `🌀 ${attacker.name} أربك خياراتك!`);
+          notify(attackerId, 'blur-success',  `🌀 ربّكت ${G.players[targetId].name}! الخيارات اختلطت عليه`);
+          io.to(attackerId).emit('ability:result', { type: 'blur', status: 'success', target: G.players[targetId]?.name });
+        });
+      }, 400);
+    }
+
+    // ← تطبيق مشتريات المتجر (تلميح + حذف خيار)
+    Object.entries(G.storePurchases).forEach(([pid, purchases]) => {
+      if (!G.players[pid]) return;
+      if (purchases.hint && G.question.hint) {
+        io.to(pid).emit('game:hint', { hint: G.question.hint });
+      }
+      if (purchases.eliminate && G.question.correctAnswer !== undefined && G.question.type !== 'order' && G.question.type !== 'text') {
+        const wrongs = [0,1,2,3].filter(i => i !== G.question.correctAnswer);
+        const elim   = wrongs[Math.floor(Math.random() * wrongs.length)];
+        io.to(pid).emit('game:eliminate-option', { eliminate: elim });
+      }
+    });
+    G.storePurchases = {};
+
+    Object.entries(G.effects).forEach(([pid, eff]) => {
+      if (eff.cut)    io.to(pid).emit('game:notify', { type: 'cut-active',    msg: '✂️ أنت مقطوع! لا يمكنك الإجابة' });
+      if (eff.frozen) io.to(pid).emit('game:notify', { type: 'frozen-active', msg: '❄️ أنت مجمد! لا يمكنك استخدام الخصائص' });
+    });
+
+    // ← أي reverse offer قديم معلق: أعطِ المدافع 5 ثوانٍ إضافية ثم طبّق الهجوم
+    Object.entries(G.reverseOffers).forEach(([targetId, offer]) => {
+      clearTimeout(offer.timeout);
+      offer.timeout = setTimeout(() => {
+        delete G.reverseOffers[targetId];
+        applyAttack(offer.attackerId, offer.type, targetId, offer.immediate, true);
+        checkPendingQuestionStart();
+      }, 5000);
+    });
   }
 
-  // ← تطبيق مشتريات المتجر (تلميح + حذف خيار)
-  Object.entries(G.storePurchases).forEach(([pid, purchases]) => {
-    if (!G.players[pid]) return;
-    if (purchases.hint && G.question.hint) {
-      io.to(pid).emit('game:hint', { hint: G.question.hint });
-    }
-    if (purchases.eliminate && G.question.correctAnswer !== undefined && G.question.type !== 'order' && G.question.type !== 'text') {
-      const wrongs = [0,1,2,3].filter(i => i !== G.question.correctAnswer);
-      const elim   = wrongs[Math.floor(Math.random() * wrongs.length)];
-      io.to(pid).emit('game:eliminate-option', { eliminate: elim });
-    }
-  });
-  G.storePurchases = {};
-
-  Object.entries(G.effects).forEach(([pid, eff]) => {
-    if (eff.cut)    io.to(pid).emit('game:notify', { type: 'cut-active',    msg: '✂️ أنت مقطوع! لا يمكنك الإجابة' });
-    if (eff.frozen) io.to(pid).emit('game:notify', { type: 'frozen-active', msg: '❄️ أنت مجمد! لا يمكنك استخدام الخصائص' });
-  });
-
-  // ← أي reverse offer معلق لم يُردّ عليه: أعطِ المدافع ثانيتين إضافيتين ثم طبّق الهجوم
-  Object.entries(G.reverseOffers).forEach(([targetId, offer]) => {
-    clearTimeout(offer.timeout);
-    offer.timeout = setTimeout(() => {
-      delete G.reverseOffers[targetId];
-      applyAttack(offer.attackerId, offer.type, targetId, offer.immediate, true);
-    }, 5000);
-  });
+  if (preQRevCount > 0) {
+    // Wait for reverse decisions before starting the question
+    G.pendingQuestionStart = fireQuestion;
+  } else {
+    fireQuestion();
+  }
 
   G.timerRef = setInterval(() => {
     G.timeLeft--;
@@ -671,6 +700,7 @@ io.on('connection', socket => {
     } else {
       applyAttack(offer.attackerId, offer.type, socket.id, offer.immediate, true);
     }
+    checkPendingQuestionStart();
   });
 
   socket.on('host:end-game', () => {
