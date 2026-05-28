@@ -55,6 +55,10 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 .ability-name{font-size:12px;font-weight:700;margin-bottom:3px}
 .ability-desc{font-size:10px;color:var(--muted);line-height:1.4}
 
+/* ── STICKY BAR ── */
+#sticky-pts-bar{transition:opacity .3s}
+body.has-bar .screen{padding-top:62px}
+
 /* ── LOBBY ── */
 .lb-mini-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface);border-radius:10px;border:1px solid var(--border);margin-bottom:6px}
 .waiting-anim{text-align:center;padding:20px 0}
@@ -485,6 +489,17 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
 </style>
 </head>
 <body>
+
+<!-- ════ STICKY POINTS BAR ════ -->
+<div id="sticky-pts-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:900;background:var(--surface);border-bottom:1px solid var(--border);padding:8px 16px;align-items:center;gap:10px">
+  <div id="sbar-avatar" style="width:30px;height:30px;border-radius:50%;overflow:hidden;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--card)"></div>
+  <div style="font-size:13px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="sbar-name"></div>
+  <div style="display:flex;align-items:center;gap:4px">
+    <span style="font-size:12px;color:var(--muted);font-weight:600">نقاطي</span>
+    <span style="font-size:17px;font-weight:900;color:var(--green)" id="sbar-pts">0</span>
+  </div>
+  <div id="sbar-streak" style="display:none;background:var(--gold);color:#000;font-size:11px;font-weight:900;padding:2px 9px;border-radius:20px"></div>
+</div>
 
 <!-- ════ SCREEN 1: JOIN ════ -->
 <div class="screen active" id="screen-join">
@@ -1373,6 +1388,24 @@ let myId = null, myName = '', myAvatar = null, myPlayer = null;
 let myAbilities = { attack: null, defense: null, general: null };
 let myPoints = 0, myStreak = 0;
 let allPlayers = {}, currentQ = null;
+
+function updateStickyPts() {
+  const bar = document.getElementById('sticky-pts-bar');
+  if (!myId) { bar.style.display = 'none'; document.body.classList.remove('has-bar'); return; }
+  bar.style.display = 'flex';
+  document.body.classList.add('has-bar');
+  document.getElementById('sbar-pts').textContent  = myPoints.toLocaleString();
+  document.getElementById('sbar-name').textContent = myName;
+  const streakEl = document.getElementById('sbar-streak');
+  if (myStreak >= 3) { streakEl.style.display = 'block'; streakEl.textContent = '🔥' + myStreak; }
+  else streakEl.style.display = 'none';
+  const av = document.getElementById('sbar-avatar');
+  if (myAvatar && myAvatar.startsWith('http')) {
+    av.innerHTML = `<img src="${myAvatar}" style="width:100%;height:100%;object-fit:cover">`;
+  } else {
+    av.textContent = myAvatar || '👤';
+  }
+}
 let hasAnswered = false, myAnswer = null, isCut = false;
 let abilitiesState = { attack: false, defense: false, general: false };
 let myBonusAbility = null;
@@ -1870,6 +1903,7 @@ function showResults(data) {
   const isCorrect = myResult.isCorrect;
   const delta     = myResult.delta || 0;
   if (myId && allPlayers[myId]) { myPoints = allPlayers[myId].points; myStreak = allPlayers[myId].streak; }
+  updateStickyPts();
   const banner = document.getElementById('result-banner');
   banner.className = 'result-banner ' + (isCorrect ? 'correct' : 'wrong');
   document.getElementById('result-icon').textContent  = isCorrect ? '🎉' : '😔';
@@ -2045,6 +2079,7 @@ socket.on('game:store-purchased', ({ itemId, newPoints, cost }) => {
   storePurchased[itemId] = true;
   document.getElementById('my-pts').textContent = newPoints.toLocaleString();
   document.getElementById('store-my-pts-num').textContent = newPoints.toLocaleString();
+  updateStickyPts();
   // Mark bought
   const si = document.getElementById('si-' + itemId);
   const sc = document.getElementById('sc-' + itemId);
@@ -2080,8 +2115,10 @@ socket.on('player:joined', ({ id, player }) => {
   myId = id; myPlayer = player;
   myName   = player.name;
   myAvatar = player.avatar;
+  myPoints = player.points || 0; myStreak = player.streak || 0;
   myAbilities = { attack: player.abilities.attack.type, defense: player.abilities.defense.type, general: player.abilities.general.type };
   abilitiesState = { attack: false, defense: false, general: false };
+  updateStickyPts();
   localStorage.setItem('quiz_player', JSON.stringify({ name: myName, avatar: myAvatar, abilities: myAbilities }));
   showLobby();
 });
@@ -2092,6 +2129,7 @@ socket.on('player:rejoined', ({ id, player, active, question, timeLeft, question
   myPoints = player.points; myStreak = player.streak;
   myAbilities  = { attack: player.abilities.attack.type, defense: player.abilities.defense.type, general: player.abilities.general.type };
   abilitiesState = { attack: player.abilities.attack.used, defense: player.abilities.defense.used, general: player.abilities.general.used };
+  updateStickyPts();
   document.getElementById('lobby-avatar').src = player.avatar || '';
   document.getElementById('lobby-name').textContent = player.name;
 
@@ -2138,6 +2176,7 @@ socket.on('game:players-update', ps => {
   allPlayers = {};
   ps.forEach(p => allPlayers[p.id] = p);
   if (myId && allPlayers[myId]) { myPoints = allPlayers[myId].points; myStreak = allPlayers[myId].streak; }
+  updateStickyPts();
   renderLobbyPlayers();
 });
 
@@ -2311,6 +2350,7 @@ socket.on('game:question-end', data => {
   if (data.leaderboard) {
     data.leaderboard.forEach(p => { if(allPlayers[p.id]){allPlayers[p.id].points=p.points;allPlayers[p.id].streak=p.streak;} });
     if (myId && allPlayers[myId]) { myPoints = allPlayers[myId].points; myStreak = allPlayers[myId].streak; }
+    updateStickyPts();
   }
   const onGame = document.getElementById('screen-game').classList.contains('active');
   if (onGame) dramaticReveal(data);
@@ -2535,6 +2575,7 @@ socket.on('game:kicked', () => {
 
 socket.on('game:reset', () => {
   myId=null; myPlayer=null; myPoints=0; myStreak=0;
+  updateStickyPts();
   allPlayers={}; abilitiesState={attack:false,defense:false,general:false};
   questionActive=false; myBonusAbility=null;
   shuffleMap=null; hasUsedLastSecond=false; isLastSecondChange=false;
