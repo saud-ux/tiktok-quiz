@@ -2069,6 +2069,7 @@ socket.on('game:reveal-sequence', ({ sequence }) => {
   container.innerHTML = '';
   overlay.classList.add('open');
   overlay.scrollTop = 0;
+  document.getElementById('sticky-pts-bar').style.display = 'none';
 
   sequence.forEach((p, i) => {
     const isMe   = p.id === myId;
