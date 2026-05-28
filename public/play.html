@@ -113,6 +113,15 @@ body.has-bar .screen{padding-top:62px}
 .last-q-banner.show{display:block}
 @keyframes goldGlow{from{box-shadow:0 0 10px #f59e0b40}to{box-shadow:0 0 25px #f59e0b80}}
 
+/* ── LEADERBOARD DRAMATIC REVEAL ── */
+@keyframes lbSlideIn{from{opacity:0;transform:translateX(40px) scale(.95)}to{opacity:1;transform:translateX(0) scale(1)}}
+@keyframes rank1Glow{0%,100%{box-shadow:0 0 10px #f59e0b50}50%{box-shadow:0 0 28px #f59e0baa,0 0 50px #f59e0b30}}
+@keyframes rank1Scale{0%{transform:scale(.8);opacity:0}60%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
+.lb-drama-item{opacity:0}
+.lb-drama-item.show{animation:lbSlideIn .38s cubic-bezier(.2,.8,.3,1) forwards}
+.lb-drama-rank1{opacity:0}
+.lb-drama-rank1.show{animation:rank1Scale .55s cubic-bezier(.2,.8,.3,1) forwards,rank1Glow 1.8s ease .55s infinite}
+
 /* ── RESULTS ── */
 .result-banner{text-align:center;padding:24px;border-radius:16px;margin-bottom:16px}
 .result-banner.correct{background:linear-gradient(135deg,#10b98120,#10b98140);border:2px solid var(--green)}
@@ -1948,22 +1957,42 @@ function showResults(data) {
   }).join('');
   document.getElementById('reactive-offers').innerHTML = '';
 
-  // ── الترتيب الكلي ──
-  const lb = data.leaderboard || [];
-  document.getElementById('result-overall-lb').innerHTML = lb.map((p, i) => {
-    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${p.rank}`;
-    const isMe  = p.id === myId;
-    return `
-    <div class="lb-mini-item" style="${isMe ? 'border-color:var(--purple);background:#7c3aed15;' : ''}">
-      <span style="font-size:13px;font-weight:900;color:${i<3?'var(--gold)':'var(--muted)'};width:24px">${medal}</span>
-      ${renderAvatar(p.avatar, 34)}
-      <span style="flex:1;font-size:14px;font-weight:700">${p.name}${isMe ? ' <span style="color:var(--purple-light);font-size:11px">(أنت)</span>' : ''}</span>
-      ${p.streak >= 3 ? `<span style="color:var(--gold);font-size:12px">🔥${p.streak}</span>` : ''}
-      <span style="font-size:15px;font-weight:900;color:var(--green)">${p.points.toLocaleString()}</span>
-    </div>`;
-  }).join('') || '<div style="color:var(--muted);font-size:14px">لا يوجد لاعبون</div>';
-
   showScreen('result');
+
+  // ── الترتيب الكلي — كشف درامي من الأخير للأول ──
+  const lb = data.leaderboard || [];
+  const lbEl = document.getElementById('result-overall-lb');
+  lbEl.innerHTML = '';
+
+  // ابنِ كل العناصر مخفية مرتبة (#1 في الأعلى)
+  lb.forEach((p, i) => {
+    const isMe   = p.id === myId;
+    const isTop1 = i === 0;
+    const medal  = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${p.rank}`;
+    const div    = document.createElement('div');
+    div.className = 'lb-mini-item ' + (isTop1 ? 'lb-drama-rank1' : 'lb-drama-item');
+    if (isTop1)      div.style.cssText += 'border-color:var(--gold);background:#f59e0b10;';
+    else if (i === 1) div.style.cssText += 'border-color:#94a3b850;';
+    else if (i === 2) div.style.cssText += 'border-color:#cd7f3250;';
+    if (isMe)        div.style.cssText += 'border-color:var(--purple);background:#7c3aed15;';
+    div.innerHTML = `
+      <span style="font-size:${i<3?'15':'13'}px;font-weight:900;color:${i<3?'var(--gold)':'var(--muted)'};width:26px">${medal}</span>
+      ${renderAvatar(p.avatar, i===0?40:34)}
+      <span style="flex:1;font-size:${isTop1?'15':'14'}px;font-weight:${isTop1?'900':'700'}">${p.name}${isMe?' <span style="color:var(--purple-light);font-size:11px">(أنت)</span>':''}</span>
+      ${p.streak>=3?`<span style="color:var(--gold);font-size:12px">🔥${p.streak}</span>`:''}
+      <span style="font-size:${isTop1?'17':'15'}px;font-weight:900;color:${isTop1?'var(--gold)':'var(--green)'}">${p.points.toLocaleString()}</span>`;
+    lbEl.appendChild(div);
+  });
+
+  // كشف من الأخير للأول — كل 320ms
+  const items    = [...lbEl.children];
+  const reversed = [...items].reverse(); // آخر مركز أولاً
+  reversed.forEach((el, idx) => {
+    setTimeout(() => {
+      el.classList.add('show');
+      if (idx === items.length - 1) playCoin?.(); // صوت عند الأول
+    }, 300 + idx * 320);
+  });
 }
 
 // ─── LAST QUESTION ANNOUNCEMENT ─────────────────────────────
