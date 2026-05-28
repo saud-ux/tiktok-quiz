@@ -391,6 +391,18 @@ textarea{min-height:70px}
                 <input type="number" id="bot-delay" min="2" max="30" value="5" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-family:inherit;font-size:15px;font-weight:700;text-align:center;width:100%">
               </div>
             </div>
+            <!-- التصنيفات — تظهر فقط لما يكون بنك أسئلة محمّل -->
+            <div id="bot-cat-section" style="display:none;margin-bottom:10px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                <span style="font-size:11px;color:var(--muted);font-weight:700">📚 التصنيفات</span>
+                <div style="display:flex;gap:4px">
+                  <button onclick="selectAllBotCats(true)"  style="padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer">الكل ✓</button>
+                  <button onclick="selectAllBotCats(false)" style="padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer">مسح ✗</button>
+                </div>
+              </div>
+              <div id="bot-cat-chips" style="display:flex;flex-wrap:wrap;gap:5px;max-height:130px;overflow-y:auto;padding:2px 0"></div>
+            </div>
+
             <div style="margin-bottom:10px">
               <span style="font-size:11px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px">🎯 صعوبة الأسئلة</span>
               <div style="display:flex;gap:6px">
@@ -799,43 +811,105 @@ function setBotDiff(diff) {
   document.getElementById(map[diff] || 'bdiff-all').classList.add('bot-diff-active');
 }
 
+function updateBotCatSection() {
+  const sec = document.getElementById('bot-cat-section');
+  if (!categoriesData) { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+  const cats = Object.keys(categoriesData);
+  document.getElementById('bot-cat-chips').innerHTML = cats.map(cat => {
+    const count = (categoriesData[cat] || []).length;
+    const icon  = CAT_ICONS[cat] || '📂';
+    const id    = 'bcat_' + encodeURIComponent(cat);
+    return `<label style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;border:1px solid var(--border);background:var(--card);cursor:pointer;font-size:12px;font-weight:600;user-select:none;transition:.15s" id="lbl_${id}">
+      <input type="checkbox" class="bot-cat-check" id="${id}" value="${cat}" checked onchange="updateBotCatLabel('${id}')" style="accent-color:var(--cyan);cursor:pointer">
+      ${icon} ${cat} <span style="color:var(--muted)">(${count})</span>
+    </label>`;
+  }).join('');
+}
+
+function updateBotCatLabel(id) {
+  const cb  = document.getElementById(id);
+  const lbl = document.getElementById('lbl_' + id);
+  if (lbl) lbl.style.borderColor = cb.checked ? 'var(--cyan)' : 'var(--border)';
+}
+
+function selectAllBotCats(val) {
+  document.querySelectorAll('.bot-cat-check').forEach(cb => {
+    cb.checked = val;
+    updateBotCatLabel(cb.id);
+  });
+}
+
+function getSelectedBotCats() {
+  return [...document.querySelectorAll('.bot-cat-check:checked')].map(cb => cb.value);
+}
+
 function buildBotPlaylist() {
-  const filtered = questionQueue
-    .map((q, i) => ({ q, i }))
-    .filter(({ q }) => !q.used && (!botHostDifficulty || q.difficulty === botHostDifficulty));
-  // خلط عشوائي
-  for (let i = filtered.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [filtered[i], filtered[j]] = [filtered[j], filtered[i]];
+  let pool;
+
+  if (categoriesData) {
+    const selectedCats = getSelectedBotCats();
+    if (!selectedCats.length) return [];
+    pool = [];
+    selectedCats.forEach(cat => {
+      (categoriesData[cat] || []).forEach(q => {
+        const item = {
+          text:            q.text || '',
+          type:            q.type || 'normal',
+          options:         q.options || [],
+          correctAnswer:   q.correct ?? q.correctAnswer ?? 0,
+          answer:          q.answer || '',
+          acceptedAnswers: q.acceptedAnswers || [],
+          hint:            q.hint || '',
+          image:           q.image || '',
+          difficulty:      q.difficulty || '',
+          used: false,
+        };
+        if (item.text && (!botHostDifficulty || item.difficulty === botHostDifficulty)) pool.push(item);
+      });
+    });
+  } else {
+    pool = questionQueue.filter(q => !q.used && (!botHostDifficulty || q.difficulty === botHostDifficulty));
   }
-  return filtered.slice(0, botHostTotal).map(({ i }) => i);
+
+  // خلط عشوائي
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, botHostTotal);
 }
 
 function startBotHost() {
-  if (!questionQueue.length) { toast('⚠️ حمّل قائمة أسئلة أولاً'); return; }
+  if (!categoriesData && !questionQueue.length) { toast('⚠️ حمّل قائمة أسئلة أولاً'); return; }
 
-  botHostTotal  = parseInt(document.getElementById('bot-q-count').value) || 10;
-  botHostDelay  = parseInt(document.getElementById('bot-delay').value)   || 5;
-  botPlaylist   = buildBotPlaylist();
+  botHostTotal = parseInt(document.getElementById('bot-q-count').value) || 10;
+  botHostDelay = parseInt(document.getElementById('bot-delay').value)   || 5;
 
-  if (!botPlaylist.length) {
-    const label = botHostDifficulty || 'أي صعوبة';
-    toast(`⚠️ لا توجد أسئلة (${label}) في القائمة`);
+  const pool = buildBotPlaylist();
+  if (!pool.length) {
+    const diff = botHostDifficulty || 'أي صعوبة';
+    toast(`⚠️ لا توجد أسئلة (${diff}) في التصنيفات المحددة`);
     return;
   }
 
-  botHostPlayed  = 0;
-  botPlaylistIdx = 0;
-  botHostActive  = true;
+  // استبدال القائمة بأسئلة البوت
+  questionQueue     = pool;
+  currentQueueIndex = -1;
+  botPlaylist       = pool.map((_, i) => i);
+  botPlaylistIdx    = 0;
+  botHostPlayed     = 0;
+  botHostActive     = true;
 
+  renderQueue();
   document.getElementById('btn-bot-start').style.display = 'none';
   document.getElementById('btn-bot-stop').style.display  = 'block';
   document.getElementById('btn-start').disabled = true;
 
   const diffLabel = botHostDifficulty ? ` — ${botHostDifficulty}` : '';
-  setBotStatus(`🎮 الجلسة بدأت — ${botPlaylist.length} سؤال${diffLabel}`);
+  setBotStatus(`🎮 الجلسة بدأت — ${pool.length} سؤال${diffLabel}`);
 
-  loadQuestion(botPlaylist[0]);
+  loadQuestion(0);
   setTimeout(() => startQuestion(), 400);
 }
 
@@ -990,6 +1064,7 @@ function parseJSON(text) {
     currentQueueIndex = -1;
     document.getElementById('queue-card').style.display = 'none';
     showCategorySelector(Object.keys(data));
+    updateBotCatSection();
     toast('✅ تم تحميل بنك الأسئلة — اختر تصنيفاً');
   } else {
     throw new Error('صيغة الملف غير مدعومة');
