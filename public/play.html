@@ -638,6 +638,10 @@ body.has-bar .screen{padding-top:62px}
     <div class="section-title">⚡ نقاط هذا السؤال</div>
     <div id="result-leaderboard"></div>
   </div>
+  <div class="card">
+    <div class="section-title">🏆 الترتيب الكلي</div>
+    <div id="result-overall-lb"></div>
+  </div>
   <div style="text-align:center;color:var(--muted);font-size:14px;padding:10px">في انتظار السؤال التالي...</div>
 </div>
 
@@ -1943,6 +1947,22 @@ function showResults(data) {
     </div>`;
   }).join('');
   document.getElementById('reactive-offers').innerHTML = '';
+
+  // ── الترتيب الكلي ──
+  const lb = data.leaderboard || [];
+  document.getElementById('result-overall-lb').innerHTML = lb.map((p, i) => {
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${p.rank}`;
+    const isMe  = p.id === myId;
+    return `
+    <div class="lb-mini-item" style="${isMe ? 'border-color:var(--purple);background:#7c3aed15;' : ''}">
+      <span style="font-size:13px;font-weight:900;color:${i<3?'var(--gold)':'var(--muted)'};width:24px">${medal}</span>
+      ${renderAvatar(p.avatar, 34)}
+      <span style="flex:1;font-size:14px;font-weight:700">${p.name}${isMe ? ' <span style="color:var(--purple-light);font-size:11px">(أنت)</span>' : ''}</span>
+      ${p.streak >= 3 ? `<span style="color:var(--gold);font-size:12px">🔥${p.streak}</span>` : ''}
+      <span style="font-size:15px;font-weight:900;color:var(--green)">${p.points.toLocaleString()}</span>
+    </div>`;
+  }).join('') || '<div style="color:var(--muted);font-size:14px">لا يوجد لاعبون</div>';
+
   showScreen('result');
 }
 
