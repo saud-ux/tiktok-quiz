@@ -128,6 +128,17 @@ body.has-bar .screen{padding-top:62px}
 .lb-rov-card.rk1.show{animation:rank1Enter .6s cubic-bezier(.34,1.56,.64,1) forwards,rank1Shine 1.6s ease .6s infinite}
 .lb-rov-cd{margin-top:16px;font-size:14px;font-weight:700;color:var(--muted);padding:8px 22px;border-radius:20px;background:#ffffff12;display:none}
 
+/* ── ORDER REVEAL OVERLAY ── */
+#order-reveal-overlay{position:fixed;inset:0;z-index:610;background:#000000f4;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px;gap:0}
+#order-reveal-overlay.open{display:flex}
+.ord-rov-title{font-size:20px;font-weight:900;color:var(--cyan);margin-bottom:20px;text-align:center;letter-spacing:1px}
+.ord-rov-item{width:100%;max-width:380px;display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:14px;border:2px solid #ffffff15;background:#ffffff08;margin-bottom:10px;opacity:0;transform:scale(.7) translateY(30px);transition:opacity .42s cubic-bezier(.34,1.56,.64,1),transform .42s cubic-bezier(.34,1.56,.64,1)}
+.ord-rov-item.show{opacity:1;transform:scale(1) translateY(0)}
+@keyframes ordItemGlow{0%,100%{box-shadow:0 0 8px #22c55e30}50%{box-shadow:0 0 22px #22c55e80}}
+.ord-rov-item.show{animation:ordItemGlow .6s ease forwards}
+.ord-rov-num{width:34px;height:34px;border-radius:50%;background:var(--gold);color:#000;font-size:15px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ord-rov-text{flex:1;font-size:16px;font-weight:700;color:var(--text)}
+
 /* ── RESULTS ── */
 .result-banner{text-align:center;padding:24px;border-radius:16px;margin-bottom:16px}
 .result-banner.correct{background:linear-gradient(135deg,#10b98120,#10b98140);border:2px solid var(--green)}
@@ -729,6 +740,12 @@ body.has-bar .screen{padding-top:62px}
 
 <!-- ════ BIG COUNTDOWN ════ -->
 <div id="big-countdown"><div id="big-cnt-num"></div></div>
+
+<!-- Order correct reveal overlay -->
+<div id="order-reveal-overlay">
+  <div class="ord-rov-title">🔢 الترتيب الصحيح</div>
+  <div id="ord-rov-items"></div>
+</div>
 
 <!-- Leaderboard reveal overlay -->
 <div id="lb-reveal-overlay">
@@ -1945,14 +1962,7 @@ function showResults(data) {
   const isOrderQ = currentQ?.type === 'order' && data.correctItems;
   const NUMS = ['١','٢','٣','٤'];
   document.getElementById('correct-ans-display').innerHTML = isOrderQ
-    ? `<div style="background:#10b98120;border:1px solid #10b98140;border-radius:10px;padding:12px">
-        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">🔢 الترتيب الصحيح</div>
-        ${data.correctItems.map((item, i) => `
-          <div style="display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;background:#10b98110;margin-bottom:5px">
-            <span style="font-size:14px;font-weight:900;color:var(--gold);width:22px;text-align:center">${NUMS[i]}</span>
-            <span style="font-size:14px;font-weight:700;color:var(--green)">${item}</span>
-          </div>`).join('')}
-       </div>`
+    ? ''
     : isTextQ
     ? `<div style="background:#10b98120;border:1px solid #10b98140;border-radius:10px;padding:12px">
         <div style="font-size:12px;color:var(--muted);margin-bottom:4px">🧩 الإجابة الصحيحة</div>
@@ -1977,7 +1987,36 @@ function showResults(data) {
   }).join('');
   document.getElementById('reactive-offers').innerHTML = '';
   showScreen('result');
-  showLbReveal(data.leaderboard || []);
+  if (isOrderQ) {
+    showOrderReveal(data.correctItems, () => showLbReveal(data.leaderboard || []));
+  } else {
+    showLbReveal(data.leaderboard || []);
+  }
+}
+
+function showOrderReveal(items, onClose) {
+  if (!items || !items.length) { if (onClose) onClose(); return; }
+  const overlay   = document.getElementById('order-reveal-overlay');
+  const container = document.getElementById('ord-rov-items');
+  const NUMS = ['١','٢','٣','٤','٥','٦'];
+  container.innerHTML = '';
+  items.forEach((text, i) => {
+    const div = document.createElement('div');
+    div.className = 'ord-rov-item';
+    div.innerHTML = `<div class="ord-rov-num">${NUMS[i] || i+1}</div><div class="ord-rov-text">${text}</div>`;
+    container.appendChild(div);
+  });
+  overlay.classList.add('open');
+  document.getElementById('sticky-pts-bar').style.display = 'none';
+  const cards = [...container.children];
+  cards.forEach((card, idx) => {
+    setTimeout(() => card.classList.add('show'), 300 + idx * 450);
+  });
+  const totalDelay = 300 + cards.length * 450 + 1800;
+  setTimeout(() => {
+    overlay.classList.remove('open');
+    if (onClose) onClose();
+  }, totalDelay);
 }
 
 function showLbReveal(lb) {
