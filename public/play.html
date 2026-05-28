@@ -1608,7 +1608,7 @@ function renderAbilitiesBar() {
     const isAttack   = cat === 'attack';
     const isUsed     = abilitiesState[cat];
     const isReactive = (a.type === 'retry' || a.type === 'revival');
-    const preQOnly   = (a.type === 'freeze' || a.type === 'cut' || a.type === 'immunity' || a.type === 'ghost' || a.type === 'blur');
+    const preQOnly   = (a.type === 'freeze' || a.type === 'cut' || a.type === 'immunity' || a.type === 'ghost' || a.type === 'blur' || a.type === 'reverse');
     const lockedByQuestion = questionActive && preQOnly;
     const allowedAfterAnswer = (a.type === 'hole' || a.type === 'retry' || a.type === 'revival' || a.type === 'spy');
     const lockedByAnswer = hasAnswered && !allowedAfterAnswer;
@@ -1764,7 +1764,7 @@ function showPreQuestionModal(abilities) {
   const list = document.getElementById('pre-q-abilities-list');
   list.innerHTML = abilities.map(({ category, type }) => {
     const a = ABILITIES[category].find(x => x.type === type);
-    const onclick = (type === 'immunity' || type === 'ghost')
+    const onclick = (type === 'immunity' || type === 'ghost' || type === 'reverse')
       ? `usePreQAbility('${category}','${type}',null)`
       : `pickPreQTarget('${category}','${type}','${a.name}')`;
     return `
