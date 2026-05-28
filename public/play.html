@@ -129,10 +129,11 @@ body.has-bar .screen{padding-top:62px}
 .lb-rov-cd{margin-top:16px;font-size:14px;font-weight:700;color:var(--muted);padding:8px 22px;border-radius:20px;background:#ffffff12;display:none}
 
 /* ── ORDER ITEMS IN CARD ── */
-.ord-rov-item{width:100%;display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:14px;border:2px solid #ffffff15;background:#ffffff08;margin-bottom:10px;opacity:0;transform:scale(.7) translateY(30px);transition:opacity .42s cubic-bezier(.34,1.56,.64,1),transform .42s cubic-bezier(.34,1.56,.64,1)}
-.ord-rov-item.show{opacity:1;transform:scale(1) translateY(0)}
-@keyframes ordItemGlow{0%,100%{box-shadow:0 0 8px #22c55e30}50%{box-shadow:0 0 22px #22c55e80}}
-.ord-rov-item.show{animation:ordItemGlow .6s ease forwards}
+.ord-rov-item{width:100%;display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:14px;border:2px solid #ffffff15;background:#ffffff08;margin-bottom:10px;opacity:0;transform:translateX(90px) rotate(7deg) scale(.85);transition:opacity .5s cubic-bezier(.34,1.56,.64,1),transform .5s cubic-bezier(.34,1.56,.64,1)}
+.ord-rov-item.from-left{transform:translateX(-90px) rotate(-7deg) scale(.85)}
+.ord-rov-item.show{opacity:1;transform:translateX(0) rotate(0deg) scale(1)}
+@keyframes ordItemGlow{0%,100%{box-shadow:0 0 8px #22c55e30}50%{box-shadow:0 0 24px #22c55e90,0 0 8px #f59e0b40}}
+.ord-rov-item.show{animation:ordItemGlow .8s ease .4s forwards}
 .ord-rov-num{width:34px;height:34px;border-radius:50%;background:var(--gold);color:#000;font-size:15px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .ord-rov-text{flex:1;font-size:16px;font-weight:700;color:var(--text)}
 
@@ -1983,11 +1984,16 @@ function showResults(data) {
   document.getElementById('reactive-offers').innerHTML = '';
   showScreen('result');
   if (isOrderQ) {
-    document.querySelectorAll('#correct-ans-display .ord-rov-item').forEach((el, i) => {
-      setTimeout(() => el.classList.add('show'), 150 + i * 400);
+    const els = [...document.querySelectorAll('#correct-ans-display .ord-rov-item')];
+    els.forEach((el, i) => {
+      if (i % 2 !== 0) el.classList.add('from-left');
+      setTimeout(() => el.classList.add('show'), 150 + i * 420);
     });
+    const lbDelay = 150 + els.length * 420 + 3000;
+    setTimeout(() => showLbReveal(data.leaderboard || []), lbDelay);
+  } else {
+    setTimeout(() => showLbReveal(data.leaderboard || []), 3000);
   }
-  showLbReveal(data.leaderboard || []);
 }
 
 
