@@ -1941,8 +1941,19 @@ function showResults(data) {
   document.getElementById('streak-display').textContent = myStreak >= 3 ? `🔥 ستريك ${myStreak}×!` : '';
   document.getElementById('result-time').textContent = myResult.timeTaken != null ? `⏱️ أجبت خلال ${myResult.timeTaken} ثانية` : '';
   const opts = currentQ?.options || [];
-  const isTextQ = currentQ?.type === 'text' || data.textAnswer;
-  document.getElementById('correct-ans-display').innerHTML = isTextQ
+  const isTextQ  = currentQ?.type === 'text' || data.textAnswer;
+  const isOrderQ = currentQ?.type === 'order' && data.correctItems;
+  const NUMS = ['١','٢','٣','٤'];
+  document.getElementById('correct-ans-display').innerHTML = isOrderQ
+    ? `<div style="background:#10b98120;border:1px solid #10b98140;border-radius:10px;padding:12px">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">🔢 الترتيب الصحيح</div>
+        ${data.correctItems.map((item, i) => `
+          <div style="display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;background:#10b98110;margin-bottom:5px">
+            <span style="font-size:14px;font-weight:900;color:var(--gold);width:22px;text-align:center">${NUMS[i]}</span>
+            <span style="font-size:14px;font-weight:700;color:var(--green)">${item}</span>
+          </div>`).join('')}
+       </div>`
+    : isTextQ
     ? `<div style="background:#10b98120;border:1px solid #10b98140;border-radius:10px;padding:12px">
         <div style="font-size:12px;color:var(--muted);margin-bottom:4px">🧩 الإجابة الصحيحة</div>
         <strong style="color:var(--green);font-size:18px">${data.textAnswer || ''}</strong>

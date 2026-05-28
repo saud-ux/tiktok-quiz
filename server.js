@@ -349,6 +349,7 @@ function endQuestion() {
   const endPayload = {
     correctAnswer:      q.correctAnswer,
     textAnswer:         q.type === 'text' ? q.answer : undefined,
+    correctItems:       q.type === 'order' ? q.items : undefined,
     results,
     leaderboard:        leaderboard(),
     questionLeaderboard,
