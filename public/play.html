@@ -620,7 +620,7 @@ input[type=text]:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 
     <div id="correct-ans-display"></div>
   </div>
   <div class="card">
-    <div class="section-title">🏆 الترتيب الحالي</div>
+    <div class="section-title">⚡ نقاط هذا السؤال</div>
     <div id="result-leaderboard"></div>
   </div>
   <div style="text-align:center;color:var(--muted);font-size:14px;padding:10px">في انتظار السؤال التالي...</div>
@@ -1894,14 +1894,20 @@ function showResults(data) {
     : `<div style="background:#10b98120;border:1px solid #10b98140;border-radius:10px;padding:12px">
         <strong style="color:var(--green)">${LETTERS[data.correctAnswer]}. ${opts[data.correctAnswer]||''}</strong>
        </div>`;
-  document.getElementById('result-leaderboard').innerHTML = (data.leaderboard||[]).slice(0,7).map(p=>`
+  const qLb = data.questionLeaderboard || [];
+  document.getElementById('result-leaderboard').innerHTML = qLb.slice(0,7).map((p, i) => {
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i+1}`;
+    const deltaColor = p.delta > 0 ? 'var(--green)' : p.delta < 0 ? 'var(--red)' : 'var(--muted)';
+    const deltaStr = p.delta > 0 ? `+${p.delta}` : `${p.delta}`;
+    return `
     <div class="lb-mini-item" style="${p.id===myId?'border-color:var(--purple);background:#7c3aed15':''}">
-      <span style="font-size:13px;font-weight:900;color:${p.rank<=3?'var(--gold)':'var(--muted)'};width:22px">${p.rank<=3?['🥇','🥈','🥉'][p.rank-1]:'#'+p.rank}</span>
+      <span style="font-size:13px;font-weight:900;color:${i<3?'var(--gold)':'var(--muted)'};width:22px">${medal}</span>
       ${renderAvatar(p.avatar, 34)}
       <span style="flex:1;font-size:14px;font-weight:700">${p.name}${p.id===myId?' (أنت)':''}</span>
       ${p.streak>=3?`<span style="color:var(--gold);font-size:12px">🔥${p.streak}</span>`:''}
-      <span style="font-size:14px;font-weight:900;color:var(--purple-light)">${p.points.toLocaleString()}</span>
-    </div>`).join('');
+      <span style="font-size:15px;font-weight:900;color:${deltaColor}">${p.delta===0?'—':deltaStr}</span>
+    </div>`;
+  }).join('');
   document.getElementById('reactive-offers').innerHTML = '';
   showScreen('result');
 }

@@ -333,13 +333,26 @@ function endQuestion() {
   G.effects      = newEff;
   G.nextEffects  = {};
 
+  const questionLeaderboard = Object.values(G.players)
+    .map(p => ({
+      id:        p.id,
+      name:      p.name,
+      avatar:    p.avatar,
+      delta:     results[p.id]?.delta     || 0,
+      isCorrect: results[p.id]?.isCorrect || false,
+      streak:    p.streak,
+      points:    p.points,
+    }))
+    .sort((a, b) => b.delta - a.delta);
+
   const endPayload = {
-    correctAnswer:   q.correctAnswer,
-    textAnswer:      q.type === 'text' ? q.answer : undefined,
+    correctAnswer:      q.correctAnswer,
+    textAnswer:         q.type === 'text' ? q.answer : undefined,
     results,
-    leaderboard:     leaderboard(),
-    qNum:            G.qNum,
-    wasLastQuestion: G.isLastQuestion,
+    leaderboard:        leaderboard(),
+    questionLeaderboard,
+    qNum:               G.qNum,
+    wasLastQuestion:    G.isLastQuestion,
   };
 
   if (G.isDramatic) {
