@@ -372,21 +372,24 @@ textarea{min-height:70px}
             <span id="last-q-status" style="font-size:12px;color:var(--muted)">غير مفعّل</span>
             <button class="btn-dramatic" id="btn-dramatic" onclick="toggleDramatic()">🎭 كشف درامي: مفعّل</button>
           </div>
-          <button class="btn btn-start" id="btn-start" onclick="startQuestion()">▶ ابدأ السؤال</button>
+          <button class="btn btn-start" id="btn-start" onclick="startQuestion()">▶ ابدأ السؤال يدوياً</button>
 
-          <!-- Auto-play -->
-          <div style="margin-top:12px;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--surface)">
-            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;font-weight:700;margin:0;user-select:none">
-                <input type="checkbox" id="autoplay-toggle" onchange="toggleAutoPlay()" style="width:16px;height:16px;accent-color:var(--cyan);cursor:pointer">
-                <span>⚡ تشغيل تلقائي</span>
-              </label>
-              <div id="autoplay-controls" style="display:none;align-items:center;gap:8px;flex:1">
-                <input type="number" id="autoplay-count" min="1" max="100" value="10" style="width:65px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:5px 8px;color:var(--text);font-family:inherit;font-size:14px;font-weight:700;text-align:center">
-                <span style="font-size:13px;color:var(--muted);white-space:nowrap">سؤال من القائمة</span>
+          <!-- Bot Host Mode -->
+          <div style="margin-top:12px;border-radius:12px;border:2px solid #06b6d440;background:#06b6d408;padding:14px">
+            <div style="font-size:13px;font-weight:700;color:var(--cyan);margin-bottom:10px">🤖 البوت يشغّل الجلسة</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+              <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:80px">
+                <span style="font-size:11px;color:var(--muted);font-weight:700">عدد الأسئلة</span>
+                <input type="number" id="bot-q-count" min="1" max="100" value="10" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-family:inherit;font-size:15px;font-weight:700;text-align:center;width:100%">
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:80px">
+                <span style="font-size:11px;color:var(--muted);font-weight:700">وقت بين الأسئلة (ث)</span>
+                <input type="number" id="bot-delay" min="2" max="30" value="5" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-family:inherit;font-size:15px;font-weight:700;text-align:center;width:100%">
               </div>
             </div>
-            <div id="autoplay-status" style="display:none;margin-top:8px;font-size:13px;font-weight:700;color:var(--cyan)"></div>
+            <button id="btn-bot-start" onclick="startBotHost()" style="width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#0891b2,#06b6d4);color:#fff;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:.2s">🤖 ابدأ الجلسة</button>
+            <button id="btn-bot-stop" onclick="stopBotHost()" style="display:none;width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px solid var(--red);background:#ef444415;color:#ef4444;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer">⏹ أوقف البوت</button>
+            <div id="bot-host-status" style="display:none;margin-top:8px;font-size:13px;font-weight:700;color:var(--cyan);text-align:center"></div>
           </div>
         </div>
 
@@ -766,52 +769,71 @@ function endGame() {
   socket.emit('host:end-game');
 }
 
-// ── AUTO-PLAY ─────────────────────────────────────────────────
-let autoPlayEnabled = false;
-let autoPlayPlayed  = 0;
-let autoPlayTimer   = null;
+// ── BOT HOST MODE ─────────────────────────────────────────────
+let botHostActive  = false;
+let botHostPlayed  = 0;
+let botHostTotal   = 10;
+let botHostDelay   = 5;
+let botHostTimer   = null;
 
-function toggleAutoPlay() {
-  autoPlayEnabled = document.getElementById('autoplay-toggle').checked;
-  document.getElementById('autoplay-controls').style.display = autoPlayEnabled ? 'flex' : 'none';
-  if (!autoPlayEnabled) {
-    clearTimeout(autoPlayTimer);
-    document.getElementById('autoplay-status').style.display = 'none';
-    autoPlayPlayed = 0;
-  }
+function startBotHost() {
+  if (!questionQueue.length) { toast('⚠️ حمّل قائمة أسئلة أولاً'); return; }
+  const unused = questionQueue.filter(q => !q.used);
+  if (!unused.length) { toast('⚠️ كل الأسئلة استُخدمت — أعد تحميل القائمة'); return; }
+
+  botHostTotal  = parseInt(document.getElementById('bot-q-count').value)  || 10;
+  botHostDelay  = parseInt(document.getElementById('bot-delay').value)     || 5;
+  botHostPlayed = 0;
+  botHostActive = true;
+
+  document.getElementById('btn-bot-start').style.display = 'none';
+  document.getElementById('btn-bot-stop').style.display  = 'block';
+  document.getElementById('btn-start').disabled = true;
+
+  setBotStatus(`🎮 الجلسة بدأت — ${botHostTotal} سؤال`);
+  loadQuestion(questionQueue.findIndex(q => !q.used));
+  setTimeout(() => startQuestion(), 400);
+}
+
+function stopBotHost() {
+  botHostActive = false;
+  clearTimeout(botHostTimer);
+  document.getElementById('btn-bot-start').style.display = 'block';
+  document.getElementById('btn-bot-stop').style.display  = 'none';
+  document.getElementById('btn-start').disabled = false;
+  setBotStatus('');
+}
+
+function setBotStatus(msg) {
+  const el = document.getElementById('bot-host-status');
+  el.style.display = msg ? 'block' : 'none';
+  el.textContent = msg;
 }
 
 function autoPlayNext() {
-  if (!autoPlayEnabled) return;
-  const total = parseInt(document.getElementById('autoplay-count').value) || 10;
-  autoPlayPlayed++;
+  if (!botHostActive) return;
+  botHostPlayed++;
 
-  if (autoPlayPlayed >= total) {
-    const status = document.getElementById('autoplay-status');
-    status.style.display = 'block';
-    status.textContent = `✅ انتهت الجلسة — ${autoPlayPlayed} سؤال`;
-    autoPlayEnabled = false;
-    document.getElementById('autoplay-toggle').checked = false;
-    document.getElementById('autoplay-controls').style.display = 'none';
-    autoPlayPlayed = 0;
+  if (botHostPlayed >= botHostTotal) {
+    setBotStatus(`✅ انتهت الجلسة — ${botHostPlayed} سؤال`);
+    botHostActive = false;
+    document.getElementById('btn-bot-start').style.display = 'block';
+    document.getElementById('btn-bot-stop').style.display  = 'none';
+    document.getElementById('btn-start').disabled = false;
+    botHostPlayed = 0;
     return;
   }
 
-  const remaining = total - autoPlayPlayed;
-  const status = document.getElementById('autoplay-status');
-  status.style.display = 'block';
+  const remaining = botHostTotal - botHostPlayed;
+  let countdown = botHostDelay;
 
-  let countdown = 4;
   function tick() {
-    status.textContent = `⏳ سؤال ${autoPlayPlayed + 1}/${total} — يبدأ خلال ${countdown} ث... (${remaining} متبقية)`;
+    setBotStatus(`⏳ سؤال ${botHostPlayed + 1}/${botHostTotal} — يبدأ خلال ${countdown} ث`);
     if (countdown <= 0) {
-      const hasNext = questionQueue.some((q, i) => !q.used && i > currentQueueIndex);
-      if (!hasNext) {
-        status.textContent = '⚠️ انتهت الأسئلة في القائمة';
-        autoPlayEnabled = false;
-        document.getElementById('autoplay-toggle').checked = false;
-        document.getElementById('autoplay-controls').style.display = 'none';
-        autoPlayPlayed = 0;
+      const nextIdx = questionQueue.findIndex((q, i) => !q.used && i > currentQueueIndex);
+      if (nextIdx < 0) {
+        setBotStatus('⚠️ انتهت الأسئلة في القائمة');
+        stopBotHost();
         return;
       }
       showSetup();
@@ -819,7 +841,7 @@ function autoPlayNext() {
       return;
     }
     countdown--;
-    autoPlayTimer = setTimeout(tick, 1000);
+    botHostTimer = setTimeout(tick, 1000);
   }
   tick();
 }
