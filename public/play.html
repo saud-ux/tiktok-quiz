@@ -113,14 +113,20 @@ body.has-bar .screen{padding-top:62px}
 .last-q-banner.show{display:block}
 @keyframes goldGlow{from{box-shadow:0 0 10px #f59e0b40}to{box-shadow:0 0 25px #f59e0b80}}
 
-/* ── LEADERBOARD DRAMATIC REVEAL ── */
-@keyframes lbSlideIn{from{opacity:0;transform:translateX(40px) scale(.95)}to{opacity:1;transform:translateX(0) scale(1)}}
-@keyframes rank1Glow{0%,100%{box-shadow:0 0 10px #f59e0b50}50%{box-shadow:0 0 28px #f59e0baa,0 0 50px #f59e0b30}}
-@keyframes rank1Scale{0%{transform:scale(.8);opacity:0}60%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
-.lb-drama-item{opacity:0}
-.lb-drama-item.show{animation:lbSlideIn .38s cubic-bezier(.2,.8,.3,1) forwards}
-.lb-drama-rank1{opacity:0}
-.lb-drama-rank1.show{animation:rank1Scale .55s cubic-bezier(.2,.8,.3,1) forwards,rank1Glow 1.8s ease .55s infinite}
+/* ── LEADERBOARD REVEAL OVERLAY ── */
+#lb-reveal-overlay{position:fixed;inset:0;z-index:600;background:#000000f2;display:none;flex-direction:column;align-items:center;overflow-y:auto;padding:20px 16px 40px}
+#lb-reveal-overlay.open{display:flex}
+.lb-rov-title{font-size:22px;font-weight:900;color:var(--gold);letter-spacing:1px;margin:10px 0 16px;text-align:center;text-shadow:0 0 24px #f59e0b70}
+.lb-rov-card{width:100%;max-width:400px;display:flex;align-items:center;gap:12px;padding:13px 16px;border-radius:14px;border:2px solid #ffffff15;background:#ffffff08;opacity:0;transform:translateY(28px);transition:opacity .38s ease,transform .45s cubic-bezier(.34,1.56,.64,1);margin-bottom:8px;flex-shrink:0}
+.lb-rov-card.show{opacity:1;transform:translateY(0)}
+.lb-rov-card.rk2{border-color:#94a3b860;background:#94a3b810}
+.lb-rov-card.rk3{border-color:#cd7f3260;background:#cd7f3210}
+.lb-rov-card.rk1{border-color:#f59e0b90;background:#f59e0b12}
+.lb-rov-card.is-me{box-shadow:0 0 0 3px #a78bfa,0 0 20px #7c3aed60}
+@keyframes rank1Enter{0%{transform:scale(.55) translateY(50px);opacity:0}65%{transform:scale(1.1) translateY(-6px)}100%{transform:scale(1) translateY(0);opacity:1}}
+@keyframes rank1Shine{0%,100%{box-shadow:0 0 0 3px #f59e0b,0 0 22px #f59e0b70}50%{box-shadow:0 0 0 4px #f59e0b,0 0 45px #f59e0bc0,0 0 70px #f59e0b30}}
+.lb-rov-card.rk1.show{animation:rank1Enter .6s cubic-bezier(.34,1.56,.64,1) forwards,rank1Shine 1.6s ease .6s infinite}
+.lb-rov-cd{margin-top:16px;font-size:14px;font-weight:700;color:var(--muted);padding:8px 22px;border-radius:20px;background:#ffffff12;display:none}
 
 /* ── RESULTS ── */
 .result-banner{text-align:center;padding:24px;border-radius:16px;margin-bottom:16px}
@@ -647,10 +653,6 @@ body.has-bar .screen{padding-top:62px}
     <div class="section-title">⚡ نقاط هذا السؤال</div>
     <div id="result-leaderboard"></div>
   </div>
-  <div class="card">
-    <div class="section-title">🏆 الترتيب الكلي</div>
-    <div id="result-overall-lb"></div>
-  </div>
   <div style="text-align:center;color:var(--muted);font-size:14px;padding:10px">في انتظار السؤال التالي...</div>
 </div>
 
@@ -727,6 +729,13 @@ body.has-bar .screen{padding-top:62px}
 
 <!-- ════ BIG COUNTDOWN ════ -->
 <div id="big-countdown"><div id="big-cnt-num"></div></div>
+
+<!-- Leaderboard reveal overlay -->
+<div id="lb-reveal-overlay">
+  <div class="lb-rov-title">🏆 الترتيب الكلي</div>
+  <div id="lb-rov-cards"></div>
+  <div class="lb-rov-cd" id="lb-rov-cd"></div>
+</div>
 
 <!-- Dramatic reveal overlay for player -->
 <div id="player-reveal-overlay">
@@ -1956,43 +1965,64 @@ function showResults(data) {
     </div>`;
   }).join('');
   document.getElementById('reactive-offers').innerHTML = '';
-
   showScreen('result');
+  showLbReveal(data.leaderboard || []);
+}
 
-  // ── الترتيب الكلي — كشف درامي من الأخير للأول ──
-  const lb = data.leaderboard || [];
-  const lbEl = document.getElementById('result-overall-lb');
-  lbEl.innerHTML = '';
+function showLbReveal(lb) {
+  if (!lb.length) return;
+  const overlay  = document.getElementById('lb-reveal-overlay');
+  const container = document.getElementById('lb-rov-cards');
+  const cdEl     = document.getElementById('lb-rov-cd');
+  container.innerHTML = '';
+  cdEl.style.display = 'none';
+  overlay.scrollTop  = 0;
 
-  // ابنِ كل العناصر مخفية مرتبة (#1 في الأعلى)
+  // ابنِ البطاقات مرتبة (#1 أعلى) — كلها مخفية
   lb.forEach((p, i) => {
-    const isMe   = p.id === myId;
-    const isTop1 = i === 0;
-    const medal  = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${p.rank}`;
-    const div    = document.createElement('div');
-    div.className = 'lb-mini-item ' + (isTop1 ? 'lb-drama-rank1' : 'lb-drama-item');
-    if (isTop1)      div.style.cssText += 'border-color:var(--gold);background:#f59e0b10;';
-    else if (i === 1) div.style.cssText += 'border-color:#94a3b850;';
-    else if (i === 2) div.style.cssText += 'border-color:#cd7f3250;';
-    if (isMe)        div.style.cssText += 'border-color:var(--purple);background:#7c3aed15;';
+    const isMe = p.id === myId;
+    const rkClass = i === 0 ? 'rk1' : i === 1 ? 'rk2' : i === 2 ? 'rk3' : '';
+    const medal   = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${p.rank}`;
+    const div = document.createElement('div');
+    div.className = `lb-rov-card ${rkClass} ${isMe ? 'is-me' : ''}`;
     div.innerHTML = `
-      <span style="font-size:${i<3?'15':'13'}px;font-weight:900;color:${i<3?'var(--gold)':'var(--muted)'};width:26px">${medal}</span>
-      ${renderAvatar(p.avatar, i===0?40:34)}
-      <span style="flex:1;font-size:${isTop1?'15':'14'}px;font-weight:${isTop1?'900':'700'}">${p.name}${isMe?' <span style="color:var(--purple-light);font-size:11px">(أنت)</span>':''}</span>
+      <span style="font-size:${i<3?'18':'14'}px;font-weight:900;width:28px;text-align:center">${medal}</span>
+      ${renderAvatar(p.avatar, i===0?44:36)}
+      <span style="flex:1;font-size:${i===0?'16':'14'}px;font-weight:${i===0?'900':'700'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+        ${p.name}${isMe?' <span style="font-size:10px;color:#a78bfa;font-weight:700">(أنت)</span>':''}
+      </span>
       ${p.streak>=3?`<span style="color:var(--gold);font-size:12px">🔥${p.streak}</span>`:''}
-      <span style="font-size:${isTop1?'17':'15'}px;font-weight:900;color:${isTop1?'var(--gold)':'var(--green)'}">${p.points.toLocaleString()}</span>`;
-    lbEl.appendChild(div);
+      <span style="font-size:${i===0?'18':'15'}px;font-weight:900;color:${i===0?'var(--gold)':'var(--green)'}">
+        ${p.points.toLocaleString()}
+      </span>`;
+    container.appendChild(div);
   });
 
-  // كشف من الأخير للأول — كل 320ms
-  const items    = [...lbEl.children];
-  const reversed = [...items].reverse(); // آخر مركز أولاً
-  reversed.forEach((el, idx) => {
-    setTimeout(() => {
-      el.classList.add('show');
-      if (idx === items.length - 1) playCoin?.(); // صوت عند الأول
-    }, 300 + idx * 320);
+  overlay.classList.add('open');
+
+  // كشف من الأخير للأول — كل 350ms
+  const cards    = [...container.children];
+  const reversed = [...cards].reverse();
+  const totalDelay = 300 + reversed.length * 350;
+
+  reversed.forEach((card, idx) => {
+    setTimeout(() => card.classList.add('show'), 300 + idx * 350);
   });
+
+  // بعد اكتمال الكشف — عداد تنازلي 7 ثوانٍ ثم إغلاق
+  let secsLeft = 7;
+  setTimeout(() => {
+    cdEl.style.display = 'block';
+    cdEl.textContent   = `يختفي خلال ${secsLeft} ثوانٍ`;
+    const iv = setInterval(() => {
+      secsLeft--;
+      cdEl.textContent = secsLeft > 0 ? `يختفي خلال ${secsLeft} ثوانٍ` : '';
+      if (secsLeft <= 0) {
+        clearInterval(iv);
+        overlay.classList.remove('open');
+      }
+    }, 1000);
+  }, totalDelay + 200);
 }
 
 // ─── LAST QUESTION ANNOUNCEMENT ─────────────────────────────
