@@ -442,10 +442,6 @@ function startActualQuestion() {
       G.effects[pid].immunity = true;
       io.to(pid).emit('ability:result', { type: 'immunity', status: 'active' });
       notify(pid, 'shield-active', '🛡️ الحصانة مفعّلة!');
-    } else if (type === 'reverse') {
-      G.effects[pid].reverse = true;
-      io.to(pid).emit('ability:result', { type: 'reverse', status: 'active' });
-      notify(pid, 'shield-active', '🔄 درع الانعكاس جاهز! أي هجوم سينقلب على صاحبه');
     } else if (type === 'ghost') {
       G.effects[pid].ghost = true;
       io.to(pid).emit('ability:result', { type: 'ghost', status: 'active' });
@@ -598,7 +594,7 @@ io.on('connection', socket => {
 
     socket.emit('host:question-confirmed', { question: qData, number: G.qNum });
 
-    const preTypes = ['freeze','cut','immunity','ghost','blur','reverse'];
+    const preTypes = ['freeze','cut','immunity','ghost','blur'];
     const eligible = Object.values(G.players).filter(p => {
       return ['attack','defense'].some(cat => {
         const ab = p.abilities[cat];
@@ -651,9 +647,9 @@ io.on('connection', socket => {
       const p = G.players[socket.id];
       if (p) {
         const ab = p.abilities[category];
-        const validTypes = ['freeze', 'cut', 'immunity', 'ghost', 'blur', 'reverse'];
+        const validTypes = ['freeze', 'cut', 'immunity', 'ghost', 'blur'];
         if (ab && !ab.used && ab.type === type && validTypes.includes(ab.type)) {
-          if (ab.type !== 'ghost' && ab.type !== 'immunity' && ab.type !== 'reverse' && (!targetId || !G.players[targetId] || targetId === socket.id)) {
+          if (ab.type !== 'ghost' && ab.type !== 'immunity' && (!targetId || !G.players[targetId] || targetId === socket.id)) {
             // attack without valid target — skip
           } else {
             ab.used = true;
