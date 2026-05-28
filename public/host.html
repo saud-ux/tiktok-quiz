@@ -130,6 +130,10 @@ textarea{min-height:70px}
 .diff-btn.diff-easy-active{border-color:#22c55e;color:#22c55e;background:#22c55e15}
 .diff-btn.diff-med-active{border-color:#f59e0b;color:#f59e0b;background:#f59e0b15}
 .diff-btn.diff-hard-active{border-color:#ef4444;color:#ef4444;background:#ef444415}
+/* Bot host difficulty buttons */
+.bot-diff-btn{flex:1;padding:6px 8px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:.2s;text-align:center}
+.bot-diff-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.bot-diff-active{border-color:var(--cyan)!important;color:var(--cyan)!important;background:#06b6d420!important}
 
 /* Category selector */
 .cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:4px}
@@ -385,6 +389,15 @@ textarea{min-height:70px}
               <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:80px">
                 <span style="font-size:11px;color:var(--muted);font-weight:700">وقت بين الأسئلة (ث)</span>
                 <input type="number" id="bot-delay" min="2" max="30" value="5" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-family:inherit;font-size:15px;font-weight:700;text-align:center;width:100%">
+              </div>
+            </div>
+            <div style="margin-bottom:10px">
+              <span style="font-size:11px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px">🎯 صعوبة الأسئلة</span>
+              <div style="display:flex;gap:6px">
+                <button class="bot-diff-btn bot-diff-active" id="bdiff-all"  onclick="setBotDiff('')">الكل</button>
+                <button class="bot-diff-btn" id="bdiff-easy" onclick="setBotDiff('سهل')">🟢 سهل</button>
+                <button class="bot-diff-btn" id="bdiff-med"  onclick="setBotDiff('متوسط')">🟡 متوسط</button>
+                <button class="bot-diff-btn" id="bdiff-hard" onclick="setBotDiff('صعب')">🔴 صعب</button>
               </div>
             </div>
             <button id="btn-bot-start" onclick="startBotHost()" style="width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#0891b2,#06b6d4);color:#fff;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:.2s">🤖 ابدأ الجلسة</button>
@@ -770,28 +783,59 @@ function endGame() {
 }
 
 // ── BOT HOST MODE ─────────────────────────────────────────────
-let botHostActive  = false;
-let botHostPlayed  = 0;
-let botHostTotal   = 10;
-let botHostDelay   = 5;
-let botHostTimer   = null;
+let botHostActive     = false;
+let botHostPlayed     = 0;
+let botHostTotal      = 10;
+let botHostDelay      = 5;
+let botHostTimer      = null;
+let botHostDifficulty = '';   // '' = الكل
+let botPlaylist       = [];   // مصفوفة indices من questionQueue
+let botPlaylistIdx    = 0;
+
+function setBotDiff(diff) {
+  botHostDifficulty = diff;
+  document.querySelectorAll('.bot-diff-btn').forEach(b => b.classList.remove('bot-diff-active'));
+  const map = { '': 'bdiff-all', 'سهل': 'bdiff-easy', 'متوسط': 'bdiff-med', 'صعب': 'bdiff-hard' };
+  document.getElementById(map[diff] || 'bdiff-all').classList.add('bot-diff-active');
+}
+
+function buildBotPlaylist() {
+  const filtered = questionQueue
+    .map((q, i) => ({ q, i }))
+    .filter(({ q }) => !q.used && (!botHostDifficulty || q.difficulty === botHostDifficulty));
+  // خلط عشوائي
+  for (let i = filtered.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [filtered[i], filtered[j]] = [filtered[j], filtered[i]];
+  }
+  return filtered.slice(0, botHostTotal).map(({ i }) => i);
+}
 
 function startBotHost() {
   if (!questionQueue.length) { toast('⚠️ حمّل قائمة أسئلة أولاً'); return; }
-  const unused = questionQueue.filter(q => !q.used);
-  if (!unused.length) { toast('⚠️ كل الأسئلة استُخدمت — أعد تحميل القائمة'); return; }
 
-  botHostTotal  = parseInt(document.getElementById('bot-q-count').value)  || 10;
-  botHostDelay  = parseInt(document.getElementById('bot-delay').value)     || 5;
-  botHostPlayed = 0;
-  botHostActive = true;
+  botHostTotal  = parseInt(document.getElementById('bot-q-count').value) || 10;
+  botHostDelay  = parseInt(document.getElementById('bot-delay').value)   || 5;
+  botPlaylist   = buildBotPlaylist();
+
+  if (!botPlaylist.length) {
+    const label = botHostDifficulty || 'أي صعوبة';
+    toast(`⚠️ لا توجد أسئلة (${label}) في القائمة`);
+    return;
+  }
+
+  botHostPlayed  = 0;
+  botPlaylistIdx = 0;
+  botHostActive  = true;
 
   document.getElementById('btn-bot-start').style.display = 'none';
   document.getElementById('btn-bot-stop').style.display  = 'block';
   document.getElementById('btn-start').disabled = true;
 
-  setBotStatus(`🎮 الجلسة بدأت — ${botHostTotal} سؤال`);
-  loadQuestion(questionQueue.findIndex(q => !q.used));
+  const diffLabel = botHostDifficulty ? ` — ${botHostDifficulty}` : '';
+  setBotStatus(`🎮 الجلسة بدأت — ${botPlaylist.length} سؤال${diffLabel}`);
+
+  loadQuestion(botPlaylist[0]);
   setTimeout(() => startQuestion(), 400);
 }
 
@@ -812,9 +856,15 @@ function setBotStatus(msg) {
 
 function autoPlayNext() {
   if (!botHostActive) return;
+  // mark current question as used
+  if (currentQueueIndex >= 0 && questionQueue[currentQueueIndex]) {
+    questionQueue[currentQueueIndex].used = true;
+    renderQueue();
+  }
   botHostPlayed++;
+  botPlaylistIdx++;
 
-  if (botHostPlayed >= botHostTotal) {
+  if (botPlaylistIdx >= botPlaylist.length) {
     setBotStatus(`✅ انتهت الجلسة — ${botHostPlayed} سؤال`);
     botHostActive = false;
     document.getElementById('btn-bot-start').style.display = 'block';
@@ -824,19 +874,13 @@ function autoPlayNext() {
     return;
   }
 
-  const remaining = botHostTotal - botHostPlayed;
   let countdown = botHostDelay;
+  const total   = botPlaylist.length;
 
   function tick() {
-    setBotStatus(`⏳ سؤال ${botHostPlayed + 1}/${botHostTotal} — يبدأ خلال ${countdown} ث`);
+    setBotStatus(`⏳ سؤال ${botHostPlayed + 1}/${total} — يبدأ خلال ${countdown} ث`);
     if (countdown <= 0) {
-      const nextIdx = questionQueue.findIndex((q, i) => !q.used && i > currentQueueIndex);
-      if (nextIdx < 0) {
-        setBotStatus('⚠️ انتهت الأسئلة في القائمة');
-        stopBotHost();
-        return;
-      }
-      showSetup();
+      loadQuestion(botPlaylist[botPlaylistIdx]);
       setTimeout(() => startQuestion(), 300);
       return;
     }
