@@ -1999,6 +1999,7 @@ function showLbReveal(lb) {
   });
 
   overlay.classList.add('open');
+  document.getElementById('sticky-pts-bar').style.display = 'none';
 
   // كشف من الأخير للأول — كل 350ms
   const cards    = [...container.children];
@@ -2020,6 +2021,7 @@ function showLbReveal(lb) {
       if (secsLeft <= 0) {
         clearInterval(iv);
         overlay.classList.remove('open');
+        updateStickyPts();
       }
     }, 1000);
   }, totalDelay + 200);
