@@ -82,13 +82,14 @@ function findByPid(pid) {
 function leaderboard() {
   return Object.values(G.players)
     .sort((a, b) => b.points - a.points)
-    .map((p, i) => ({ rank: i + 1, id: p.id, name: p.name, avatar: p.avatar, points: p.points, streak: p.streak }));
+    .map((p, i) => ({ rank: i + 1, id: p.id, name: p.name, avatar: p.avatar, points: p.points, streak: p.streak, isBot: p.isBot || false }));
 }
 
 function publicPlayers() {
   return Object.values(G.players).map(p => ({
     id: p.id, name: p.name, avatar: p.avatar, points: p.points, streak: p.streak,
     isGhost: G.effects[p.id]?.ghost || false,
+    isBot: p.isBot || false,
   }));
 }
 
@@ -404,6 +405,45 @@ function endQuestion() {
 }
 
 // ─────────────────────────────────────────────────────────────
+// BOT ANSWER SCHEDULING
+// ─────────────────────────────────────────────────────────────
+function scheduleBotAnswers() {
+  const bots = Object.values(G.players).filter(p => p.isBot);
+  bots.forEach(bot => {
+    const minDelay = 1500;
+    const maxDelay = Math.max(minDelay + 500, (G.questionTime - 2) * 1000);
+    const delay = Math.floor(Math.random() * (maxDelay - minDelay) + minDelay);
+    setTimeout(() => {
+      if (!G.active) return;
+      const eff = G.effects[bot.id] || {};
+      if (eff.cut || eff.frozen) return;
+      if (G.answers[bot.id]) return;
+
+      const correct = Math.random() < bot.botDifficulty;
+      if (G.question.type === 'order') {
+        G.answers[bot.id] = { choice: correct ? 0 : 1, timeLeft: G.timeLeft, isOrderCorrect: correct };
+      } else if (G.question.type === 'text') {
+        G.answers[bot.id] = { textAnswer: correct ? G.question.answer : '؟', isTextCorrect: correct, timeLeft: G.timeLeft };
+      } else {
+        let choice;
+        if (correct) {
+          choice = G.question.correctAnswer;
+        } else {
+          const wrongs = [0,1,2,3].filter(i => i !== G.question.correctAnswer && G.question.options[i]);
+          choice = wrongs[Math.floor(Math.random() * wrongs.length)] ?? ((G.question.correctAnswer + 1) % 4);
+        }
+        G.answers[bot.id] = { choice, timeLeft: G.timeLeft };
+      }
+
+      const answered = Object.keys(G.answers).length;
+      const total    = Object.keys(G.players).length;
+      io.emit('host:answer-stats', { answered, total });
+      io.emit('game:answer-progress', { answered, total, lb: leaderboard() });
+    }, delay);
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
 // START ACTUAL QUESTION
 // ─────────────────────────────────────────────────────────────
 function startActualQuestion() {
@@ -566,6 +606,8 @@ function startActualQuestion() {
       G.autoEndRef = setTimeout(() => endQuestion(), 3000);
     }
   }, 1000);
+
+  scheduleBotAnswers();
 }
 
 function checkAllPreQResponded() {
@@ -766,6 +808,52 @@ io.on('connection', socket => {
     Object.values(G.disconnectTimers).forEach(t => clearTimeout(t));
     G = newState();
     io.emit('game:reset');
+  });
+
+  // ── BOT MANAGEMENT ─────────────────────────────────────────
+  socket.on('host:add-bot', ({ difficulty } = {}) => {
+    const botCount = Object.values(G.players).filter(p => p.isBot).length + 1;
+    const botId = `bot_${Date.now()}_${botCount}`;
+    const diffMap = { easy: 0.8, medium: 0.5, hard: 0.2 };
+    const botDifficulty = diffMap[difficulty] || 0.5;
+    const botNames = ['روبوت ذكي', 'لاعب آلي', 'بوت', 'روبوت', 'مساعد آلي'];
+    const name = botCount <= botNames.length ? botNames[botCount - 1] : `روبوت ${botCount}`;
+
+    G.players[botId] = {
+      id:                botId,
+      persistentId:      botId,
+      name,
+      avatar:            '🤖',
+      points:            0,
+      streak:            0,
+      lastStreak:        0,
+      offline:           false,
+      isBot:             true,
+      botDifficulty,
+      bonusAbility:      null,
+      hasUsedLastSecond: false,
+      abilities: {
+        attack:  { type: null, used: false },
+        defense: { type: null, used: false },
+        general: { type: null, used: false },
+      },
+    };
+    G.effects[botId] = { cut: false, frozen: false };
+
+    io.emit('game:players-update', publicPlayers());
+    io.emit('game:leaderboard', leaderboard());
+  });
+
+  socket.on('host:remove-bots', () => {
+    Object.keys(G.players).forEach(id => {
+      if (G.players[id].isBot) {
+        delete G.players[id];
+        delete G.effects[id];
+        delete G.answers[id];
+      }
+    });
+    io.emit('game:players-update', publicPlayers());
+    io.emit('game:leaderboard', leaderboard());
   });
 
   // ── PLAYER ─────────────────────────────────────────────────

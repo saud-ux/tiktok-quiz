@@ -373,6 +373,21 @@ textarea{min-height:70px}
             <button class="btn-dramatic" id="btn-dramatic" onclick="toggleDramatic()">🎭 كشف درامي: مفعّل</button>
           </div>
           <button class="btn btn-start" id="btn-start" onclick="startQuestion()">▶ ابدأ السؤال</button>
+
+          <!-- Auto-play -->
+          <div style="margin-top:12px;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--surface)">
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;font-weight:700;margin:0;user-select:none">
+                <input type="checkbox" id="autoplay-toggle" onchange="toggleAutoPlay()" style="width:16px;height:16px;accent-color:var(--cyan);cursor:pointer">
+                <span>⚡ تشغيل تلقائي</span>
+              </label>
+              <div id="autoplay-controls" style="display:none;align-items:center;gap:8px;flex:1">
+                <input type="number" id="autoplay-count" min="1" max="100" value="10" style="width:65px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:5px 8px;color:var(--text);font-family:inherit;font-size:14px;font-weight:700;text-align:center">
+                <span style="font-size:13px;color:var(--muted);white-space:nowrap">سؤال من القائمة</span>
+              </div>
+            </div>
+            <div id="autoplay-status" style="display:none;margin-top:8px;font-size:13px;font-weight:700;color:var(--cyan)"></div>
+          </div>
         </div>
 
         <!-- Waiting players -->
@@ -380,6 +395,15 @@ textarea{min-height:70px}
           <div class="card-title">👥 اللاعبون المنتظرون</div>
           <div class="player-grid" id="waiting-players">
             <div style="color:var(--muted);font-size:14px">في انتظار انضمام اللاعبين...</div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--border);padding-top:12px">
+            <select id="bot-difficulty" style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">
+              <option value="easy">🟢 سهل (80% صح)</option>
+              <option value="medium" selected>🟡 متوسط (50% صح)</option>
+              <option value="hard">🔴 صعب (20% صح)</option>
+            </select>
+            <button onclick="addBot()" style="padding:8px 14px;border-radius:8px;border:2px solid var(--cyan);background:#06b6d415;color:var(--cyan);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s;white-space:nowrap">🤖 + روبوت</button>
+            <button onclick="removeBots()" style="padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s;white-space:nowrap">🗑️ حذف</button>
           </div>
         </div>
 
@@ -742,6 +766,64 @@ function endGame() {
   socket.emit('host:end-game');
 }
 
+// ── AUTO-PLAY ─────────────────────────────────────────────────
+let autoPlayEnabled = false;
+let autoPlayPlayed  = 0;
+let autoPlayTimer   = null;
+
+function toggleAutoPlay() {
+  autoPlayEnabled = document.getElementById('autoplay-toggle').checked;
+  document.getElementById('autoplay-controls').style.display = autoPlayEnabled ? 'flex' : 'none';
+  if (!autoPlayEnabled) {
+    clearTimeout(autoPlayTimer);
+    document.getElementById('autoplay-status').style.display = 'none';
+    autoPlayPlayed = 0;
+  }
+}
+
+function autoPlayNext() {
+  if (!autoPlayEnabled) return;
+  const total = parseInt(document.getElementById('autoplay-count').value) || 10;
+  autoPlayPlayed++;
+
+  if (autoPlayPlayed >= total) {
+    const status = document.getElementById('autoplay-status');
+    status.style.display = 'block';
+    status.textContent = `✅ انتهت الجلسة — ${autoPlayPlayed} سؤال`;
+    autoPlayEnabled = false;
+    document.getElementById('autoplay-toggle').checked = false;
+    document.getElementById('autoplay-controls').style.display = 'none';
+    autoPlayPlayed = 0;
+    return;
+  }
+
+  const remaining = total - autoPlayPlayed;
+  const status = document.getElementById('autoplay-status');
+  status.style.display = 'block';
+
+  let countdown = 4;
+  function tick() {
+    status.textContent = `⏳ سؤال ${autoPlayPlayed + 1}/${total} — يبدأ خلال ${countdown} ث... (${remaining} متبقية)`;
+    if (countdown <= 0) {
+      const hasNext = questionQueue.some((q, i) => !q.used && i > currentQueueIndex);
+      if (!hasNext) {
+        status.textContent = '⚠️ انتهت الأسئلة في القائمة';
+        autoPlayEnabled = false;
+        document.getElementById('autoplay-toggle').checked = false;
+        document.getElementById('autoplay-controls').style.display = 'none';
+        autoPlayPlayed = 0;
+        return;
+      }
+      showSetup();
+      setTimeout(() => startQuestion(), 300);
+      return;
+    }
+    countdown--;
+    autoPlayTimer = setTimeout(tick, 1000);
+  }
+  tick();
+}
+
 let isDramatic = true;
 function toggleDramatic() {
   isDramatic = !isDramatic;
@@ -1081,7 +1163,7 @@ function renderLeaderboard(lb) {
     <div class="lb-item">
       <div class="lb-rank ${p.rank <= 3 ? 'r' + p.rank : ''}">${p.rank <= 3 ? ['🥇','🥈','🥉'][p.rank-1] : '#' + p.rank}</div>
       ${renderAvatar(p.avatar, 32)}
-      <div class="lb-name">${p.name}</div>
+      <div class="lb-name">${p.name}${p.isBot ? ' <span style="font-size:10px;color:var(--cyan);font-weight:700">BOT</span>' : ''}</div>
       ${p.streak >= 3 ? `<div class="lb-streak">🔥${p.streak}</div>` : ''}
       <div class="lb-pts">${p.points.toLocaleString()}</div>
     </div>
@@ -1096,9 +1178,18 @@ function renderWaitingPlayers() {
     return;
   }
   el.innerHTML = ps.map(p => `
-    <div class="player-chip">${renderAvatar(p.avatar, 24)} ${p.name}</div>
+    <div class="player-chip" style="${p.isBot ? 'border-color:#06b6d450;background:#06b6d410;' : ''}">${renderAvatar(p.avatar, 24)} ${p.name}${p.isBot ? ' <span style="font-size:10px;color:var(--cyan);font-weight:700">BOT</span>' : ''}</div>
   `).join('');
   document.getElementById('player-count').textContent = ps.length + ' لاعب';
+}
+
+function addBot() {
+  const difficulty = document.getElementById('bot-difficulty').value;
+  socket.emit('host:add-bot', { difficulty });
+}
+
+function removeBots() {
+  socket.emit('host:remove-bots');
 }
 
 function renderActiveQuestion(q) {
@@ -1199,6 +1290,7 @@ socket.on('game:question-end', ({ correctAnswer, textAnswer, results, leaderboar
   document.getElementById('result-list').innerHTML = resultHtml || '<div style="color:var(--muted)">لم يجب أحد</div>';
   showPanel('results');
   toast('⏹️ انتهى السؤال');
+  autoPlayNext();
 });
 
 socket.on('game:reset', () => {
