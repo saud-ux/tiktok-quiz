@@ -211,6 +211,11 @@ body.has-bar .screen{padding-top:62px}
 .attack-hit-msg{font-size:20px;font-weight:900;color:var(--red);text-align:center;text-shadow:0 0 20px #ef4444;animation:hitPop .5s ease .1s both}
 @keyframes hitPop{0%{transform:scale(3);opacity:0}50%{opacity:1}100%{transform:scale(1);opacity:1}}
 
+/* ── PROFILE EDIT MODAL ── */
+#profile-edit-modal{position:fixed;inset:0;background:#000000bb;z-index:999;display:none;align-items:center;justify-content:center;padding:20px}
+#profile-edit-modal.open{display:flex}
+.profile-edit-sheet{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:24px 20px;width:100%;max-width:360px}
+
 /* ── WAITING OVERLAY ── */
 #waiting-overlay{position:fixed;inset:0;background:#00000095;z-index:90;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px}
 .waiting-spinner{width:52px;height:52px;border:4px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite}
@@ -587,22 +592,6 @@ body.has-bar .screen{padding-top:62px}
     <div style="margin-top:6px;font-size:13px;color:var(--muted)">انتظر الهوست</div>
     <div class="waiting-anim"><span class="waiting-dots">...</span></div>
 
-    <!-- لوحة تعديل الملف الشخصي -->
-    <div id="profile-edit-panel" style="display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:14px;text-align:right">
-      <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px">تعديل الاسم والصورة</div>
-      <input type="text" id="edit-name-input" maxlength="20" placeholder="اسمك"
-        style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:inherit;font-size:15px;margin-bottom:10px">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-        <button class="avatar-btn" onclick="document.getElementById('edit-file-gallery').click()">🖼️ من الصور</button>
-        <button class="avatar-btn" onclick="document.getElementById('edit-file-camera').click()">📷 الكاميرا</button>
-      </div>
-      <input type="file" id="edit-file-gallery" accept="image/*" style="display:none" onchange="handleEditFile(this)">
-      <input type="file" id="edit-file-camera" accept="image/*" capture="user" style="display:none" onchange="handleEditFile(this)">
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-primary" style="flex:1" onclick="saveProfileEdit()">حفظ</button>
-        <button class="btn btn-secondary" style="flex:0 0 70px" onclick="toggleProfileEdit()">إلغاء</button>
-      </div>
-    </div>
   </div>
   <div class="card">
     <div class="section-title">خصائصك</div>
@@ -706,7 +695,10 @@ body.has-bar .screen{padding-top:62px}
     <div class="pre-q-subtitle">يمكنك استخدام خاصية واحدة فقط</div>
     <div class="pre-q-countdown">سيتم التخطي بعد <span id="pre-q-timer">4</span> ثوانٍ</div>
     <div class="pre-q-abilities-list" id="pre-q-abilities-list"></div>
-    <button class="btn-skip" onclick="skipPreQuestion()">تخطّ — لا أريد استخدام أي خاصية</button>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn-skip" style="flex:1" onclick="skipPreQuestion()">تخطّ — لا أريد استخدام أي خاصية</button>
+      <button onclick="toggleProfileEdit()" style="flex:0 0 auto;background:transparent;border:1px solid var(--border);color:var(--muted);font-family:inherit;font-size:13px;font-weight:700;padding:10px 14px;border-radius:12px;cursor:pointer" title="تعديل الملف الشخصي">✏️</button>
+    </div>
   </div>
 </div>
 
@@ -777,6 +769,7 @@ body.has-bar .screen{padding-top:62px}
 <div id="waiting-overlay">
   <div class="waiting-spinner"></div>
   <div class="waiting-text">جاري اختيار الخصائص...</div>
+  <button onclick="toggleProfileEdit()" style="margin-top:8px;background:transparent;border:1px solid #ffffff40;color:#ffffffaa;font-family:inherit;font-size:13px;font-weight:700;padding:8px 18px;border-radius:20px;cursor:pointer">✏️ تعديل صورتك واسمك</button>
 </div>
 
 <!-- ════ STORE VOTE OVERLAY ════ -->
@@ -838,6 +831,30 @@ body.has-bar .screen{padding-top:62px}
 </div>
 
 <div id="notif"></div>
+
+<!-- ════ PROFILE EDIT MODAL ════ -->
+<div id="profile-edit-modal">
+  <div class="profile-edit-sheet">
+    <div style="font-size:16px;font-weight:900;margin-bottom:16px;text-align:center">✏️ تعديل الملف الشخصي</div>
+    <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:6px">الاسم</div>
+    <input type="text" id="edit-name-input" maxlength="20" placeholder="اسمك"
+      style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:inherit;font-size:15px;margin-bottom:14px">
+    <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px">صورة العرض</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+      <button class="avatar-btn" onclick="document.getElementById('edit-file-gallery').click()">🖼️ من الصور</button>
+      <button class="avatar-btn" onclick="document.getElementById('edit-file-camera').click()">📷 الكاميرا</button>
+    </div>
+    <input type="file" id="edit-file-gallery" accept="image/*" style="display:none" onchange="handleEditFile(this)">
+    <input type="file" id="edit-file-camera" accept="image/*" capture="user" style="display:none" onchange="handleEditFile(this)">
+    <div id="edit-preview-wrap" style="display:none;text-align:center;margin-bottom:14px">
+      <img id="edit-preview-img" style="width:70px;height:70px;border-radius:50%;object-fit:cover;border:3px solid var(--purple)">
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" style="flex:1" onclick="saveProfileEdit()">حفظ</button>
+      <button class="btn btn-secondary" style="flex:0 0 70px" onclick="toggleProfileEdit()">إلغاء</button>
+    </div>
+  </div>
+</div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
@@ -1599,16 +1616,19 @@ function joinGame() {
   socket.emit('player:join', { name: myName, avatar: myAvatar, abilities: myAbilities, persistentId: getOrCreatePid() });
 }
 
-// ─── PROFILE EDIT (LOBBY) ────────────────────────────────────
+// ─── PROFILE EDIT MODAL ──────────────────────────────────────
 let editAvatarTemp = null;
 
 function toggleProfileEdit() {
-  const panel = document.getElementById('profile-edit-panel');
-  const open = panel.style.display === 'none';
-  panel.style.display = open ? 'block' : 'none';
-  if (open) {
+  const modal = document.getElementById('profile-edit-modal');
+  const isOpen = modal.classList.contains('open');
+  if (isOpen) {
+    modal.classList.remove('open');
+  } else {
     document.getElementById('edit-name-input').value = myName;
     editAvatarTemp = null;
+    document.getElementById('edit-preview-wrap').style.display = 'none';
+    modal.classList.add('open');
   }
 }
 
@@ -1618,7 +1638,9 @@ function handleEditFile(input) {
   const reader = new FileReader();
   reader.onload = e => {
     editAvatarTemp = e.target.result;
-    document.getElementById('lobby-avatar').src = editAvatarTemp;
+    const prev = document.getElementById('edit-preview-img');
+    prev.src = editAvatarTemp;
+    document.getElementById('edit-preview-wrap').style.display = 'block';
   };
   reader.readAsDataURL(file);
 }
@@ -1630,6 +1652,8 @@ function saveProfileEdit() {
   if (editAvatarTemp) myAvatar = editAvatarTemp;
   document.getElementById('lobby-avatar').src = myAvatar;
   document.getElementById('lobby-name').textContent = myName;
+  const sbar = document.getElementById('sbar-avatar');
+  if (sbar) { sbar.innerHTML = ''; sbar.appendChild(Object.assign(document.createElement('img'), { src: myAvatar, style: 'width:100%;height:100%;object-fit:cover;border-radius:50%' })); }
   socket.emit('player:update-profile', { name: myName, avatar: myAvatar });
   toggleProfileEdit();
   notify('✅ تم تحديث ملفك الشخصي', 'green');
