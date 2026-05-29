@@ -934,6 +934,15 @@ io.on('connection', socket => {
     io.emit('game:leaderboard', leaderboard());
   });
 
+  socket.on('player:update-profile', ({ name, avatar }) => {
+    const p = G.players[socket.id];
+    if (!p || G.active) return;
+    if (name)   p.name   = String(name).trim().slice(0, 20);
+    if (avatar) p.avatar = avatar;
+    io.emit('game:players-update', publicPlayers());
+    io.emit('game:leaderboard', leaderboard());
+  });
+
   socket.on('player:question-escape', () => {
     if (!G.active) return;
     const p = G.players[socket.id];

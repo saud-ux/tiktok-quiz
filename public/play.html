@@ -577,12 +577,32 @@ body.has-bar .screen{padding-top:62px}
 <div class="screen" id="screen-lobby">
   <div class="logo">تحدي الأسئلة</div>
   <div class="card" style="text-align:center">
-    <div style="margin:0 auto 10px;width:90px;height:90px;border-radius:50%;overflow:hidden;border:3px solid var(--purple)">
-      <img id="lobby-avatar" src="" style="width:100%;height:100%;object-fit:cover">
+    <div style="position:relative;width:90px;height:90px;margin:0 auto 10px;cursor:pointer" onclick="toggleProfileEdit()" title="تعديل">
+      <div style="width:90px;height:90px;border-radius:50%;overflow:hidden;border:3px solid var(--purple)">
+        <img id="lobby-avatar" src="" style="width:100%;height:100%;object-fit:cover">
+      </div>
+      <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);background:var(--purple);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap">✏️ تعديل</div>
     </div>
     <div style="font-size:20px;font-weight:800" id="lobby-name"></div>
     <div style="margin-top:6px;font-size:13px;color:var(--muted)">انتظر الهوست</div>
     <div class="waiting-anim"><span class="waiting-dots">...</span></div>
+
+    <!-- لوحة تعديل الملف الشخصي -->
+    <div id="profile-edit-panel" style="display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:14px;text-align:right">
+      <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px">تعديل الاسم والصورة</div>
+      <input type="text" id="edit-name-input" maxlength="20" placeholder="اسمك"
+        style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:inherit;font-size:15px;margin-bottom:10px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <button class="avatar-btn" onclick="document.getElementById('edit-file-gallery').click()">🖼️ من الصور</button>
+        <button class="avatar-btn" onclick="document.getElementById('edit-file-camera').click()">📷 الكاميرا</button>
+      </div>
+      <input type="file" id="edit-file-gallery" accept="image/*" style="display:none" onchange="handleEditFile(this)">
+      <input type="file" id="edit-file-camera" accept="image/*" capture="user" style="display:none" onchange="handleEditFile(this)">
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" style="flex:1" onclick="saveProfileEdit()">حفظ</button>
+        <button class="btn btn-secondary" style="flex:0 0 70px" onclick="toggleProfileEdit()">إلغاء</button>
+      </div>
+    </div>
   </div>
   <div class="card">
     <div class="section-title">خصائصك</div>
@@ -1577,6 +1597,42 @@ function joinGame() {
   if (!myAbilities.defense) { notify('⚠️ اختر خاصية دفاعية', 'red'); return; }
   if (!myAbilities.general) { notify('⚠️ اختر خاصية عامة', 'red'); return; }
   socket.emit('player:join', { name: myName, avatar: myAvatar, abilities: myAbilities, persistentId: getOrCreatePid() });
+}
+
+// ─── PROFILE EDIT (LOBBY) ────────────────────────────────────
+let editAvatarTemp = null;
+
+function toggleProfileEdit() {
+  const panel = document.getElementById('profile-edit-panel');
+  const open = panel.style.display === 'none';
+  panel.style.display = open ? 'block' : 'none';
+  if (open) {
+    document.getElementById('edit-name-input').value = myName;
+    editAvatarTemp = null;
+  }
+}
+
+function handleEditFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    editAvatarTemp = e.target.result;
+    document.getElementById('lobby-avatar').src = editAvatarTemp;
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveProfileEdit() {
+  const newName = document.getElementById('edit-name-input').value.trim();
+  if (!newName) { notify('⚠️ أدخل اسمك', 'red'); return; }
+  myName = newName;
+  if (editAvatarTemp) myAvatar = editAvatarTemp;
+  document.getElementById('lobby-avatar').src = myAvatar;
+  document.getElementById('lobby-name').textContent = myName;
+  socket.emit('player:update-profile', { name: myName, avatar: myAvatar });
+  toggleProfileEdit();
+  notify('✅ تم تحديث ملفك الشخصي', 'green');
 }
 
 // ─── LOBBY ───────────────────────────────────────────────────
