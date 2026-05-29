@@ -346,6 +346,12 @@ function endQuestion() {
     }))
     .sort((a, b) => b.delta - a.delta);
 
+  // حساب وقت انتظار الهوست ليتزامن مع انتهاء عرض الترتيب عند المتنافسين
+  // المتنافسون يرون: كشف درامي (2800ms إذا كان مفعلاً) + شاشة نتائج (3000ms) + كشف الترتيب (300 + n*350ms) + عداد 7 ثوان
+  const _lbSize = leaderboard().length;
+  const _lbRevealMs = 300 + _lbSize * 350;
+  const hostUnlockDelay = (G.isDramatic ? 2800 : 0) + 3000 + _lbRevealMs + 7000 + 500;
+
   const endPayload = {
     correctAnswer:      q.correctAnswer,
     textAnswer:         q.type === 'text' ? q.answer : undefined,
@@ -355,6 +361,7 @@ function endQuestion() {
     questionLeaderboard,
     qNum:               G.qNum,
     wasLastQuestion:    G.isLastQuestion,
+    hostUnlockDelay,
   };
 
   if (G.isDramatic) {

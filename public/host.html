@@ -748,6 +748,11 @@ const COLORS  = ['opt-a','opt-b','opt-c','opt-d'];
 
 // ── ACTIONS ──────────────────────────────────────────────────
 function startQuestion() {
+  if (hostLockedUntil > Date.now()) {
+    const secsLeft = Math.ceil((hostLockedUntil - Date.now()) / 1000);
+    toast(`⏳ انتظر ${secsLeft} ث — المتنافسون لم ينتهوا من مشاهدة الترتيب`);
+    return;
+  }
   const text = document.getElementById('q-text').value.trim();
   if (!text) { toast('⚠️ أدخل نص السؤال'); return; }
 
@@ -803,6 +808,8 @@ let botHostTimer      = null;
 let botHostDifficulty = '';   // '' = الكل
 let botPlaylist       = [];   // مصفوفة indices من questionQueue
 let botPlaylistIdx    = 0;
+let hostLockedUntil   = 0;    // timestamp — الهوست ممنوع يبدأ سؤال قبل هذا الوقت
+let hostUnlockCdTimer = null; // setInterval للعداد التنازلي على زر البدء
 
 function setBotDiff(diff) {
   botHostDifficulty = diff;
@@ -918,7 +925,10 @@ function stopBotHost() {
   clearTimeout(botHostTimer);
   document.getElementById('btn-bot-start').style.display = 'block';
   document.getElementById('btn-bot-stop').style.display  = 'none';
-  document.getElementById('btn-start').disabled = false;
+  if (hostLockedUntil <= Date.now()) {
+    document.getElementById('btn-start').disabled = false;
+    document.getElementById('btn-start').textContent = '▶ ابدأ السؤال يدوياً';
+  }
   setBotStatus('');
 }
 
@@ -943,12 +953,16 @@ function autoPlayNext() {
     botHostActive = false;
     document.getElementById('btn-bot-start').style.display = 'block';
     document.getElementById('btn-bot-stop').style.display  = 'none';
-    document.getElementById('btn-start').disabled = false;
+    if (hostLockedUntil <= Date.now()) {
+      document.getElementById('btn-start').disabled = false;
+      document.getElementById('btn-start').textContent = '▶ ابدأ السؤال يدوياً';
+    }
     botHostPlayed = 0;
     return;
   }
 
-  let countdown = botHostDelay;
+  const lockRemaining = Math.max(0, Math.ceil((hostLockedUntil - Date.now()) / 1000));
+  let countdown = Math.max(botHostDelay, lockRemaining);
   const total   = botPlaylist.length;
 
   function tick() {
@@ -1396,10 +1410,30 @@ socket.on('host:answer-stats', ({ answered, total }) => {
   document.getElementById('stat-total').textContent = total;
 });
 
-socket.on('game:question-end', ({ correctAnswer, textAnswer, results, leaderboard: lb }) => {
+socket.on('game:question-end', ({ correctAnswer, textAnswer, results, leaderboard: lb, hostUnlockDelay }) => {
   document.getElementById('live-badge').style.display = 'none';
-  document.getElementById('btn-start').disabled = false;
   renderLeaderboard(lb);
+
+  // قفل الزر حتى ينتهي المتنافسون من مشاهدة النتائج والترتيب
+  if (hostUnlockCdTimer) clearInterval(hostUnlockCdTimer);
+  const delay = hostUnlockDelay || 0;
+  hostLockedUntil = Date.now() + delay;
+  const btnStart = document.getElementById('btn-start');
+  btnStart.disabled = true;
+  let cdLeft = Math.ceil(delay / 1000);
+  btnStart.textContent = `⏳ ${cdLeft} ث`;
+  hostUnlockCdTimer = setInterval(() => {
+    cdLeft--;
+    if (cdLeft <= 0) {
+      clearInterval(hostUnlockCdTimer);
+      hostUnlockCdTimer = null;
+      hostLockedUntil = 0;
+      btnStart.disabled = false;
+      btnStart.textContent = '▶ ابدأ السؤال يدوياً';
+    } else {
+      btnStart.textContent = `⏳ ${cdLeft} ث`;
+    }
+  }, 1000);
 
   // Build results display
   const opts = currentQuestion?.options || [];
@@ -1438,10 +1472,14 @@ socket.on('game:reset', () => {
   players = {};
   qNum = 0;
   currentQuestion = null;
+  if (hostUnlockCdTimer) { clearInterval(hostUnlockCdTimer); hostUnlockCdTimer = null; }
+  hostLockedUntil = 0;
   renderWaitingPlayers();
   renderLeaderboard([]);
   document.getElementById('live-badge').style.display = 'none';
-  document.getElementById('btn-start').disabled = false;
+  const btnStart = document.getElementById('btn-start');
+  btnStart.disabled = false;
+  btnStart.textContent = '▶ ابدأ السؤال يدوياً';
   showSetup();
   toast('🔄 تم إعادة تشغيل اللعبة');
 });
