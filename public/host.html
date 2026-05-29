@@ -105,6 +105,20 @@ textarea{min-height:70px}
 #lb-modal{position:fixed;inset:0;background:#000000cc;z-index:800;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
 #lb-modal.open{display:flex}
 .lb-modal-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;width:100%;max-width:520px;padding:24px 20px}
+
+/* Leaderboard reveal overlay (matches player view) */
+#lb-reveal-overlay{position:fixed;inset:0;z-index:900;background:#000000f2;display:none;flex-direction:column;align-items:center;overflow-y:auto;padding:20px 16px 40px}
+#lb-reveal-overlay.open{display:flex}
+.lb-rov-title{font-size:22px;font-weight:900;color:var(--gold);letter-spacing:1px;margin:10px 0 16px;text-align:center;text-shadow:0 0 24px #f59e0b70}
+.lb-rov-card{width:100%;max-width:420px;display:flex;align-items:center;gap:12px;padding:13px 16px;border-radius:14px;border:2px solid #ffffff15;background:#ffffff08;opacity:0;transform:translateY(28px);transition:opacity .38s ease,transform .45s cubic-bezier(.34,1.56,.64,1);margin-bottom:8px;flex-shrink:0}
+.lb-rov-card.show{opacity:1;transform:translateY(0)}
+.lb-rov-card.rk2{border-color:#94a3b860;background:#94a3b810}
+.lb-rov-card.rk3{border-color:#cd7f3260;background:#cd7f3210}
+.lb-rov-card.rk1{border-color:#f59e0b90;background:#f59e0b12}
+@keyframes rank1Enter{0%{transform:scale(.55) translateY(50px);opacity:0}65%{transform:scale(1.1) translateY(-6px)}100%{transform:scale(1) translateY(0);opacity:1}}
+@keyframes rank1Shine{0%,100%{box-shadow:0 0 0 3px #f59e0b,0 0 22px #f59e0b70}50%{box-shadow:0 0 0 4px #f59e0b,0 0 45px #f59e0bc0,0 0 70px #f59e0b30}}
+.lb-rov-card.rk1.show{animation:rank1Enter .6s cubic-bezier(.34,1.56,.64,1) forwards,rank1Shine 1.6s ease .6s infinite}
+.lb-rov-cd{margin-top:16px;font-size:14px;font-weight:700;color:var(--muted);padding:8px 22px;border-radius:20px;background:#ffffff12;display:none}
 .lb-pts{font-size:16px;font-weight:900;color:var(--purple-light)}
 .lb-streak{font-size:12px;color:var(--gold);background:#f59e0b15;padding:2px 8px;border-radius:20px}
 
@@ -606,6 +620,13 @@ textarea{min-height:70px}
 </div>
 
 <div id="toast"></div>
+
+<!-- LEADERBOARD REVEAL OVERLAY (same as player view) -->
+<div id="lb-reveal-overlay">
+  <div class="lb-rov-title">🏆 الترتيب الكلي</div>
+  <div id="lb-rov-cards"></div>
+  <div class="lb-rov-cd" id="lb-rov-cd"></div>
+</div>
 
 <!-- FULL LEADERBOARD MODAL -->
 <div id="lb-modal" onclick="if(event.target===this)toggleLbModal()">
@@ -1356,6 +1377,50 @@ function toggleLbModal() {
   document.getElementById('lb-modal').classList.toggle('open');
 }
 
+function showLbReveal(lb) {
+  if (!lb.length) return;
+  const overlay   = document.getElementById('lb-reveal-overlay');
+  const container = document.getElementById('lb-rov-cards');
+  const cdEl      = document.getElementById('lb-rov-cd');
+  container.innerHTML = '';
+  cdEl.style.display  = 'none';
+  overlay.scrollTop   = 0;
+
+  lb.forEach((p, i) => {
+    const rkClass = i === 0 ? 'rk1' : i === 1 ? 'rk2' : i === 2 ? 'rk3' : '';
+    const medal   = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${p.rank}`;
+    const div = document.createElement('div');
+    div.className = `lb-rov-card ${rkClass}`;
+    div.innerHTML = `
+      <span style="font-size:${i<3?'18':'14'}px;font-weight:900;width:28px;text-align:center">${medal}</span>
+      ${renderAvatar(p.avatar, i===0?44:36)}
+      <span style="flex:1;font-size:${i===0?'16':'14'}px;font-weight:${i===0?'900':'700'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}${p.isBot?' <span style="font-size:10px;color:var(--cyan);font-weight:700">BOT</span>':''}</span>
+      ${p.streak>=3?`<span style="color:var(--gold);font-size:12px">🔥${p.streak}</span>`:''}
+      <span style="font-size:${i===0?'18':'15'}px;font-weight:900;color:${i===0?'var(--gold)':'var(--green)'}">${p.points.toLocaleString()}</span>`;
+    container.appendChild(div);
+  });
+
+  overlay.classList.add('open');
+
+  const cards    = [...container.children];
+  const reversed = [...cards].reverse();
+  const totalDelay = 300 + reversed.length * 350;
+  reversed.forEach((card, idx) => {
+    setTimeout(() => card.classList.add('show'), 300 + idx * 350);
+  });
+
+  let secsLeft = 7;
+  setTimeout(() => {
+    cdEl.style.display = 'block';
+    cdEl.textContent   = `يختفي خلال ${secsLeft} ثوانٍ`;
+    const iv = setInterval(() => {
+      secsLeft--;
+      cdEl.textContent = secsLeft > 0 ? `يختفي خلال ${secsLeft} ثوانٍ` : '';
+      if (secsLeft <= 0) { clearInterval(iv); overlay.classList.remove('open'); }
+    }, 1000);
+  }, totalDelay + 200);
+}
+
 function renderWaitingPlayers() {
   const el = document.getElementById('waiting-players');
   const ps = Object.values(players);
@@ -1444,6 +1509,7 @@ socket.on('host:answer-stats', ({ answered, total }) => {
 socket.on('game:question-end', ({ correctAnswer, textAnswer, results, leaderboard: lb, hostUnlockDelay }) => {
   document.getElementById('live-badge').style.display = 'none';
   renderLeaderboard(lb);
+  setTimeout(() => showLbReveal(lb), 3000);
 
   // قفل الزر حتى ينتهي المتنافسون من مشاهدة النتائج والترتيب
   if (hostUnlockCdTimer) clearInterval(hostUnlockCdTimer);
