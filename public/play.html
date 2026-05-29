@@ -695,10 +695,7 @@ body.has-bar .screen{padding-top:62px}
     <div class="pre-q-subtitle">يمكنك استخدام خاصية واحدة فقط</div>
     <div class="pre-q-countdown">سيتم التخطي بعد <span id="pre-q-timer">4</span> ثوانٍ</div>
     <div class="pre-q-abilities-list" id="pre-q-abilities-list"></div>
-    <div style="display:flex;gap:8px;margin-top:4px">
-      <button class="btn-skip" style="flex:1" onclick="skipPreQuestion()">تخطّ — لا أريد استخدام أي خاصية</button>
-      <button onclick="toggleProfileEdit()" style="flex:0 0 auto;background:transparent;border:1px solid var(--border);color:var(--muted);font-family:inherit;font-size:13px;font-weight:700;padding:10px 14px;border-radius:12px;cursor:pointer" title="تعديل الملف الشخصي">✏️</button>
-    </div>
+    <button class="btn-skip" onclick="skipPreQuestion()">تخطّ — لا أريد استخدام أي خاصية</button>
   </div>
 </div>
 
@@ -769,7 +766,6 @@ body.has-bar .screen{padding-top:62px}
 <div id="waiting-overlay">
   <div class="waiting-spinner"></div>
   <div class="waiting-text">جاري اختيار الخصائص...</div>
-  <button onclick="toggleProfileEdit()" style="margin-top:8px;background:transparent;border:1px solid #ffffff40;color:#ffffffaa;font-family:inherit;font-size:13px;font-weight:700;padding:8px 18px;border-radius:20px;cursor:pointer">✏️ تعديل صورتك واسمك</button>
 </div>
 
 <!-- ════ STORE VOTE OVERLAY ════ -->
@@ -1619,7 +1615,10 @@ function joinGame() {
 // ─── PROFILE EDIT MODAL ──────────────────────────────────────
 let editAvatarTemp = null;
 
+let profileEditLocked = false;
+
 function toggleProfileEdit() {
+  if (profileEditLocked) { notify('🔒 التعديل مقفل حتى تنتهي الجولة', 'red'); return; }
   const modal = document.getElementById('profile-edit-modal');
   const isOpen = modal.classList.contains('open');
   if (isOpen) {
@@ -2392,10 +2391,14 @@ socket.on('game:question-start', ({ question, isLastQuestion, questionTime }) =>
 });
 
 socket.on('game:pre-question', ({ abilities }) => {
+  profileEditLocked = true;
+  document.getElementById('profile-edit-modal').classList.remove('open');
   showPreQuestionModal(abilities);
 });
 
 socket.on('game:waiting-pre-question', () => {
+  profileEditLocked = true;
+  document.getElementById('profile-edit-modal').classList.remove('open');
   showWaitingOverlay();
 });
 
@@ -2513,6 +2516,7 @@ socket.on('game:revival-available', () => {
 });
 
 socket.on('game:question-end', data => {
+  profileEditLocked = false;
   questionActive = false;
   isCut = false;
   clearDanger();
