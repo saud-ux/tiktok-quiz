@@ -761,6 +761,17 @@ io.on('connection', socket => {
         }
       } else if (offer.type === 'hole') {
         G.effects[socket.id] = { ...(G.effects[socket.id] || {}), holeTarget: offer.attackerId };
+      } else if (offer.type === 'blur') {
+        if (!G.answers[offer.attackerId]) {
+          const arr = [0,1,2,3];
+          for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+          }
+          if (arr.every((v, i) => v === i)) { [arr[0], arr[1]] = [arr[1], arr[0]]; }
+          io.to(offer.attackerId).emit('game:shuffle-options', { shuffle: arr, attackerName: p.name });
+          notify(offer.attackerId, 'blur-incoming', `🌀 ${p.name} عكس الإرباك عليك!`);
+        }
       }
       notify(offer.attackerId, 'attack-reflected', `🔄 ${p.name} عكس هجومك عليك!`);
       notify(socket.id, 'reverse-fired', '🔄 درع الانعكاس انطلق!');
