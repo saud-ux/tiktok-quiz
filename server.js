@@ -85,6 +85,25 @@ function leaderboard() {
     .map((p, i) => ({ rank: i + 1, id: p.id, name: p.name, avatar: p.avatar, points: p.points, streak: p.streak, isBot: p.isBot || false }));
 }
 
+function hostAnswerStats() {
+  const answered = Object.keys(G.answers).length;
+  const total    = Object.keys(G.players).length;
+  const liveAnswers = Object.entries(G.answers).map(([id, ans]) => {
+    const p = G.players[id];
+    if (!p) return null;
+    return {
+      id,
+      name:       p.name,
+      avatar:     p.avatar,
+      choice:     ans.choice !== undefined ? ans.choice : -1,
+      textAnswer: ans.textAnswer || null,
+      isText:     G.question?.type === 'text',
+      isOrder:    G.question?.type === 'order',
+    };
+  }).filter(Boolean);
+  return { answered, total, liveAnswers };
+}
+
 function publicPlayers() {
   return Object.values(G.players).map(p => ({
     id: p.id, name: p.name, avatar: p.avatar, points: p.points, streak: p.streak,
@@ -438,7 +457,7 @@ function scheduleBotAnswers() {
 
       const answered = Object.keys(G.answers).length;
       const total    = Object.keys(G.players).length;
-      io.emit('host:answer-stats', { answered, total });
+      io.emit('host:answer-stats', hostAnswerStats());
       io.emit('game:answer-progress', { answered, total, lb: leaderboard() });
     }, delay);
   });
@@ -957,7 +976,7 @@ io.on('connection', socket => {
       socket.emit('player:answer-accepted', { correct: isTextCorrect, isText: true });
       const answered = Object.keys(G.answers).length;
       const total    = Object.keys(G.players).length;
-      io.emit('host:answer-stats', { answered, total });
+      io.emit('host:answer-stats', hostAnswerStats());
       io.emit('game:answer-progress', { answered, total, lb: leaderboard() });
       return;
     }
@@ -972,7 +991,7 @@ io.on('connection', socket => {
       socket.emit('player:answer-accepted', { choice: 0, correct: isOrderCorrect, isOrder: true });
       const answered = Object.keys(G.answers).length;
       const total    = Object.keys(G.players).length;
-      io.emit('host:answer-stats', { answered, total });
+      io.emit('host:answer-stats', hostAnswerStats());
       io.emit('game:answer-progress', { answered, total, lb: leaderboard() });
       return;
     }
@@ -1026,7 +1045,7 @@ io.on('connection', socket => {
 
     const answered = Object.keys(G.answers).length;
     const total    = Object.keys(G.players).length;
-    io.emit('host:answer-stats', { answered, total });
+    io.emit('host:answer-stats', hostAnswerStats());
     // ← جديد: إرسال التقدم لكل اللاعبين
     io.emit('game:answer-progress', { answered, total, lb: leaderboard() });
   });

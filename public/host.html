@@ -517,6 +517,22 @@ textarea{min-height:70px}
             </div>
           </div>
         </div>
+
+        <!-- Live Answers -->
+        <div class="card">
+          <div class="card-title">👀 إجابات المنافسين <span id="live-answers-count" style="font-size:12px;color:var(--cyan);font-weight:600"></span></div>
+          <div id="live-answers-list">
+            <div style="color:var(--muted);font-size:13px;text-align:center;padding:10px">في انتظار الإجابات...</div>
+          </div>
+        </div>
+
+        <!-- Current Ranking -->
+        <div class="card">
+          <div class="card-title">🏆 الترتيب الحالي</div>
+          <div id="active-leaderboard-list" style="max-height:350px;overflow-y:auto">
+            <div style="color:var(--muted);font-size:13px;text-align:center;padding:10px">لا يوجد لاعبون</div>
+          </div>
+        </div>
       </div>
 
       <!-- RESULTS PANEL -->
@@ -1324,6 +1340,84 @@ function renderWaitingPlayers() {
   document.getElementById('player-count').textContent = ps.length + ' لاعب';
 }
 
+function renderLiveAnswers(liveAnswers) {
+  const el = document.getElementById('live-answers-list');
+  if (!el) return;
+  if (!liveAnswers || !liveAnswers.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:10px">في انتظار الإجابات...</div>';
+    return;
+  }
+  const opts          = currentQuestion?.options || [];
+  const correctChoice = currentQuestion?.correctAnswer;
+  const isText        = currentQuestion?.type === 'text';
+  const isOrder       = currentQuestion?.type === 'order';
+  const total         = Object.keys(players).length;
+  let html = '';
+
+  if (!isText && !isOrder && opts.length) {
+    const counts = [0, 0, 0, 0];
+    liveAnswers.forEach(a => { if (a.choice >= 0 && a.choice < 4) counts[a.choice]++; });
+    html += '<div style="margin-bottom:10px">';
+    opts.forEach((opt, i) => {
+      const count  = counts[i];
+      const isCorr = i === correctChoice;
+      const pct    = total > 0 ? Math.round((count / total) * 100) : 0;
+      html += `
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+          <div class="option-letter ${COLORS[i]}" style="width:24px;height:24px;font-size:11px;flex-shrink:0">${LETTERS[i]}</div>
+          <div style="flex:1;height:24px;background:var(--bg);border-radius:5px;overflow:hidden;border:1px solid ${isCorr ? '#22c55e50' : 'var(--border)'}">
+            <div style="height:100%;width:${pct}%;background:${isCorr ? '#16a34a60' : '#1e3a5f'};transition:width .5s ease"></div>
+          </div>
+          <div style="font-size:11px;font-weight:700;color:${isCorr ? 'var(--green)' : 'var(--muted)'};width:20px;text-align:center">${count}</div>
+        </div>`;
+    });
+    html += '</div>';
+  }
+
+  html += '<div style="display:flex;flex-direction:column;gap:4px;max-height:220px;overflow-y:auto">';
+  liveAnswers.forEach(a => {
+    let choiceText = '';
+    let isCorrect  = false;
+    if (a.isText) {
+      choiceText = `✏️ ${a.textAnswer || '—'}`;
+    } else if (a.isOrder) {
+      choiceText = '🔢 ترتيب';
+    } else {
+      isCorrect  = a.choice === correctChoice;
+      choiceText = `${LETTERS[a.choice] ?? '?'}. ${opts[a.choice] || ''}`;
+    }
+    html += `
+      <div style="display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:7px;background:var(--surface);border:1px solid ${isCorrect ? '#22c55e30' : '#ef444420'}">
+        ${renderAvatar(a.avatar, 22)}
+        <div style="flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.name}</div>
+        <div style="font-size:11px;font-weight:700;color:${isCorrect ? 'var(--green)' : '#f87171'};flex-shrink:0">${choiceText}</div>
+      </div>`;
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function renderActiveLeaderboard() {
+  const el = document.getElementById('active-leaderboard-list');
+  if (!el) return;
+  const lb = Object.values(players)
+    .sort((a, b) => b.points - a.points)
+    .map((p, i) => ({ ...p, rank: i + 1 }));
+  if (!lb.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:10px">لا يوجد لاعبون</div>';
+    return;
+  }
+  el.innerHTML = lb.map(p => `
+    <div class="lb-item" style="padding:8px 10px;margin-bottom:5px">
+      <div class="lb-rank ${p.rank <= 3 ? 'r' + p.rank : ''}" style="font-size:13px;width:24px">${p.rank <= 3 ? ['🥇','🥈','🥉'][p.rank - 1] : '#' + p.rank}</div>
+      ${renderAvatar(p.avatar, 26)}
+      <div class="lb-name" style="font-size:13px">${p.name}${p.isBot ? ' <span style="font-size:10px;color:var(--cyan)">BOT</span>' : ''}</div>
+      ${p.streak >= 3 ? `<div class="lb-streak">🔥${p.streak}</div>` : ''}
+      <div class="lb-pts" style="font-size:14px">${p.points.toLocaleString()}</div>
+    </div>
+  `).join('');
+}
+
 function addBot() {
   const difficulty = document.getElementById('bot-difficulty').value;
   socket.emit('host:add-bot', { difficulty });
@@ -1367,6 +1461,7 @@ socket.on('game:players-update', ps => {
   renderWaitingPlayers();
   document.getElementById('player-count').textContent = ps.length + ' لاعب';
   document.getElementById('stat-total').textContent = ps.length;
+  if (document.getElementById('panel-active').classList.contains('active')) renderActiveLeaderboard();
 });
 
 socket.on('game:leaderboard', renderLeaderboard);
@@ -1385,15 +1480,20 @@ socket.on('host:question-confirmed', ({ question, number }) => {
   updateTimerCircle(selectedDuration);
   const btn = document.getElementById('btn-end');
   if (btn) { btn.textContent = '⏹ أنهِ السؤال'; btn.style.animation = ''; btn._autoEndStarted = false; }
+  document.getElementById('live-answers-list').innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:10px">في انتظار الإجابات...</div>';
+  document.getElementById('live-answers-count').textContent = '';
+  renderActiveLeaderboard();
   showPanel('active');
   toast('▶️ السؤال بدأ!');
 });
 
 socket.on('game:timer', t => updateTimerCircle(t));
 
-socket.on('host:answer-stats', ({ answered, total }) => {
+socket.on('host:answer-stats', ({ answered, total, liveAnswers }) => {
   document.getElementById('stat-answered').textContent = answered;
   document.getElementById('stat-total').textContent = total;
+  document.getElementById('live-answers-count').textContent = `(${answered}/${total})`;
+  renderLiveAnswers(liveAnswers || []);
 });
 
 socket.on('game:question-end', ({ correctAnswer, textAnswer, results, leaderboard: lb }) => {
