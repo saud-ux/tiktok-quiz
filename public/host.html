@@ -106,6 +106,12 @@ textarea{min-height:70px}
 #lb-modal.open{display:flex}
 .lb-modal-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;width:100%;max-width:520px;padding:24px 20px}
 
+/* Ability log */
+.ability-log-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:var(--surface);border:1px solid var(--border);font-size:13px;animation:logSlide .3s ease}
+@keyframes logSlide{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.ability-log-row .ab-badge{font-size:18px;flex-shrink:0}
+.ability-log-row .ab-phase{font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;background:#ffffff15;color:var(--muted);flex-shrink:0}
+
 /* Leaderboard reveal overlay (matches player view) */
 #lb-reveal-overlay{position:fixed;inset:0;z-index:900;background:#000000f2;display:none;flex-direction:column;align-items:center;overflow-y:auto;padding:20px 16px 40px}
 #lb-reveal-overlay.open{display:flex}
@@ -535,6 +541,14 @@ textarea{min-height:70px}
                 <div style="font-size:11px;color:#64748b">صوّتوا</div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- ABILITY LOG -->
+        <div class="card" style="margin-top:14px">
+          <div class="card-title" style="margin-bottom:10px">⚡ الخصائص المستخدمة</div>
+          <div id="ability-log" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto">
+            <div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">لم تُستخدم أي خاصية بعد</div>
           </div>
         </div>
       </div>
@@ -1377,6 +1391,46 @@ function toggleLbModal() {
   document.getElementById('lb-modal').classList.toggle('open');
 }
 
+const ABILITY_ICONS = {
+  freeze:'❄️', cut:'✂️', blur:'🌀', hole:'🪙', spy:'🔍',
+  reverse:'🔄', immunity:'🛡️', retry:'↩️', doubleRisk:'⚡',
+  hint:'💡', revival:'✨', ghost:'👻', joker:'🃏',
+};
+const ABILITY_NAMES = {
+  freeze:'تجميد', cut:'قطع', blur:'تشويش', hole:'سرقة', spy:'تجسس',
+  reverse:'انعكاس', immunity:'حصانة', retry:'إعادة', doubleRisk:'مضاعف الخطر',
+  hint:'تلميح', revival:'إنعاش', ghost:'اختفاء', joker:'جوكر',
+};
+
+function clearAbilityLog() {
+  document.getElementById('ability-log').innerHTML =
+    '<div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">لم تُستخدم أي خاصية بعد</div>';
+}
+
+socket.on('host:ability-log', ({ attackerName, attackerAvatar, type, targetName, targetAvatar, phase }) => {
+  const log = document.getElementById('ability-log');
+  const empty = log.querySelector('div[style*="padding:12px"]');
+  if (empty) empty.remove();
+
+  const icon = ABILITY_ICONS[type] || '⚡';
+  const name = ABILITY_NAMES[type] || type;
+  const phaseLabel = phase === 'pre-q' ? 'قبل السؤال' : 'أثناء السؤال';
+
+  const row = document.createElement('div');
+  row.className = 'ability-log-row';
+  row.innerHTML = `
+    ${renderAvatar(attackerAvatar, 28)}
+    <span style="font-weight:700;flex-shrink:0">${attackerName}</span>
+    <span style="color:var(--muted)">استخدم</span>
+    <span class="ab-badge">${icon}</span>
+    <span style="font-weight:700;color:var(--green);flex-shrink:0">${name}</span>
+    ${targetName ? `<span style="color:var(--muted)">على</span>${renderAvatar(targetAvatar, 24)}<span style="font-weight:700;color:var(--red);flex-shrink:0">${targetName}</span>` : ''}
+    <span style="margin-right:auto"></span>
+    <span class="ab-phase">${phaseLabel}</span>
+  `;
+  log.insertBefore(row, log.firstChild);
+});
+
 function showLbReveal(lb) {
   if (!lb.length) return;
   const overlay   = document.getElementById('lb-reveal-overlay');
@@ -1491,6 +1545,7 @@ socket.on('host:question-confirmed', ({ question, number }) => {
   document.getElementById('btn-start').disabled = true;
   document.getElementById('stat-total').textContent = Object.keys(players).length;
   document.getElementById('stat-answered').textContent = '0';
+  clearAbilityLog();
   renderActiveQuestion({ ...question, number });
   updateTimerCircle(selectedDuration);
   const btn = document.getElementById('btn-end');

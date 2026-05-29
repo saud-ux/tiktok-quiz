@@ -717,9 +717,15 @@ io.on('connection', socket => {
           } else {
             ab.used = true;
             G.preQDecisions[socket.id] = { category, type, targetId };
-            // Confirm selection (not activation) so the client marks it as used
             io.to(socket.id).emit('ability:result', { type: ab.type, status: 'selected' });
             io.emit('game:players-update', publicPlayers());
+            const tgt = targetId ? G.players[targetId] : null;
+            io.emit('host:ability-log', {
+              attackerName: p.name, attackerAvatar: p.avatar,
+              type: ab.type,
+              targetName: tgt?.name || null, targetAvatar: tgt?.avatar || null,
+              phase: 'pre-q',
+            });
           }
         }
       }
@@ -1182,6 +1188,13 @@ io.on('connection', socket => {
     if (used) {
       if (isBonusAbility) p.bonusAbility.used = true;
       else ability.used = true;
+      const target = targetId ? G.players[targetId] : null;
+      io.emit('host:ability-log', {
+        attackerName: p.name, attackerAvatar: p.avatar,
+        type: ability.type,
+        targetName: target?.name || null, targetAvatar: target?.avatar || null,
+        phase: 'during',
+      });
     }
     io.emit('game:players-update', publicPlayers());
   });
@@ -1200,6 +1213,11 @@ io.on('connection', socket => {
     G.jokerUsed[socket.id] = true;
     socket.emit('game:joker-result', { eliminated });
     notify(socket.id, 'ability-active', '🃏 الجوكر! حُذف خياران خاطئان');
+    const pj = G.players[socket.id];
+    if (pj) io.emit('host:ability-log', {
+      attackerName: pj.name, attackerAvatar: pj.avatar,
+      type: 'joker', targetName: null, targetAvatar: null, phase: 'during',
+    });
   });
 
   // ── POINTS STORE ──────────────────────────────────────────
