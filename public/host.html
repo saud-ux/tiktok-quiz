@@ -810,6 +810,7 @@ let botPlaylist       = [];   // مصفوفة indices من questionQueue
 let botPlaylistIdx    = 0;
 let hostLockedUntil   = 0;    // timestamp — الهوست ممنوع يبدأ سؤال قبل هذا الوقت
 let hostUnlockCdTimer = null; // setInterval للعداد التنازلي على زر البدء
+let botStoreVoteSent  = false; // تم إرسال تصويت المتجر عند نصف الجلسة؟
 
 function setBotDiff(diff) {
   botHostDifficulty = diff;
@@ -907,6 +908,7 @@ function startBotHost() {
   botPlaylistIdx    = 0;
   botHostPlayed     = 0;
   botHostActive     = true;
+  botStoreVoteSent  = false;
 
   renderQueue();
   document.getElementById('btn-bot-start').style.display = 'none';
@@ -961,9 +963,16 @@ function autoPlayNext() {
     return;
   }
 
+  // تصويت المتجر تلقائياً عند منتصف الجلسة
+  const total = botPlaylist.length;
+  if (!botStoreVoteSent && botHostPlayed === Math.floor(total / 2)) {
+    botStoreVoteSent = true;
+    startStoreVote();
+    toast('🗳️ تصويت المتجر — منتصف الجلسة');
+  }
+
   const lockRemaining = Math.max(0, Math.ceil((hostLockedUntil - Date.now()) / 1000));
   let countdown = Math.max(botHostDelay, lockRemaining);
-  const total   = botPlaylist.length;
 
   function tick() {
     setBotStatus(`⏳ سؤال ${botHostPlayed + 1}/${total} — يبدأ خلال ${countdown} ث`);
