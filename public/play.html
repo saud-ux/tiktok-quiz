@@ -533,7 +533,7 @@ body.has-bar .screen{padding-top:62px}
 <!-- ════ SCREEN 1: JOIN ════ -->
 <div class="screen active" id="screen-join">
   <div class="logo">تحدي الأسئلة</div>
-  <div class="subtitle">اكتب اسمك وأضف صورة</div>
+  <div class="subtitle">اكتب اسمك (الصورة اختيارية)</div>
   <div class="card">
     <div class="section-title">اسمك</div>
     <input type="text" id="player-name" placeholder="اكتب اسمك" maxlength="20">
@@ -1598,8 +1598,7 @@ function selectAbility(cat, type, el) {
 
 function goToAbilities() {
   const name = document.getElementById('player-name').value.trim();
-  if (!name)     { notify('⚠️ أدخل اسمك أولاً', 'red'); return; }
-  if (!myAvatar) { notify('⚠️ اختر صورة شخصية أولاً', 'red'); return; }
+  if (!name) { notify('⚠️ أدخل اسمك أولاً', 'red'); return; }
   myName = name;
   buildAbilityCards();
   showScreen('abilities');
