@@ -89,7 +89,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row-reverse',
     flexWrap: 'wrap',
     gap: 6,
-    paddingVertical: 8,
+    paddingTop: 4,
+    paddingBottom: 8,
     paddingHorizontal: 4,
   },
   btn: {

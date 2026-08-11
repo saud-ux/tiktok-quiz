@@ -110,13 +110,22 @@ export default function GameScreen() {
             {canLastSecond && (
               <Text style={styles.lastSecondHint}>⚡ آخر 5 ثواني - يمكنك تغيير إجابتك!</Text>
             )}
+            <AbilitiesBar />
           </View>
         )}
 
-        {q.type === 'order' && <OrderQuestion />}
-        {q.type === 'text' && <TextQuestion />}
-
-        <AbilitiesBar />
+        {q.type === 'order' && (
+          <>
+            <OrderQuestion />
+            <AbilitiesBar />
+          </>
+        )}
+        {q.type === 'text' && (
+          <>
+            <TextQuestion />
+            <AbilitiesBar />
+          </>
+        )}
 
         {state.isCut && !state.showFrozen && (
           <View style={styles.cutBanner}>
