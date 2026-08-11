@@ -83,6 +83,8 @@ export default function GameScreen() {
       <ScrollView style={styles.content} contentContainerStyle={styles.contentInner}>
         <Text style={styles.question}>{q.text}</Text>
 
+        <AbilitiesBar />
+
         {state.hintText && (
           <View style={styles.hint}>
             <Text style={styles.hintIcon}>💡</Text>
@@ -122,8 +124,6 @@ export default function GameScreen() {
           </View>
         )}
       </ScrollView>
-
-      <AbilitiesBar />
     </View>
   );
 }
