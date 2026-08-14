@@ -7,116 +7,332 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <style>
+/* ═══════════════════════════════════════════════════════
+   BASE  &  VARIABLES
+   ═══════════════════════════════════════════════════════ */
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
   --bg:#050e05;--surface:#081408;--card:#0c1c0c;--border:#1a3d1a;
   --purple:#16a34a;--purple-light:#4ade80;--cyan:#22c55e;--cyan-dark:#15803d;
   --green:#4ade80;--red:#ef4444;--gold:#f59e0b;--text:#f0fdf4;--muted:#86efac;
+  --radius:14px;--radius-sm:10px;--radius-lg:18px;
+  --shadow-glow:0 0 24px #4ade8020;
 }
-body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,#1a3d1a18 1px,transparent 1px);background-size:28px 28px;pointer-events:none;z-index:0}
-.layout,.header{position:relative;z-index:1}
 body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-.layout{display:grid;grid-template-columns:1fr 900px;gap:0;height:100vh;overflow:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,#1a3d1a18 1px,transparent 1px);background-size:28px 28px;pointer-events:none;z-index:0}
+
+/* ═══════════════════════════════════════════════════════
+   APP  SHELL  &  LAYOUT
+   ═══════════════════════════════════════════════════════ */
+.app-shell{position:relative;z-index:1;display:grid;grid-template-rows:auto 1fr;min-height:100vh}
+.layout{display:grid;grid-template-columns:1fr 400px;height:calc(100vh - 62px);overflow:hidden}
 .main{padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:16px}
-.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:16px}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
 
-/* Header */
-.header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:var(--surface);border-bottom:1px solid var(--border);grid-column:1/-1}
-.logo{font-size:22px;font-weight:900;color:var(--green);text-shadow:0 0 20px #4ade8060,0 0 40px #16a34a40}
-.badge{background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;animation:pulse 1.5s infinite}
+/* Scrollbars */
+.main::-webkit-scrollbar,.sidebar::-webkit-scrollbar{width:6px}
+.main::-webkit-scrollbar-thumb,.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.main::-webkit-scrollbar-thumb:hover,.sidebar::-webkit-scrollbar-thumb:hover{background:var(--purple)}
+
+/* ═══════════════════════════════════════════════════════
+   HEADER
+   ═══════════════════════════════════════════════════════ */
+.app-header{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:12px 20px;background:var(--surface);
+  border-bottom:1px solid var(--border);
+}
+.header-brand{display:flex;align-items:center;gap:12px;min-width:0}
+.logo{font-size:22px;font-weight:900;color:var(--green);text-shadow:0 0 20px #4ade8060,0 0 40px #16a34a40;white-space:nowrap}
+.live-badge{background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;animation:pulse 1.5s infinite;display:none}
+.live-badge.on{display:inline-block}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
-.btn-reset{background:transparent;border:1px solid var(--red);color:var(--red);padding:8px 16px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;transition:.2s}
-.btn-reset:hover{background:var(--red);color:#fff}
-.btn-end-game{background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;transition:.2s}
-.btn-end-game:hover{filter:brightness(1.1)}
-.btn-last-q{padding:9px 14px;border-radius:10px;border:2px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s}
-.btn-last-q:hover{border-color:var(--gold);color:var(--gold)}
-.btn-last-q.on{border-color:var(--gold);background:#f59e0b20;color:var(--gold);box-shadow:0 0 12px #f59e0b40}
-.btn-dramatic{padding:9px 14px;border-radius:10px;border:2px solid var(--purple);background:#16a34a18;color:var(--green);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s}
-.btn-dramatic:hover{filter:brightness(1.1)}
-.btn-dramatic.off{border-color:var(--border);background:var(--surface);color:var(--muted)}
-.dur-btn{padding:8px 14px;border-radius:10px;border:2px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s;flex:1;min-width:48px}
-.dur-btn:hover{border-color:var(--cyan);color:var(--cyan)}
-.dur-btn.dur-active{border-color:var(--cyan);background:#06b6d420;color:var(--cyan);box-shadow:0 0 10px #06b6d430}
 
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px}
-.card-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px}
+.header-status{display:flex;align-items:center;gap:10px}
+.player-count-badge{
+  background:var(--card);border:1px solid var(--border);color:var(--muted);
+  padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;white-space:nowrap;
+}
 
+.header-actions{display:flex;gap:8px;flex-shrink:0}
+.btn-header{
+  padding:8px 14px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;
+  transition:.15s;background:transparent;border:1px solid var(--border);color:var(--muted);white-space:nowrap;
+}
+.btn-header:hover{transform:translateY(-1px)}
+.btn-header-gold{border-color:var(--gold);color:var(--gold)}
+.btn-header-gold:hover{background:var(--gold);color:#000}
+.btn-header-warning{background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;border-color:transparent;font-weight:800}
+.btn-header-warning:hover{filter:brightness(1.1)}
+.btn-header-danger{border-color:var(--red);color:var(--red)}
+.btn-header-danger:hover{background:var(--red);color:#fff}
 
-label{display:block;font-size:14px;font-weight:600;margin-bottom:6px;color:var(--text)}
-input[type=text],textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:inherit;font-size:15px;transition:.2s;resize:vertical}
-input[type=text]:focus,textarea:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 3px rgba(124,58,237,.2)}
-textarea{min-height:70px}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* ═══════════════════════════════════════════════════════
+   CARDS  &  SECTION  HEADERS
+   ═══════════════════════════════════════════════════════ */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.card-header{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:14px 18px;border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg,#0f230f30,transparent);
+}
+.card-heading{
+  display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;
+  color:var(--text);letter-spacing:.3px;
+}
+.card-icon{font-size:16px;filter:drop-shadow(0 0 8px #4ade8040)}
+.card-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.card-body{padding:18px}
+
+/* Compact card variant (sidebar) */
+.sidebar .card-header{padding:12px 14px}
+.sidebar .card-body{padding:14px}
+.sidebar .card-heading{font-size:13px}
+
+/* ═══════════════════════════════════════════════════════
+   COLLAPSIBLE  (Bot Host section)
+   ═══════════════════════════════════════════════════════ */
+.collapsible{
+  background:var(--card);border:1px solid #06b6d440;border-radius:var(--radius);
+  overflow:hidden;transition:border-color .2s;
+}
+.collapsible[open]{border-color:#06b6d480;box-shadow:0 0 20px #06b6d418}
+.collapsible-summary{
+  padding:14px 18px;cursor:pointer;list-style:none;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  user-select:none;background:linear-gradient(180deg,#06b6d418,transparent);
+}
+.collapsible-summary::-webkit-details-marker{display:none}
+.collapsible-summary .card-heading{color:var(--cyan)}
+.chevron{color:var(--muted);font-size:11px;transition:transform .25s ease}
+.collapsible[open] .chevron{transform:rotate(180deg);color:var(--cyan)}
+.collapsible-body{padding:16px 18px 18px;border-top:1px solid #06b6d425}
+
+/* ═══════════════════════════════════════════════════════
+   FIELDS  &  INPUTS
+   ═══════════════════════════════════════════════════════ */
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.field-label{
+  display:block;font-size:13px;font-weight:700;color:var(--text);
+  margin-bottom:8px;
+}
+.field-label-sm{
+  display:block;font-size:11px;font-weight:700;color:var(--muted);
+  margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;
+}
+.field-hint{font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5}
+.field-block{margin-bottom:12px}
+.field-inline{margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+
+.input{
+  width:100%;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:10px 14px;color:var(--text);
+  font-family:inherit;font-size:15px;transition:.15s;
+}
+.input:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 3px #16a34a25}
+textarea.input{min-height:70px;resize:vertical;line-height:1.6}
+.input-number{text-align:center;font-weight:700;font-size:15px;padding:8px 10px}
+.select-slim{padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer}
+
+/* Row helpers */
+.row-2col{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.mini-field{display:flex;flex-direction:column;gap:4px}
+.mini-field .field-label-sm{margin-bottom:2px}
+
+.image-preview{
+  margin-top:10px;border-radius:var(--radius-sm);overflow:hidden;
+  max-height:180px;text-align:center;border:1px solid var(--border);
+  background:var(--surface);padding:8px;
+}
+.image-preview img{max-height:164px;max-width:100%;object-fit:contain;border-radius:6px}
+
+/* ═══════════════════════════════════════════════════════
+   QUESTION  TYPE  TOGGLE
+   ═══════════════════════════════════════════════════════ */
+.type-toggle{display:flex;gap:8px}
+.type-chip{
+  display:flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--radius-sm);
+  border:1.5px solid var(--border);cursor:pointer;font-size:13px;font-weight:700;
+  transition:.2s;background:var(--surface);color:var(--muted);
+}
+.type-chip:hover{color:var(--text)}
+.type-chip input{display:none}
+.type-chip.active{border-color:var(--cyan);background:#22c55e15;color:var(--cyan)}
+#type-order-lbl.active{border-color:var(--gold);background:#f59e0b15;color:var(--gold)}
+
+/* ═══════════════════════════════════════════════════════
+   OPTIONS  (MC & Order)
+   ═══════════════════════════════════════════════════════ */
 .option-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.option-letter{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-weight:700;font-size:13px;flex-shrink:0}
+.option-row:last-child{margin-bottom:0}
+.option-letter{
+  width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+  border-radius:8px;font-weight:700;font-size:14px;flex-shrink:0;
+}
 .opt-a{background:#7c3aed22;color:#a78bfa}
 .opt-b{background:#06b6d422;color:#67e8f9}
 .opt-c{background:#10b98122;color:#6ee7b7}
 .opt-d{background:#f59e0b22;color:#fcd34d}
-.correct-radio{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
-.correct-radio label{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:600;padding:6px 12px;border-radius:8px;border:1px solid var(--border);transition:.2s}
+.opt-order-1{background:#16a34a22;color:#4ade80}
+.opt-order-2{background:#06b6d422;color:#67e8f9}
+.opt-order-3{background:#f59e0b22;color:#fcd34d}
+.opt-order-4{background:#ef444422;color:#fca5a5}
+
+/* Correct-answer radio pills */
+.correct-radio{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.correct-radio label{
+  display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;
+  font-weight:700;padding:7px 14px;border-radius:8px;border:1px solid var(--border);
+  transition:.15s;background:var(--surface);
+}
+.correct-radio label:hover{border-color:var(--green)}
 .correct-radio input[type=radio]{display:none}
 .correct-radio input[type=radio]:checked+span{color:var(--green)}
 .correct-radio label:has(input:checked){border-color:var(--green);background:#10b98115}
 
-/* Buttons */
-.btn{width:100%;padding:14px;border-radius:12px;border:none;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;transition:.2s}
-.btn-start{background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;box-shadow:0 4px 20px #16a34a40}
-.btn-start:hover{filter:brightness(1.1);transform:translateY(-1px)}
-.btn-start:disabled{opacity:.4;cursor:not-allowed;transform:none}
+/* ═══════════════════════════════════════════════════════
+   DURATION  &  MODIFIER  BUTTONS
+   ═══════════════════════════════════════════════════════ */
+.dur-group{display:flex;gap:6px;flex-wrap:wrap}
+.dur-btn{
+  padding:9px 14px;border-radius:var(--radius-sm);border:2px solid var(--border);
+  background:var(--surface);color:var(--muted);font-family:inherit;
+  font-size:13px;font-weight:700;cursor:pointer;transition:.15s;flex:1;min-width:52px;
+}
+.dur-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.dur-btn.dur-active{border-color:var(--cyan);background:#22c55e20;color:var(--cyan);box-shadow:0 0 10px #22c55e30}
+
+.modifier-row{
+  display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+  margin-bottom:14px;padding:12px;background:var(--surface);
+  border-radius:var(--radius-sm);border:1px solid var(--border);
+}
+.btn-last-q,.btn-dramatic{
+  padding:9px 14px;border-radius:10px;border:2px solid var(--border);
+  background:var(--card);color:var(--muted);font-family:inherit;
+  font-size:12px;font-weight:700;cursor:pointer;transition:.15s;
+}
+.btn-last-q:hover{border-color:var(--gold);color:var(--gold)}
+.btn-last-q.on{border-color:var(--gold);background:#f59e0b20;color:var(--gold);box-shadow:0 0 12px #f59e0b40}
+.btn-dramatic{border-color:var(--purple);background:#16a34a18;color:var(--green)}
+.btn-dramatic:hover{filter:brightness(1.15)}
+.btn-dramatic.off{border-color:var(--border);background:var(--card);color:var(--muted)}
+.modifier-status{font-size:12px;color:var(--muted);font-weight:600}
+
+/* ═══════════════════════════════════════════════════════
+   BUTTONS  (primary / secondary / danger)
+   ═══════════════════════════════════════════════════════ */
+.btn{
+  width:100%;padding:14px;border-radius:12px;border:none;
+  font-family:inherit;font-size:16px;font-weight:800;cursor:pointer;transition:.15s;
+}
+.btn-primary{background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;box-shadow:0 4px 20px #16a34a40}
+.btn-primary:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-start-main{font-size:17px;padding:15px}
 .btn-end{background:var(--red);color:#fff}
 .btn-end:hover{filter:brightness(1.1)}
 .btn-end:disabled{opacity:.4;cursor:not-allowed}
+.btn-full-mt{margin-top:16px}
 
-/* Timer */
-.timer-display{text-align:center}
+.btn-tool{
+  padding:7px 12px;border-radius:8px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);font-family:inherit;
+  font-size:12px;font-weight:700;cursor:pointer;transition:.15s;
+}
+.btn-tool:hover{border-color:var(--text);color:var(--text)}
+.btn-tool-primary{border-color:var(--cyan);color:var(--cyan)}
+.btn-tool-primary:hover{background:var(--cyan);color:#000}
+
+.btn-mini{
+  padding:5px 10px;border-radius:6px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);font-family:inherit;
+  font-size:11px;font-weight:700;cursor:pointer;transition:.15s;
+}
+.btn-mini:hover{border-color:var(--text);color:var(--text)}
+.btn-mini-danger{border-color:var(--red);color:var(--red)}
+.btn-mini-danger:hover{background:var(--red);color:#fff}
+
+/* Bot host buttons */
+.btn-bot-primary{background:linear-gradient(135deg,#0891b2,#06b6d4);color:#fff;font-size:15px;padding:12px;border-radius:10px}
+.btn-bot-primary:hover{filter:brightness(1.1)}
+.btn-bot-stop{background:#ef444415;color:#ef4444;border:1px solid var(--red);padding:10px;font-size:14px;margin-top:8px;border-radius:10px}
+.btn-bot-stop:hover{background:#ef444425}
+.bot-status{margin-top:10px;padding:8px;font-size:13px;font-weight:700;color:var(--cyan);text-align:center;background:#22c55e0a;border-radius:8px}
+
+/* Bot difficulty */
+.bot-diff-group{display:flex;gap:6px}
+.bot-diff-btn{
+  flex:1;padding:7px 8px;border-radius:8px;border:1.5px solid var(--border);
+  background:var(--card);color:var(--muted);font-family:inherit;
+  font-size:12px;font-weight:700;cursor:pointer;transition:.15s;text-align:center;
+}
+.bot-diff-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.bot-diff-active{border-color:var(--cyan)!important;color:var(--cyan)!important;background:#06b6d420!important}
+
+/* Bot categories */
+.bot-cats{margin-bottom:12px;padding:10px;background:var(--surface);border-radius:8px;border:1px solid var(--border)}
+.bot-cats-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.bot-cats-actions{display:flex;gap:4px}
+.bot-cat-chips{display:flex;flex-wrap:wrap;gap:5px;max-height:130px;overflow-y:auto;padding:2px 0}
+
+/* ═══════════════════════════════════════════════════════
+   TIMER  &  STATS  (active panel)
+   ═══════════════════════════════════════════════════════ */
+.timer-display{text-align:center;margin:6px 0}
 .timer-ring{position:relative;width:120px;height:120px;margin:0 auto 10px}
 .timer-ring svg{transform:rotate(-90deg)}
 .timer-ring circle.bg{fill:none;stroke:var(--border);stroke-width:8}
 .timer-ring circle.prog{fill:none;stroke:var(--cyan);stroke-width:8;stroke-linecap:round;stroke-dasharray:326;stroke-dashoffset:0;transition:stroke-dashoffset 1s linear,stroke .5s}
 .timer-ring .num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:900}
 .timer-label{font-size:13px;color:var(--muted);font-weight:600}
+@keyframes goldPulse{from{box-shadow:0 0 0 0 #f59e0b40}to{box-shadow:0 0 0 8px #f59e0b00}}
 
-/* Stats */
-.stats-row{display:flex;gap:12px}
-.stat-box{flex:1;text-align:center;background:var(--surface);border-radius:10px;padding:12px;border:1px solid var(--border)}
+.stats-row{display:flex;gap:12px;margin-top:16px}
+.stat-box{flex:1;text-align:center;background:var(--surface);border-radius:var(--radius-sm);padding:12px;border:1px solid var(--border)}
 .stat-num{font-size:28px;font-weight:900;color:var(--purple-light)}
-.stat-lbl{font-size:12px;color:var(--muted);font-weight:600}
+.stat-lbl{font-size:12px;color:var(--muted);font-weight:600;margin-top:2px}
 
 /* Q display */
-.q-display{background:linear-gradient(135deg,#1e1b4b,#0d0d1a);border:1px solid var(--purple);border-radius:14px;padding:20px;margin-bottom:12px}
+.q-display{background:linear-gradient(135deg,#0f230f,#08140800);border:1px solid var(--purple);border-radius:var(--radius);padding:20px;margin-bottom:16px}
 .q-num{font-size:12px;color:var(--purple-light);font-weight:700;margin-bottom:6px}
 .q-text{font-size:18px;font-weight:700;line-height:1.5}
 .q-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
-.q-opt{padding:10px 14px;border-radius:10px;font-size:14px;font-weight:600;background:var(--surface);border:1px solid var(--border)}
+.q-opt{padding:10px 14px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;background:var(--surface);border:1px solid var(--border)}
 .q-opt.correct{background:#10b98120;border-color:var(--green);color:var(--green)}
 
-/* Leaderboard */
-.lb-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--surface);margin-bottom:8px;transition:.3s}
+/* ═══════════════════════════════════════════════════════
+   LEADERBOARD  &  ABILITY  LOG
+   ═══════════════════════════════════════════════════════ */
+.lb-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:var(--radius-sm);background:var(--surface);margin-bottom:8px;transition:.3s}
 .lb-rank{width:28px;text-align:center;font-size:14px;font-weight:900}
 .lb-rank.r1{color:var(--gold)}
 .lb-rank.r2{color:#94a3b8}
 .lb-rank.r3{color:#cd7f32}
 .lb-emoji{font-size:22px}
 .lb-name{flex:1;font-size:15px;font-weight:700}
+.lb-pts{font-size:16px;font-weight:900;color:var(--purple-light)}
+.lb-streak{font-size:12px;color:var(--gold);background:#f59e0b15;padding:2px 8px;border-radius:20px}
 
-/* Full-screen leaderboard modal */
-#lb-modal{position:fixed;inset:0;background:#000000cc;z-index:800;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
-#lb-modal.open{display:flex}
-.lb-modal-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;width:100%;max-width:520px;padding:24px 20px}
-
-/* Ability log */
-.ability-log-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:var(--surface);border:1px solid var(--border);font-size:13px;animation:logSlide .3s ease}
+.ability-log{display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto}
+.ability-log-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--radius-sm);background:var(--surface);border:1px solid var(--border);font-size:13px;animation:logSlide .3s ease}
 @keyframes logSlide{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 .ability-log-row .ab-badge{font-size:18px;flex-shrink:0}
 .ability-log-row .ab-phase{font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;background:#ffffff15;color:var(--muted);flex-shrink:0}
 
-/* Leaderboard reveal overlay (matches player view) */
+/* Full LB modal */
+#lb-modal{position:fixed;inset:0;background:#000000cc;z-index:800;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
+#lb-modal.open{display:flex}
+.lb-modal-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);width:100%;max-width:520px;padding:24px 20px}
+.lb-modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.lb-modal-title{font-size:18px;font-weight:900;color:var(--gold)}
+
+/* LB reveal overlay */
 #lb-reveal-overlay{position:fixed;inset:0;z-index:900;background:#000000f2;display:none;flex-direction:column;align-items:center;overflow-y:auto;padding:20px 16px 40px}
 #lb-reveal-overlay.open{display:flex}
 .lb-rov-title{font-size:22px;font-weight:900;color:var(--gold);letter-spacing:1px;margin:10px 0 16px;text-align:center;text-shadow:0 0 24px #f59e0b70}
-.lb-rov-card{width:100%;max-width:420px;display:flex;align-items:center;gap:12px;padding:13px 16px;border-radius:14px;border:2px solid #ffffff15;background:#ffffff08;opacity:0;transform:translateY(28px);transition:opacity .38s ease,transform .45s cubic-bezier(.34,1.56,.64,1);margin-bottom:8px;flex-shrink:0}
+.lb-rov-card{width:100%;max-width:420px;display:flex;align-items:center;gap:12px;padding:13px 16px;border-radius:var(--radius);border:2px solid #ffffff15;background:#ffffff08;opacity:0;transform:translateY(28px);transition:opacity .38s ease,transform .45s cubic-bezier(.34,1.56,.64,1);margin-bottom:8px;flex-shrink:0}
 .lb-rov-card.show{opacity:1;transform:translateY(0)}
 .lb-rov-card.rk2{border-color:#94a3b860;background:#94a3b810}
 .lb-rov-card.rk3{border-color:#cd7f3260;background:#cd7f3210}
@@ -125,106 +341,176 @@ textarea{min-height:70px}
 @keyframes rank1Shine{0%,100%{box-shadow:0 0 0 3px #f59e0b,0 0 22px #f59e0b70}50%{box-shadow:0 0 0 4px #f59e0b,0 0 45px #f59e0bc0,0 0 70px #f59e0b30}}
 .lb-rov-card.rk1.show{animation:rank1Enter .6s cubic-bezier(.34,1.56,.64,1) forwards,rank1Shine 1.6s ease .6s infinite}
 .lb-rov-cd{margin-top:16px;font-size:14px;font-weight:700;color:var(--muted);padding:8px 22px;border-radius:20px;background:#ffffff12;display:none}
-.lb-pts{font-size:16px;font-weight:900;color:var(--purple-light)}
-.lb-streak{font-size:12px;color:var(--gold);background:#f59e0b15;padding:2px 8px;border-radius:20px}
 
-/* Results panel */
-.result-list{max-height:200px;overflow-y:auto}
+/* ═══════════════════════════════════════════════════════
+   RESULTS  &  FINAL
+   ═══════════════════════════════════════════════════════ */
+.result-list{max-height:220px;overflow-y:auto}
 .result-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;margin-bottom:6px;font-size:14px;font-weight:600}
 .result-item.correct{background:#10b98115;border:1px solid #10b98140;color:var(--green)}
 .result-item.wrong{background:#ef444415;border:1px solid #ef444440;color:#f87171}
 .result-icon{font-size:16px}
 
-/* Players waiting */
-.player-grid{display:flex;flex-wrap:wrap;gap:8px}
-.player-chip{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+.final-heading{text-align:center;padding:14px 0 20px}
+.final-trophy{font-size:48px;margin-bottom:6px}
+.final-title{font-size:22px;font-weight:900;color:var(--green)}
+.final-top3{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
 
-/* Notify toast */
-#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e1e3a;border:1px solid var(--purple);color:var(--text);padding:12px 24px;border-radius:12px;font-size:14px;font-weight:600;z-index:999;opacity:0;transition:.3s;pointer-events:none}
-#toast.show{opacity:1}
+/* ═══════════════════════════════════════════════════════
+   PLAYERS  (waiting + bot controls)
+   ═══════════════════════════════════════════════════════ */
+.player-grid{display:flex;flex-wrap:wrap;gap:8px;min-height:32px}
+.player-chip{
+  background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:6px 10px;font-size:13px;font-weight:600;
+  display:flex;align-items:center;gap:6px;
+}
+.bot-add-row{
+  display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;align-items:center;
+  border-top:1px solid var(--border);padding-top:12px;
+}
+.bot-add-row .select-slim{flex:1;min-width:150px}
+.btn-add-bot{
+  padding:8px 14px;border-radius:8px;border:2px solid var(--cyan);
+  background:#06b6d415;color:var(--cyan);font-family:inherit;
+  font-size:13px;font-weight:700;cursor:pointer;transition:.15s;white-space:nowrap;
+}
+.btn-add-bot:hover{background:var(--cyan);color:#000}
+.btn-remove-bots{
+  padding:8px 14px;border-radius:8px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);font-family:inherit;
+  font-size:13px;font-weight:700;cursor:pointer;transition:.15s;white-space:nowrap;
+}
+.btn-remove-bots:hover{border-color:var(--red);color:var(--red)}
 
-/* State panels */
-.panel{display:none}
-.panel.active{display:block}
-#panel-active .card{margin-bottom:12px}
+/* ═══════════════════════════════════════════════════════
+   STORE  (setup + active)
+   ═══════════════════════════════════════════════════════ */
+.btn-store-vote{
+  background:#f59e0b15;color:var(--gold);border:2px solid var(--gold);
+  padding:12px;font-size:14px;border-radius:12px;
+}
+.btn-store-vote:hover{filter:brightness(1.15)}
+.btn-store-vote:disabled{opacity:.5;cursor:not-allowed}
+.btn-store-direct{
+  background:transparent;color:#94a3b8;border:2px solid #94a3b830;
+  padding:10px;font-size:13px;border-radius:12px;margin-top:8px;
+}
+.btn-store-direct:hover{border-color:#94a3b880;color:var(--text)}
+.btn-store-vote-inline{margin-top:10px}
+.btn-store-direct-inline{margin-top:6px}
 
-/* Difficulty filter */
-.diff-btn{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:.2s}
-.diff-btn:hover{border-color:var(--cyan);color:var(--cyan)}
-.diff-btn.diff-active{border-color:var(--cyan);color:var(--cyan);background:#22c55e15}
-.diff-btn.diff-easy-active{border-color:#22c55e;color:#22c55e;background:#22c55e15}
-.diff-btn.diff-med-active{border-color:#f59e0b;color:#f59e0b;background:#f59e0b15}
-.diff-btn.diff-hard-active{border-color:#ef4444;color:#ef4444;background:#ef444415}
-/* Bot host difficulty buttons */
-.bot-diff-btn{flex:1;padding:6px 8px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:.2s;text-align:center}
-.bot-diff-btn:hover{border-color:var(--cyan);color:var(--cyan)}
-.bot-diff-active{border-color:var(--cyan)!important;color:var(--cyan)!important;background:#06b6d420!important}
+.vote-panel{
+  margin-top:10px;background:#0f172a;border:1px solid var(--gold);
+  border-radius:12px;padding:12px;text-align:center;
+}
+.vote-title{font-size:13px;font-weight:700;color:var(--gold);margin-bottom:8px}
+.vote-row{display:flex;gap:8px;justify-content:center}
+.vote-cell{flex:1;border-radius:10px;padding:8px}
+.vote-cell .vote-num{font-size:22px;font-weight:900}
+.vote-cell .vote-lbl{font-size:11px}
+.vote-yes{background:#16a34a20;border:1px solid #16a34a}
+.vote-yes .vote-num{color:#4ade80}
+.vote-yes .vote-lbl{color:#86efac}
+.vote-no{background:#ef444420;border:1px solid #ef4444}
+.vote-no .vote-num{color:#ef4444}
+.vote-no .vote-lbl{color:#fca5a5}
+.vote-total{background:#1e293b;border:1px solid #334155}
+.vote-total .vote-num{color:#94a3b8}
+.vote-total .vote-lbl{color:#64748b}
 
-/* Category selector */
-.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:4px}
+.store-open-status{
+  margin-top:10px;background:#16a34a15;border:2px solid #16a34a;
+  border-radius:12px;padding:14px;
+}
+.store-open-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.store-open-title{font-size:14px;font-weight:900;color:#4ade80}
+.btn-close-store{
+  padding:6px 14px;border-radius:8px;border:1px solid var(--red);
+  background:#ef444415;color:#ef4444;font-family:inherit;
+  font-size:12px;font-weight:700;cursor:pointer;
+}
+.btn-close-store:hover{background:var(--red);color:#fff}
+.store-purchases{font-size:13px;color:#86efac;display:flex;flex-direction:column;gap:4px}
+
+/* ═══════════════════════════════════════════════════════
+   CATEGORIES  &  DIFFICULTY  FILTER  (sidebar)
+   ═══════════════════════════════════════════════════════ */
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .cat-btn{
-  position:relative;padding:12px 10px;border-radius:12px;
+  position:relative;padding:12px 8px;border-radius:12px;
   border:1.5px solid var(--border);background:var(--surface);
-  color:var(--text);font-family:inherit;font-size:13px;font-weight:700;
+  color:var(--text);font-family:inherit;font-size:12px;font-weight:700;
   cursor:pointer;transition:all .2s;text-align:center;line-height:1.4;
-  display:flex;flex-direction:column;align-items:center;gap:4px
+  display:flex;flex-direction:column;align-items:center;gap:4px;
 }
 .cat-btn .cat-count{
   font-size:10px;font-weight:600;color:var(--muted);
   background:var(--bg);padding:2px 7px;border-radius:20px;
-  border:1px solid var(--border)
+  border:1px solid var(--border);
 }
 .cat-btn:hover{transform:translateY(-2px);border-color:var(--cyan);background:#22c55e0a;color:var(--cyan)}
 .cat-btn:hover .cat-count{border-color:var(--cyan);color:var(--cyan)}
 .cat-btn.active{
   border-color:var(--green);background:linear-gradient(135deg,#16a34a18,#22c55e10);
   color:var(--green);box-shadow:0 0 16px #22c55e25,inset 0 0 20px #22c55e08;
-  transform:translateY(-2px)
+  transform:translateY(-2px);
 }
 .cat-btn.active .cat-count{background:#16a34a20;border-color:var(--green);color:var(--green)}
 .cat-btn.active::after{
   content:'✓';position:absolute;top:6px;left:8px;
-  font-size:11px;color:var(--green);font-weight:900
+  font-size:11px;color:var(--green);font-weight:900;
 }
-#cat-info{
+
+.cat-info{
   margin-top:12px;padding:8px 12px;border-radius:8px;
   background:var(--surface);border:1px solid var(--border);
-  font-size:13px;color:var(--muted);font-weight:600;text-align:center
+  font-size:12px;color:var(--muted);font-weight:600;text-align:center;
 }
 
-/* Question type selector */
-#type-normal-lbl{border-color:var(--border);transition:.2s}
-#type-order-lbl{border-color:var(--border);transition:.2s}
-#type-normal-lbl.active{border-color:var(--cyan);background:#22c55e15;color:var(--cyan)}
-#type-order-lbl.active{border-color:#f59e0b;background:#f59e0b15;color:var(--gold)}
+.diff-filter{margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.diff-btns{display:flex;gap:6px;flex-wrap:wrap}
+.diff-btn{
+  padding:6px 12px;border-radius:20px;border:1.5px solid var(--border);
+  background:var(--surface);color:var(--muted);font-family:inherit;
+  font-size:11px;font-weight:700;cursor:pointer;transition:.15s;
+}
+.diff-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.diff-btn.diff-active{border-color:var(--cyan);color:var(--cyan);background:#22c55e15}
+.diff-btn.diff-easy-active{border-color:#22c55e;color:#22c55e;background:#22c55e15}
+.diff-btn.diff-med-active{border-color:#f59e0b;color:#f59e0b;background:#f59e0b15}
+.diff-btn.diff-hard-active{border-color:#ef4444;color:#ef4444;background:#ef444415}
 
-/* Import buttons */
-.btn-import{padding:7px 13px;border-radius:8px;border:1px solid var(--cyan);background:transparent;color:var(--cyan);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s}
-.btn-import:hover{background:var(--cyan);color:#000}
-.btn-template{padding:7px 13px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s}
-.btn-template:hover{border-color:var(--muted);color:var(--text)}
-
-/* Question queue */
-.queue-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:var(--surface);border:1px solid var(--border);margin-bottom:8px;transition:.2s;cursor:pointer}
-.queue-item.used{cursor:default;pointer-events:none;background:#16a34a18;border-color:#16a34a50;opacity:1}
+/* ═══════════════════════════════════════════════════════
+   QUESTION  QUEUE  (sidebar)
+   ═══════════════════════════════════════════════════════ */
+.queue-counter{color:var(--cyan);font-size:12px;font-weight:700}
+.queue-scroll{max-height:340px;overflow-y:auto;padding-left:2px;display:flex;flex-direction:column;gap:6px}
+.queue-scroll::-webkit-scrollbar{width:4px}
+.queue-scroll::-webkit-scrollbar-thumb{background:var(--purple);border-radius:2px}
+.queue-item{
+  display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;
+  background:var(--surface);border:1px solid var(--border);transition:.15s;cursor:pointer;
+}
+.queue-item.used{cursor:default;pointer-events:none;background:#16a34a15;border-color:#16a34a40;opacity:.85}
 .queue-item.used .queue-text{text-decoration:line-through;color:var(--muted)}
 .queue-item.used .queue-num{background:#16a34a;color:#fff}
 .queue-item.active-q{border-color:var(--cyan);background:#22c55e10}
 .queue-item:not(.used):hover{border-color:var(--cyan);background:#22c55e08;transform:translateX(-2px)}
-.queue-num{width:26px;height:26px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:var(--muted);flex-shrink:0}
+.queue-num{width:24px;height:24px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:var(--muted);flex-shrink:0}
 .queue-item.active-q .queue-num{background:var(--cyan);color:#000}
-.queue-text{flex:1;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.queue-done{color:var(--green);font-size:16px;flex-shrink:0}
-.queue-arrow{color:var(--muted);font-size:14px;flex-shrink:0}
-.queue-scroll{max-height:300px;overflow-y:auto;padding-left:2px}
-.queue-scroll::-webkit-scrollbar{width:4px}
-.queue-scroll::-webkit-scrollbar-thumb{background:var(--purple);border-radius:2px}
+.queue-text{flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.queue-done{color:var(--green);font-size:15px;flex-shrink:0}
+.queue-arrow{color:var(--muted);font-size:13px;flex-shrink:0}
 
-/* Reveal overlay */
+/* ═══════════════════════════════════════════════════════
+   OVERLAYS  (reveal, preview)
+   ═══════════════════════════════════════════════════════ */
 .reveal-overlay{position:fixed;inset:0;background:#000000dd;z-index:150;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px}
 .reveal-overlay.open{display:flex}
 .reveal-title{font-size:20px;font-weight:900;color:var(--text);margin-bottom:6px;letter-spacing:1px;text-transform:uppercase}
-.reveal-card{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:12px 20px;display:flex;align-items:center;gap:14px;width:420px;max-width:90vw;opacity:0;transform:translateX(80px);transition:all .45s cubic-bezier(.34,1.56,.64,1)}
+.reveal-cards{display:flex;flex-direction:column;gap:8px;width:420px;max-width:90vw}
+.reveal-card{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:12px 20px;display:flex;align-items:center;gap:14px;opacity:0;transform:translateX(80px);transition:all .45s cubic-bezier(.34,1.56,.64,1)}
 .reveal-card.show{opacity:1;transform:translateX(0)}
 .reveal-card.correct{border-color:var(--green);background:#10b98112}
 .reveal-card.wrong{border-color:var(--red);background:#ef444412}
@@ -234,10 +520,9 @@ textarea{min-height:70px}
 @keyframes revealPulse{0%{box-shadow:0 0 0 0 #22c55e60}70%{box-shadow:0 0 0 12px transparent}100%{box-shadow:0 0 0 0 transparent}}
 .reveal-card.correct.show{animation:revealPulse .6s ease}
 
-/* Preview modal */
 .preview-overlay{position:fixed;inset:0;background:#00000085;z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
 .preview-overlay.open{display:flex}
-.preview-modal{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto}
+.preview-modal{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto}
 .preview-qnum{font-size:12px;font-weight:700;color:var(--cyan);letter-spacing:1px;margin-bottom:10px}
 .preview-qtext{font-size:20px;font-weight:800;line-height:1.6;margin-bottom:20px}
 .preview-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
@@ -249,377 +534,412 @@ textarea{min-height:70px}
 .btn-preview-start:hover{filter:brightness(1.1)}
 .btn-preview-close{padding:13px 18px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;font-size:15px;font-weight:700;cursor:pointer}
 
-/* ── MOBILE ── */
-@media (max-width: 768px) {
-  .layout {
-    grid-template-columns: 1fr;
-    height: auto;
-    overflow: visible;
-  }
-  .main { overflow-y: visible; padding: 12px; }
-  .sidebar {
-    border-right: none;
-    border-top: 1px solid var(--border);
-    padding: 12px;
-  }
-  .header {
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 10px 12px;
-  }
-  .logo { font-size: 17px; }
-  .btn-end-game, .btn-reset {
-    padding: 7px 10px;
-    font-size: 12px;
-  }
-  #player-count { font-size: 12px; }
-  .q-options { grid-template-columns: 1fr; }
-  .form-grid { grid-template-columns: 1fr; }
-  .preview-opts { grid-template-columns: 1fr; }
-  .stats-row { gap: 8px; }
-  .dur-btn { padding: 7px 10px; font-size: 12px; }
-  .cat-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
-  .correct-radio { gap: 6px; }
-  .btn-last-q, .btn-dramatic { font-size: 12px; padding: 7px 10px; }
-  .card { padding: 14px; }
-  .timer-ring { width: 96px; height: 96px; }
-  .timer-ring svg { width: 96px; height: 96px; }
-  .timer-ring .num { font-size: 28px; }
-  .stat-num { font-size: 22px; }
-  .preview-modal { padding: 20px 16px; }
-}
-@media (max-width: 768px) {
-  .outer-wrap { grid-template-rows: auto auto !important; min-height: unset; }
+/* ═══════════════════════════════════════════════════════
+   UTILITIES
+   ═══════════════════════════════════════════════════════ */
+.panel{display:none}
+.panel.active{display:block}
+#panel-active .card,#panel-setup .card,#panel-setup .collapsible{margin-bottom:0}
+.empty-hint{color:var(--muted);font-size:14px}
+.empty-hint-sm{color:#4ade8080;font-size:12px}
+.empty-hint-center{color:var(--muted);font-size:13px;text-align:center;padding:14px}
+
+/* Toast */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e1e3a;border:1px solid var(--purple);color:var(--text);padding:12px 24px;border-radius:12px;font-size:14px;font-weight:600;z-index:999;opacity:0;transition:.3s;pointer-events:none}
+#toast.show{opacity:1}
+
+/* ═══════════════════════════════════════════════════════
+   MOBILE
+   ═══════════════════════════════════════════════════════ */
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr;height:auto;overflow:visible}
+  .main{overflow-y:visible;padding:12px}
+  .sidebar{border-right:none;border-top:1px solid var(--border);padding:12px}
+  .app-shell{min-height:unset}
+  .app-header{flex-wrap:wrap;gap:8px;padding:10px 12px}
+  .logo{font-size:17px}
+  .header-actions{flex-wrap:wrap}
+  .btn-header{padding:6px 10px;font-size:12px}
+  .player-count-badge{padding:5px 10px;font-size:12px}
+  .card-body{padding:14px}
+  .card-header{padding:12px 14px}
+  .q-options,.form-grid,.preview-opts,.cat-grid,.row-2col{grid-template-columns:1fr}
+  .stats-row{gap:8px}
+  .dur-btn{padding:7px 10px;font-size:12px}
+  .btn-last-q,.btn-dramatic{font-size:11px;padding:7px 10px}
+  .timer-ring{width:96px;height:96px}
+  .timer-ring svg{width:96px;height:96px}
+  .timer-ring .num{font-size:28px}
+  .stat-num{font-size:22px}
+  .preview-modal{padding:20px 16px}
 }
 </style>
 </head>
 <body>
 
-<div class="outer-wrap" style="display:grid;grid-template-rows:auto 1fr;min-height:100vh">
-  <div class="header">
-    <div style="display:flex;align-items:center;gap:12px">
-      <div class="logo">🎮 كويز لايف</div>
-      <span class="badge" id="live-badge" style="display:none">● LIVE</span>
-    </div>
-    <div style="display:flex;gap:10px;align-items:center">
-      <span id="player-count" style="color:var(--muted);font-size:14px">0 لاعب</span>
-      <button onclick="toggleLbModal()" style="background:transparent;border:1px solid var(--gold);color:var(--gold);padding:8px 14px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;transition:.2s">🏆 الترتيب</button>
-      <button class="btn-end-game" onclick="endGame()">🏁 انهاء اللعبة</button>
-      <button class="btn-reset" onclick="resetGame()">🔄 إعادة تشغيل</button>
-    </div>
-  </div>
+<div class="app-shell">
 
+  <!-- ═══════════════ HEADER ═══════════════ -->
+  <header class="app-header">
+    <div class="header-brand">
+      <span class="logo">🎮 كويز لايف</span>
+      <span class="live-badge" id="live-badge">● LIVE</span>
+    </div>
+    <div class="header-status">
+      <span class="player-count-badge"><span id="player-count">0 لاعب</span></span>
+    </div>
+    <div class="header-actions">
+      <button class="btn-header btn-header-gold" onclick="toggleLbModal()">🏆 الترتيب</button>
+      <button class="btn-header btn-header-warning" onclick="endGame()">🏁 إنهاء</button>
+      <button class="btn-header btn-header-danger" onclick="resetGame()">🔄 إعادة</button>
+    </div>
+  </header>
+
+  <!-- ═══════════════ BODY ═══════════════ -->
   <div class="layout">
-    <!-- MAIN -->
-    <div class="main">
 
-      <!-- SETUP PANEL -->
+    <!-- ─── MAIN ─── -->
+    <main class="main">
+
+      <!-- ══ SETUP PANEL (broken into focused cards) ══ -->
       <div class="panel active" id="panel-setup">
-        <div class="card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-            <div class="card-title" style="margin-bottom:0">✏️ السؤال</div>
-            <div style="display:flex;gap:8px">
-              <button class="btn-template" onclick="downloadTemplate()" title="تحميل نموذج JSON">⬇️ نموذج</button>
-              <button class="btn-import" onclick="loadFushaBank()" title="تحميل بنك الفصحى">📖 فصحى</button>
-              <button class="btn-import" onclick="document.getElementById('file-import').click()">📂 استيراد</button>
+
+        <!-- Card 1 · Question composer -->
+        <section class="card">
+          <div class="card-header">
+            <div class="card-heading"><span class="card-icon">✏️</span>السؤال</div>
+            <div class="card-actions">
+              <button class="btn-tool" onclick="downloadTemplate()" title="تحميل نموذج JSON">⬇️ نموذج</button>
+              <button class="btn-tool" onclick="loadFushaBank()" title="تحميل بنك الفصحى">📖 فصحى</button>
+              <button class="btn-tool btn-tool-primary" onclick="document.getElementById('file-import').click()">📂 استيراد</button>
               <input type="file" id="file-import" accept=".json,.csv" style="display:none" onchange="importFile(this)">
             </div>
           </div>
-          <div style="margin-bottom:14px">
-            <label>نص السؤال</label>
-            <textarea id="q-text" placeholder="اكتب سؤالك هنا..."></textarea>
-          </div>
-          <!-- نوع السؤال -->
-          <div style="margin-bottom:14px">
-            <label>نوع السؤال</label>
-            <div style="display:flex;gap:10px;margin-top:6px">
-              <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;border:1px solid var(--border);cursor:pointer;font-size:13px;font-weight:600;transition:.2s" id="type-normal-lbl">
-                <input type="radio" name="qtype" value="normal" checked id="type-normal" onchange="setQType('normal')" style="display:none">
-                <span>🔘 اختيار متعدد</span>
-              </label>
-              <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;border:1px solid var(--border);cursor:pointer;font-size:13px;font-weight:600;transition:.2s" id="type-order-lbl">
-                <input type="radio" name="qtype" value="order" id="type-order" onchange="setQType('order')" style="display:none">
-                <span>🔢 ترتيب</span>
-              </label>
+          <div class="card-body">
+
+            <div class="field">
+              <label class="field-label">نص السؤال</label>
+              <textarea id="q-text" class="input" placeholder="اكتب سؤالك هنا..."></textarea>
             </div>
-          </div>
 
-          <!-- خيارات الاختيار المتعدد -->
-          <div id="mc-section">
-          <div class="card-title" style="margin-bottom:10px">الخيارات</div>
-          <div class="option-row"><div class="option-letter opt-a">أ</div><input type="text" id="opt-0" placeholder="الخيار الأول"></div>
-          <div class="option-row"><div class="option-letter opt-b">ب</div><input type="text" id="opt-1" placeholder="الخيار الثاني"></div>
-          <div class="option-row"><div class="option-letter opt-c">ج</div><input type="text" id="opt-2" placeholder="الخيار الثالث"></div>
-          <div class="option-row"><div class="option-letter opt-d">د</div><input type="text" id="opt-3" placeholder="الخيار الرابع"></div>
-
-          <div style="margin-top:14px;margin-bottom:14px">
-            <label style="margin-bottom:8px">الإجابة الصحيحة</label>
-            <div class="correct-radio">
-              <label><input type="radio" name="correct" value="0"><span>أ</span></label>
-              <label><input type="radio" name="correct" value="1"><span>ب</span></label>
-              <label><input type="radio" name="correct" value="2"><span>ج</span></label>
-              <label><input type="radio" name="correct" value="3"><span>د</span></label>
-            </div>
-          </div>
-          </div>
-
-          <!-- بنود الترتيب -->
-          <div id="order-section" style="display:none">
-          <div class="card-title" style="margin-bottom:6px">🔢 بنود الترتيب (الأول = الأصح)</div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:10px">اكتب البنود بالترتيب الصحيح — ستُخلط تلقائياً عند اللاعبين</div>
-          <div class="option-row"><div class="option-letter opt-a" style="background:#16a34a22;color:#4ade80">١</div><input type="text" id="ord-0" placeholder="البند الأول (الأول في الترتيب الصحيح)"></div>
-          <div class="option-row"><div class="option-letter opt-b" style="background:#06b6d422;color:#67e8f9">٢</div><input type="text" id="ord-1" placeholder="البند الثاني"></div>
-          <div class="option-row"><div class="option-letter opt-c" style="background:#f59e0b22;color:#fcd34d">٣</div><input type="text" id="ord-2" placeholder="البند الثالث"></div>
-          <div class="option-row"><div class="option-letter opt-d" style="background:#ef444422;color:#fca5a5">٤</div><input type="text" id="ord-3" placeholder="البند الرابع (الأخير في الترتيب الصحيح)"></div>
-          </div>
-
-          <div style="margin-bottom:16px">
-            <label>تلميح (اختياري)</label>
-            <input type="text" id="q-hint" placeholder="أضف تلميحاً للاعبين الذين يملكون خاصية التلميح">
-          </div>
-
-          <div style="margin-bottom:16px">
-            <label>🖼️ صورة السؤال — رابط URL (اختياري)</label>
-            <input type="text" id="q-image" placeholder="https://example.com/image.jpg" oninput="previewImage(this.value)">
-            <div id="q-image-preview" style="display:none;margin-top:8px;border-radius:10px;overflow:hidden;max-height:180px;text-align:center">
-              <img id="q-image-img" style="max-height:180px;max-width:100%;object-fit:contain;border-radius:8px;border:1px solid var(--border)">
-            </div>
-          </div>
-
-          <!-- question duration -->
-          <div style="margin-bottom:12px">
-            <label style="font-size:13px;font-weight:700;color:var(--muted);display:block;margin-bottom:8px">⏱ وقت السؤال</label>
-            <div style="display:flex;gap:6px;flex-wrap:wrap" id="duration-btns">
-              <button onclick="setDuration(7)"  class="dur-btn" id="dur-7">7 ث</button>
-              <button onclick="setDuration(10)" class="dur-btn" id="dur-10">10 ث</button>
-              <button onclick="setDuration(15)" class="dur-btn" id="dur-15">15 ث</button>
-              <button onclick="setDuration(20)" class="dur-btn dur-active" id="dur-20">20 ث</button>
-              <button onclick="setDuration(30)" class="dur-btn" id="dur-30">30 ث</button>
-            </div>
-          </div>
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-            <button class="btn-last-q" id="btn-last-q" onclick="toggleLastQuestion()">🏁 السؤال الأخير (الأخير ×3)</button>
-            <span id="last-q-status" style="font-size:12px;color:var(--muted)">غير مفعّل</span>
-            <button class="btn-dramatic" id="btn-dramatic" onclick="toggleDramatic()">🎭 كشف درامي: مفعّل</button>
-          </div>
-          <button class="btn btn-start" id="btn-start" onclick="startQuestion()">▶ ابدأ السؤال يدوياً</button>
-
-          <!-- Bot Host Mode -->
-          <div style="margin-top:12px;border-radius:12px;border:2px solid #06b6d440;background:#06b6d408;padding:14px">
-            <div style="font-size:13px;font-weight:700;color:var(--cyan);margin-bottom:10px">🤖 البوت يشغّل الجلسة</div>
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-              <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:80px">
-                <span style="font-size:11px;color:var(--muted);font-weight:700">عدد الأسئلة</span>
-                <input type="number" id="bot-q-count" min="1" max="100" value="10" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-family:inherit;font-size:15px;font-weight:700;text-align:center;width:100%">
-              </div>
-              <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:80px">
-                <span style="font-size:11px;color:var(--muted);font-weight:700">وقت بين الأسئلة (ث)</span>
-                <input type="number" id="bot-delay" min="2" max="30" value="5" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-family:inherit;font-size:15px;font-weight:700;text-align:center;width:100%">
+            <div class="field">
+              <label class="field-label">نوع السؤال</label>
+              <div class="type-toggle">
+                <label class="type-chip active" id="type-normal-lbl">
+                  <input type="radio" name="qtype" value="normal" checked id="type-normal" onchange="setQType('normal')">
+                  <span>🔘 اختيار متعدد</span>
+                </label>
+                <label class="type-chip" id="type-order-lbl">
+                  <input type="radio" name="qtype" value="order" id="type-order" onchange="setQType('order')">
+                  <span>🔢 ترتيب</span>
+                </label>
               </div>
             </div>
-            <!-- التصنيفات — تظهر فقط لما يكون بنك أسئلة محمّل -->
-            <div id="bot-cat-section" style="display:none;margin-bottom:10px">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-                <span style="font-size:11px;color:var(--muted);font-weight:700">📚 التصنيفات</span>
-                <div style="display:flex;gap:4px">
-                  <button onclick="selectAllBotCats(true)"  style="padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer">الكل ✓</button>
-                  <button onclick="selectAllBotCats(false)" style="padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer">مسح ✗</button>
+
+            <!-- MC options -->
+            <div id="mc-section" class="field">
+              <label class="field-label">الخيارات</label>
+              <div class="option-row"><div class="option-letter opt-a">أ</div><input type="text" id="opt-0" class="input" placeholder="الخيار الأول"></div>
+              <div class="option-row"><div class="option-letter opt-b">ب</div><input type="text" id="opt-1" class="input" placeholder="الخيار الثاني"></div>
+              <div class="option-row"><div class="option-letter opt-c">ج</div><input type="text" id="opt-2" class="input" placeholder="الخيار الثالث"></div>
+              <div class="option-row"><div class="option-letter opt-d">د</div><input type="text" id="opt-3" class="input" placeholder="الخيار الرابع"></div>
+              <div class="field-inline">
+                <label class="field-label">الإجابة الصحيحة</label>
+                <div class="correct-radio">
+                  <label><input type="radio" name="correct" value="0"><span>أ</span></label>
+                  <label><input type="radio" name="correct" value="1"><span>ب</span></label>
+                  <label><input type="radio" name="correct" value="2"><span>ج</span></label>
+                  <label><input type="radio" name="correct" value="3"><span>د</span></label>
                 </div>
               </div>
-              <div id="bot-cat-chips" style="display:flex;flex-wrap:wrap;gap:5px;max-height:130px;overflow-y:auto;padding:2px 0"></div>
             </div>
 
-            <div style="margin-bottom:10px">
-              <span style="font-size:11px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px">🎯 صعوبة الأسئلة</span>
-              <div style="display:flex;gap:6px">
+            <!-- Order items -->
+            <div id="order-section" class="field" style="display:none">
+              <label class="field-label">🔢 بنود الترتيب (الأول = الأصح)</label>
+              <div class="field-hint">اكتب البنود بالترتيب الصحيح — ستُخلط تلقائياً عند اللاعبين</div>
+              <div class="option-row"><div class="option-letter opt-order-1">١</div><input type="text" id="ord-0" class="input" placeholder="البند الأول (الأول في الترتيب الصحيح)"></div>
+              <div class="option-row"><div class="option-letter opt-order-2">٢</div><input type="text" id="ord-1" class="input" placeholder="البند الثاني"></div>
+              <div class="option-row"><div class="option-letter opt-order-3">٣</div><input type="text" id="ord-2" class="input" placeholder="البند الثالث"></div>
+              <div class="option-row"><div class="option-letter opt-order-4">٤</div><input type="text" id="ord-3" class="input" placeholder="البند الرابع (الأخير في الترتيب الصحيح)"></div>
+            </div>
+
+            <div class="field">
+              <label class="field-label">💡 تلميح (اختياري)</label>
+              <input type="text" id="q-hint" class="input" placeholder="أضف تلميحاً للاعبين الذين يملكون خاصية التلميح">
+            </div>
+
+            <div class="field">
+              <label class="field-label">🖼️ صورة السؤال — رابط URL (اختياري)</label>
+              <input type="text" id="q-image" class="input" placeholder="https://example.com/image.jpg" oninput="previewImage(this.value)">
+              <div id="q-image-preview" class="image-preview" style="display:none">
+                <img id="q-image-img">
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- Card 2 · Playback settings + start button -->
+        <section class="card">
+          <div class="card-header">
+            <div class="card-heading"><span class="card-icon">⚙️</span>إعدادات التشغيل</div>
+          </div>
+          <div class="card-body">
+
+            <div class="field">
+              <label class="field-label">⏱ وقت السؤال</label>
+              <div class="dur-group" id="duration-btns">
+                <button onclick="setDuration(7)"  class="dur-btn" id="dur-7">7 ث</button>
+                <button onclick="setDuration(10)" class="dur-btn" id="dur-10">10 ث</button>
+                <button onclick="setDuration(15)" class="dur-btn" id="dur-15">15 ث</button>
+                <button onclick="setDuration(20)" class="dur-btn dur-active" id="dur-20">20 ث</button>
+                <button onclick="setDuration(30)" class="dur-btn" id="dur-30">30 ث</button>
+              </div>
+            </div>
+
+            <div class="modifier-row">
+              <button class="btn-last-q" id="btn-last-q" onclick="toggleLastQuestion()">🏁 السؤال الأخير (×3)</button>
+              <span id="last-q-status" class="modifier-status">غير مفعّل</span>
+              <button class="btn-dramatic" id="btn-dramatic" onclick="toggleDramatic()">🎭 كشف درامي: مفعّل</button>
+            </div>
+
+            <button class="btn btn-primary btn-start-main" id="btn-start" onclick="startQuestion()">▶ ابدأ السؤال يدوياً</button>
+
+          </div>
+        </section>
+
+        <!-- Card 3 · Bot Host mode (COLLAPSIBLE) -->
+        <details class="collapsible" id="bot-host-collapse">
+          <summary class="collapsible-summary">
+            <div class="card-heading"><span class="card-icon">🤖</span>وضع البوت — شغّل جلسة تلقائية</div>
+            <span class="chevron">▼</span>
+          </summary>
+          <div class="collapsible-body">
+
+            <div class="row-2col">
+              <div class="mini-field">
+                <span class="field-label-sm">عدد الأسئلة</span>
+                <input type="number" id="bot-q-count" class="input input-number" min="1" max="100" value="10">
+              </div>
+              <div class="mini-field">
+                <span class="field-label-sm">وقت بين الأسئلة (ث)</span>
+                <input type="number" id="bot-delay" class="input input-number" min="2" max="30" value="5">
+              </div>
+            </div>
+
+            <div id="bot-cat-section" class="bot-cats" style="display:none">
+              <div class="bot-cats-header">
+                <span class="field-label-sm" style="margin-bottom:0">📚 التصنيفات</span>
+                <div class="bot-cats-actions">
+                  <button onclick="selectAllBotCats(true)" class="btn-mini">الكل ✓</button>
+                  <button onclick="selectAllBotCats(false)" class="btn-mini">مسح ✗</button>
+                </div>
+              </div>
+              <div id="bot-cat-chips" class="bot-cat-chips"></div>
+            </div>
+
+            <div class="field-block">
+              <span class="field-label-sm">🎯 صعوبة الأسئلة</span>
+              <div class="bot-diff-group">
                 <button class="bot-diff-btn bot-diff-active" id="bdiff-all"  onclick="setBotDiff('')">الكل</button>
                 <button class="bot-diff-btn" id="bdiff-easy" onclick="setBotDiff('سهل')">🟢 سهل</button>
                 <button class="bot-diff-btn" id="bdiff-med"  onclick="setBotDiff('متوسط')">🟡 متوسط</button>
                 <button class="bot-diff-btn" id="bdiff-hard" onclick="setBotDiff('صعب')">🔴 صعب</button>
               </div>
             </div>
-            <button id="btn-bot-start" onclick="startBotHost()" style="width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#0891b2,#06b6d4);color:#fff;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:.2s">🤖 ابدأ الجلسة</button>
-            <button id="btn-bot-stop" onclick="stopBotHost()" style="display:none;width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px solid var(--red);background:#ef444415;color:#ef4444;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer">⏹ أوقف البوت</button>
-            <div id="bot-host-status" style="display:none;margin-top:8px;font-size:13px;font-weight:700;color:var(--cyan);text-align:center"></div>
+
+            <button id="btn-bot-start" onclick="startBotHost()" class="btn btn-bot-primary">🤖 ابدأ الجلسة</button>
+            <button id="btn-bot-stop" onclick="stopBotHost()" class="btn btn-bot-stop" style="display:none">⏹ أوقف البوت</button>
+            <div id="bot-host-status" class="bot-status" style="display:none"></div>
+
           </div>
-        </div>
+        </details>
 
         <!-- Waiting players -->
-        <div class="card">
-          <div class="card-title">👥 اللاعبون المنتظرون</div>
-          <div class="player-grid" id="waiting-players">
-            <div style="color:var(--muted);font-size:14px">في انتظار انضمام اللاعبين...</div>
+        <section class="card">
+          <div class="card-header">
+            <div class="card-heading"><span class="card-icon">👥</span>اللاعبون المنتظرون</div>
           </div>
-          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--border);padding-top:12px">
-            <select id="bot-difficulty" style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">
-              <option value="easy">🟢 سهل (80% صح)</option>
-              <option value="medium" selected>🟡 متوسط (50% صح)</option>
-              <option value="hard">🔴 صعب (20% صح)</option>
-            </select>
-            <button onclick="addBot()" style="padding:8px 14px;border-radius:8px;border:2px solid var(--cyan);background:#06b6d415;color:var(--cyan);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s;white-space:nowrap">🤖 + روبوت</button>
-            <button onclick="removeBots()" style="padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s;white-space:nowrap">🗑️ حذف</button>
+          <div class="card-body">
+            <div class="player-grid" id="waiting-players">
+              <div class="empty-hint">في انتظار انضمام اللاعبين...</div>
+            </div>
+            <div class="bot-add-row">
+              <select id="bot-difficulty" class="input select-slim">
+                <option value="easy">🟢 سهل (80% صح)</option>
+                <option value="medium" selected>🟡 متوسط (50% صح)</option>
+                <option value="hard">🔴 صعب (20% صح)</option>
+              </select>
+              <button onclick="addBot()" class="btn-add-bot">🤖 + روبوت</button>
+              <button onclick="removeBots()" class="btn-remove-bots">🗑️ حذف</button>
+            </div>
           </div>
-        </div>
+        </section>
 
-        <!-- Store card -->
-        <div class="card" id="store-card">
-          <div class="card-title">🛒 المتجر</div>
-
-          <!-- buttons -->
-          <div id="store-btns">
-            <button onclick="startStoreVote()" style="width:100%;padding:12px;border-radius:12px;border:2px solid var(--gold);background:#f59e0b15;color:var(--gold);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:.2s" id="btn-store-vote-setup">🗳️ نفتح المتجر؟ (تصويت 15 ثانية)</button>
-            <button onclick="openStore()" style="width:100%;margin-top:8px;padding:10px;border-radius:12px;border:2px solid #94a3b830;background:transparent;color:#94a3b8;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s" id="btn-open-store-setup">🛒 افتح المتجر مباشرة</button>
+        <!-- Store -->
+        <section class="card" id="store-card">
+          <div class="card-header">
+            <div class="card-heading"><span class="card-icon">🛒</span>المتجر</div>
           </div>
+          <div class="card-body">
+            <div id="store-btns">
+              <button onclick="startStoreVote()" class="btn btn-store-vote" id="btn-store-vote-setup">🗳️ نفتح المتجر؟ (تصويت 15 ثانية)</button>
+              <button onclick="openStore()" class="btn btn-store-direct" id="btn-open-store-setup">🛒 افتح المتجر مباشرة</button>
+            </div>
 
-          <!-- vote tally -->
-          <div id="store-vote-panel-setup" style="display:none;margin-top:10px;background:#0f172a;border:1px solid var(--gold);border-radius:12px;padding:12px;text-align:center">
-            <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:8px">🗳️ تصويت جارٍ — <span id="svote-secs-setup">15</span>s</div>
-            <div style="display:flex;gap:8px;justify-content:center">
-              <div style="flex:1;background:#16a34a20;border:1px solid #16a34a;border-radius:10px;padding:8px">
-                <div style="font-size:22px;font-weight:900;color:#4ade80" id="svote-yes-setup">0</div>
-                <div style="font-size:11px;color:#86efac">آيه ✅</div>
+            <div id="store-vote-panel-setup" class="vote-panel" style="display:none">
+              <div class="vote-title">🗳️ تصويت جارٍ — <span id="svote-secs-setup">15</span>s</div>
+              <div class="vote-row">
+                <div class="vote-cell vote-yes"><div class="vote-num" id="svote-yes-setup">0</div><div class="vote-lbl">آيه ✅</div></div>
+                <div class="vote-cell vote-no"><div class="vote-num" id="svote-no-setup">0</div><div class="vote-lbl">لا ❌</div></div>
+                <div class="vote-cell vote-total"><div class="vote-num" id="svote-total-setup">0</div><div class="vote-lbl">صوّتوا</div></div>
               </div>
-              <div style="flex:1;background:#ef444420;border:1px solid #ef4444;border-radius:10px;padding:8px">
-                <div style="font-size:22px;font-weight:900;color:#ef4444" id="svote-no-setup">0</div>
-                <div style="font-size:11px;color:#fca5a5">لا ❌</div>
+            </div>
+
+            <div id="store-open-status" class="store-open-status" style="display:none">
+              <div class="store-open-header">
+                <div class="store-open-title">🛒 المتجر مفتوح — <span id="store-countdown">30</span>s</div>
+                <button onclick="closeStore()" class="btn-close-store">❌ أغلق الآن</button>
               </div>
-              <div style="flex:1;background:#1e293b;border:1px solid #334155;border-radius:10px;padding:8px">
-                <div style="font-size:22px;font-weight:900;color:#94a3b8" id="svote-total-setup">0</div>
-                <div style="font-size:11px;color:#64748b">صوّتوا</div>
+              <div id="store-purchases-list" class="store-purchases">
+                <div class="empty-hint-sm">لا يوجد مشتريات بعد...</div>
               </div>
             </div>
           </div>
+        </section>
 
-          <!-- store open status -->
-          <div id="store-open-status" style="display:none;margin-top:10px;background:#16a34a15;border:2px solid #16a34a;border-radius:12px;padding:14px">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-              <div style="font-size:14px;font-weight:900;color:#4ade80">🛒 المتجر مفتوح — <span id="store-countdown">30</span>s</div>
-              <button onclick="closeStore()" style="padding:6px 14px;border-radius:8px;border:1px solid var(--red);background:#ef444415;color:#ef4444;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">❌ أغلق الآن</button>
-            </div>
-            <div id="store-purchases-list" style="font-size:13px;color:#86efac;display:flex;flex-direction:column;gap:4px">
-              <div style="color:#4ade8070;font-size:12px">لا يوجد مشتريات بعد...</div>
-            </div>
-          </div>
-        </div>
       </div>
 
-      <!-- ACTIVE PANEL -->
+      <!-- ══ ACTIVE PANEL ══ -->
       <div class="panel" id="panel-active">
-        <div class="card">
-          <div class="q-display" id="active-q-display"></div>
-          <div class="timer-display">
-            <div class="timer-ring">
-              <svg width="120" height="120" viewBox="0 0 120 120">
-                <circle class="bg" cx="60" cy="60" r="52"/>
-                <circle class="prog" id="timer-circle" cx="60" cy="60" r="52"/>
-              </svg>
-              <div class="num" id="timer-num">30</div>
+        <section class="card">
+          <div class="card-body">
+            <div class="q-display" id="active-q-display"></div>
+            <div class="timer-display">
+              <div class="timer-ring">
+                <svg width="120" height="120" viewBox="0 0 120 120">
+                  <circle class="bg" cx="60" cy="60" r="52"/>
+                  <circle class="prog" id="timer-circle" cx="60" cy="60" r="52"/>
+                </svg>
+                <div class="num" id="timer-num">30</div>
+              </div>
+              <div class="timer-label">ثانية متبقية</div>
             </div>
-            <div class="timer-label">ثانية متبقية</div>
-          </div>
-          <div class="stats-row" style="margin-top:16px">
-            <div class="stat-box"><div class="stat-num" id="stat-answered">0</div><div class="stat-lbl">أجابوا</div></div>
-            <div class="stat-box"><div class="stat-num" id="stat-total">0</div><div class="stat-lbl">إجمالي</div></div>
-          </div>
-          <button class="btn btn-end" style="margin-top:16px" id="btn-end" onclick="endQuestion()">⏹ أنهِ السؤال</button>
-          <button onclick="startStoreVote()" style="width:100%;margin-top:10px;padding:12px;border-radius:12px;border:2px solid var(--gold);background:#f59e0b15;color:var(--gold);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:.2s" id="btn-store-vote">🗳️ نفتح المتجر؟ (تصويت)</button>
-          <button onclick="openStore()" style="width:100%;margin-top:6px;padding:10px;border-radius:12px;border:2px solid #94a3b830;background:transparent;color:#94a3b8;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s" id="btn-open-store">🛒 افتح المتجر مباشرة</button>
-          <!-- vote progress -->
-          <div id="store-vote-panel" style="display:none;margin-top:10px;background:#0f172a;border:1px solid var(--gold);border-radius:12px;padding:12px;text-align:center">
-            <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:8px">🗳️ تصويت جارٍ — <span id="svote-secs">15</span>s</div>
-            <div style="display:flex;gap:8px;justify-content:center">
-              <div style="flex:1;background:#16a34a20;border:1px solid #16a34a;border-radius:10px;padding:8px">
-                <div style="font-size:22px;font-weight:900;color:#4ade80" id="svote-yes">0</div>
-                <div style="font-size:11px;color:#86efac">آيه ✅</div>
-              </div>
-              <div style="flex:1;background:#ef444420;border:1px solid #ef4444;border-radius:10px;padding:8px">
-                <div style="font-size:22px;font-weight:900;color:#ef4444" id="svote-no">0</div>
-                <div style="font-size:11px;color:#fca5a5">لا ❌</div>
-              </div>
-              <div style="flex:1;background:#1e293b;border:1px solid #334155;border-radius:10px;padding:8px">
-                <div style="font-size:22px;font-weight:900;color:#94a3b8" id="svote-total">0</div>
-                <div style="font-size:11px;color:#64748b">صوّتوا</div>
-              </div>
+            <div class="stats-row">
+              <div class="stat-box"><div class="stat-num" id="stat-answered">0</div><div class="stat-lbl">أجابوا</div></div>
+              <div class="stat-box"><div class="stat-num" id="stat-total">0</div><div class="stat-lbl">إجمالي</div></div>
             </div>
-          </div>
-        </div>
+            <button class="btn btn-end btn-full-mt" id="btn-end" onclick="endQuestion()">⏹ أنهِ السؤال</button>
+            <button onclick="startStoreVote()" class="btn btn-store-vote btn-store-vote-inline" id="btn-store-vote">🗳️ نفتح المتجر؟ (تصويت)</button>
+            <button onclick="openStore()" class="btn btn-store-direct btn-store-direct-inline" id="btn-open-store">🛒 افتح المتجر مباشرة</button>
 
-        <!-- ABILITY LOG -->
-        <div class="card" style="margin-top:14px">
-          <div class="card-title" style="margin-bottom:10px">⚡ الخصائص المستخدمة</div>
-          <div id="ability-log" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto">
-            <div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">لم تُستخدم أي خاصية بعد</div>
+            <div id="store-vote-panel" class="vote-panel" style="display:none">
+              <div class="vote-title">🗳️ تصويت جارٍ — <span id="svote-secs">15</span>s</div>
+              <div class="vote-row">
+                <div class="vote-cell vote-yes"><div class="vote-num" id="svote-yes">0</div><div class="vote-lbl">آيه ✅</div></div>
+                <div class="vote-cell vote-no"><div class="vote-num" id="svote-no">0</div><div class="vote-lbl">لا ❌</div></div>
+                <div class="vote-cell vote-total"><div class="vote-num" id="svote-total">0</div><div class="vote-lbl">صوّتوا</div></div>
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <div class="card-heading"><span class="card-icon">⚡</span>الخصائص المستخدمة</div>
+          </div>
+          <div class="card-body">
+            <div id="ability-log" class="ability-log">
+              <div class="empty-hint-center">لم تُستخدم أي خاصية بعد</div>
+            </div>
+          </div>
+        </section>
       </div>
 
-      <!-- RESULTS PANEL -->
+      <!-- ══ RESULTS PANEL ══ -->
       <div class="panel" id="panel-results">
-        <div class="card">
-          <div class="card-title">✅ نتائج السؤال</div>
-          <div id="correct-answer-display" style="margin-bottom:14px"></div>
-          <div class="result-list" id="result-list"></div>
-          <button class="btn btn-start" style="margin-top:16px" onclick="showSetup()">➕ سؤال جديد</button>
-        </div>
+        <section class="card">
+          <div class="card-header">
+            <div class="card-heading"><span class="card-icon">✅</span>نتائج السؤال</div>
+          </div>
+          <div class="card-body">
+            <div id="correct-answer-display"></div>
+            <div class="result-list" id="result-list"></div>
+            <button class="btn btn-primary btn-full-mt" onclick="showSetup()">➕ سؤال جديد</button>
+          </div>
+        </section>
       </div>
 
-      <!-- FINAL PANEL -->
+      <!-- ══ FINAL PANEL ══ -->
       <div class="panel" id="panel-final">
-        <div class="card">
-          <div style="text-align:center;padding:10px 0 18px">
-            <div style="font-size:48px;margin-bottom:6px">🏆</div>
-            <div style="font-size:22px;font-weight:900;color:var(--green)">نهاية اللعبة!</div>
+        <section class="card">
+          <div class="card-body">
+            <div class="final-heading">
+              <div class="final-trophy">🏆</div>
+              <div class="final-title">نهاية اللعبة!</div>
+            </div>
+            <div id="final-top3" class="final-top3"></div>
+            <button class="btn btn-primary btn-full-mt" onclick="resetGame()">🔄 لعبة جديدة</button>
           </div>
-          <div id="final-top3" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px"></div>
-          <button class="btn btn-start" style="width:100%;margin-top:4px" onclick="resetGame()">🔄 لعبة جديدة</button>
-        </div>
+        </section>
       </div>
-    </div>
 
-    <!-- SIDEBAR -->
-    <div class="sidebar">
+    </main>
 
-      <!-- Category selector (always visible in sidebar) -->
-      <div class="card" id="category-section" style="display:none">
-        <div class="card-title">📚 اختر تصنيفاً</div>
-        <div class="cat-grid" id="cat-grid"></div>
-        <div id="diff-filter" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
-          <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px">🎯 درجة الصعوبة</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <button class="diff-btn diff-active" id="diff-all" onclick="setDifficulty(null)">الكل</button>
-            <button class="diff-btn" id="diff-easy" onclick="setDifficulty('سهل')">🟢 سهل</button>
-            <button class="diff-btn" id="diff-med" onclick="setDifficulty('متوسط')">🟡 متوسط</button>
-            <button class="diff-btn" id="diff-hard" onclick="setDifficulty('صعب')">🔴 صعب</button>
+    <!-- ─── SIDEBAR ─── -->
+    <aside class="sidebar">
+
+      <section class="card" id="category-section" style="display:none">
+        <div class="card-header">
+          <div class="card-heading"><span class="card-icon">📚</span>اختر تصنيفاً</div>
+        </div>
+        <div class="card-body">
+          <div class="cat-grid" id="cat-grid"></div>
+          <div id="diff-filter" class="diff-filter" style="display:none">
+            <div class="field-label-sm">🎯 درجة الصعوبة</div>
+            <div class="diff-btns">
+              <button class="diff-btn diff-active" id="diff-all" onclick="setDifficulty(null)">الكل</button>
+              <button class="diff-btn" id="diff-easy" onclick="setDifficulty('سهل')">🟢 سهل</button>
+              <button class="diff-btn" id="diff-med" onclick="setDifficulty('متوسط')">🟡 متوسط</button>
+              <button class="diff-btn" id="diff-hard" onclick="setDifficulty('صعب')">🔴 صعب</button>
+            </div>
+          </div>
+          <div id="cat-info" class="cat-info">اختر تصنيفاً لتحميل أسئلته</div>
+        </div>
+      </section>
+
+      <section class="card" id="queue-card" style="display:none">
+        <div class="card-header">
+          <div class="card-heading"><span class="card-icon">📋</span>قائمة الأسئلة <span id="queue-counter" class="queue-counter"></span></div>
+          <button onclick="clearQueue()" class="btn-mini btn-mini-danger">🗑️ مسح</button>
+        </div>
+        <div class="card-body">
+          <div class="queue-scroll" id="queue-list"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <div class="card-heading"><span class="card-icon">🏆</span>الليدربورد</div>
+        </div>
+        <div class="card-body">
+          <div id="leaderboard-list">
+            <div class="empty-hint-center">لا يوجد لاعبون بعد</div>
           </div>
         </div>
-        <div id="cat-info" style="margin-top:10px;font-size:13px;color:var(--muted)">اختر تصنيفاً لتحميل أسئلته</div>
-      </div>
+      </section>
 
-      <!-- Question queue (always visible in sidebar) -->
-      <div class="card" id="queue-card" style="display:none">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <div class="card-title" style="margin-bottom:0">📋 قائمة الأسئلة &nbsp;<span id="queue-counter" style="color:var(--cyan)"></span></div>
-          <button onclick="clearQueue()" style="background:transparent;border:1px solid var(--red);color:var(--red);padding:5px 10px;border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">🗑️ مسح</button>
-        </div>
-        <div class="queue-scroll" id="queue-list"></div>
-      </div>
-
-      <!-- Leaderboard -->
-      <div class="card-title" style="font-size:16px;color:var(--text)">🏆 الليدربورد</div>
-      <div id="leaderboard-list">
-        <div style="color:var(--muted);font-size:14px;text-align:center;padding:20px">لا يوجد لاعبون بعد</div>
-      </div>
-    </div>
+    </aside>
   </div>
 </div>
 
-<!-- DRAMATIC REVEAL OVERLAY -->
+<!-- ═══════════════ OVERLAYS ═══════════════ -->
 <div class="reveal-overlay" id="reveal-overlay">
   <div class="reveal-title">🎭 كشف الإجابات</div>
-  <div id="reveal-cards" style="display:flex;flex-direction:column;gap:8px;width:420px;max-width:90vw"></div>
+  <div id="reveal-cards" class="reveal-cards"></div>
 </div>
 
-<!-- QUESTION PREVIEW MODAL -->
 <div class="preview-overlay" id="preview-overlay" onclick="closePreview(event)">
   <div class="preview-modal">
     <div class="preview-qnum" id="preview-qnum"></div>
@@ -635,19 +955,17 @@ textarea{min-height:70px}
 
 <div id="toast"></div>
 
-<!-- LEADERBOARD REVEAL OVERLAY (same as player view) -->
 <div id="lb-reveal-overlay">
   <div class="lb-rov-title">🏆 الترتيب الكلي</div>
   <div id="lb-rov-cards"></div>
   <div class="lb-rov-cd" id="lb-rov-cd"></div>
 </div>
 
-<!-- FULL LEADERBOARD MODAL -->
 <div id="lb-modal" onclick="if(event.target===this)toggleLbModal()">
   <div class="lb-modal-box">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
-      <div style="font-size:18px;font-weight:900;color:var(--gold)">🏆 الترتيب الكلي</div>
-      <button onclick="toggleLbModal()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:6px 12px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700">✕ إغلاق</button>
+    <div class="lb-modal-header">
+      <div class="lb-modal-title">🏆 الترتيب الكلي</div>
+      <button onclick="toggleLbModal()" class="btn-mini">✕ إغلاق</button>
     </div>
     <div id="lb-modal-list"></div>
   </div>
