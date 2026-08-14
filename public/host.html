@@ -2,7 +2,9 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>لوحة المضيف — كويز لايف</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -574,6 +576,191 @@ textarea.input{min-height:70px;resize:vertical;line-height:1.6}
   .preview-modal{padding:20px 16px}
 }
 </style>
+<style>
+/* ═══════════════════════════════════════════════════════
+   UI POLISH LAYER — refined depth, rhythm, motion
+   ═══════════════════════════════════════════════════════ */
+:root{
+  --bg:#040c06;--surface:#0a170d;--card:#0d1f11;--border:#1c3f26;
+  --purple:#16a34a;--purple-light:#5ef08a;--cyan:#2ee06a;--cyan-dark:#15803d;
+  --green:#5ef08a;--red:#f4585d;--gold:#fbbf24;--text:#eefdf2;--muted:#8fd8a6;
+  --radius:16px;--radius-sm:12px;--radius-lg:22px;
+  --shadow-soft:0 2px 8px #00000055;
+  --shadow-card:0 10px 30px -18px #000, 0 1px 0 #ffffff08 inset;
+  --shadow-lift:0 16px 40px -20px #000, 0 0 0 1px #2ee06a22;
+  --ring:0 0 0 3px #2ee06a2e;
+}
+html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body{background:
+  radial-gradient(1100px 620px at 85% -10%, #16a34a1c, transparent 60%),
+  radial-gradient(900px 520px at 0% 110%, #06b6d412, transparent 60%),
+  var(--bg);
+  letter-spacing:.1px}
+body::before{background-image:radial-gradient(circle,#2ee06a14 1px,transparent 1px);background-size:34px 34px;opacity:.7}
+::selection{background:#2ee06a35;color:#fff}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+
+/* Scrollbars */
+.main::-webkit-scrollbar,.sidebar::-webkit-scrollbar,.queue-scroll::-webkit-scrollbar{width:8px}
+.main::-webkit-scrollbar-thumb,.sidebar::-webkit-scrollbar-thumb,.queue-scroll::-webkit-scrollbar-thumb{
+  background:linear-gradient(180deg,#2ee06a55,#16a34a33);border-radius:99px;border:2px solid transparent;background-clip:padding-box}
+
+/* Header */
+.app-header{
+  position:sticky;top:0;z-index:60;
+  background:color-mix(in oklab, var(--surface) 78%, transparent);
+  backdrop-filter:blur(14px) saturate(140%);
+  border-bottom:1px solid #2ee06a24;
+  box-shadow:0 8px 28px -22px #000;
+  padding:14px 22px;
+}
+.logo{font-size:21px;letter-spacing:-.2px;
+  background:linear-gradient(100deg,#eefdf2,#5ef08a 55%,#22c55e);
+  -webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;
+  filter:drop-shadow(0 0 18px #2ee06a45)}
+.live-badge{box-shadow:0 0 0 4px #f4585d22;letter-spacing:.6px}
+.player-count-badge{background:#ffffff07;border-color:#2ee06a2b;box-shadow:var(--shadow-soft);backdrop-filter:blur(6px)}
+.btn-header{border-radius:12px;box-shadow:var(--shadow-soft);transition:transform .18s cubic-bezier(.34,1.4,.64,1),background .18s,color .18s,border-color .18s}
+.btn-header:hover{transform:translateY(-2px)}
+.btn-header:active{transform:translateY(0) scale(.98)}
+
+/* Layout rhythm */
+.main{padding:24px;gap:18px}
+.sidebar{background:linear-gradient(180deg,#0a170dcc,#040c06cc);border-right:1px solid #2ee06a1f;backdrop-filter:blur(8px);gap:16px}
+
+/* Cards */
+.card,.collapsible{
+  background:linear-gradient(180deg,#ffffff06,transparent) , var(--card);
+  border-color:#2ee06a22;box-shadow:var(--shadow-card);
+  transition:box-shadow .25s, border-color .25s, transform .25s}
+.card:hover{border-color:#2ee06a38;box-shadow:var(--shadow-lift)}
+.card-header{background:linear-gradient(180deg,#2ee06a12,transparent);border-bottom-color:#2ee06a1f;padding:16px 20px}
+.card-heading{font-size:15px;letter-spacing:0}
+.card-body{padding:20px}
+
+/* Inputs */
+.input{background:#ffffff06;border-color:#2ee06a24;border-radius:var(--radius-sm);
+  padding:12px 15px;transition:border-color .18s, box-shadow .18s, background .18s}
+.input::placeholder{color:#8fd8a680}
+.input:hover{border-color:#2ee06a3d}
+.input:focus{background:#ffffff0a;border-color:var(--cyan);box-shadow:var(--ring)}
+.field-label{font-size:13.5px;letter-spacing:.1px}
+
+/* Chips / toggles / buttons */
+.type-chip,.dur-btn,.diff-btn,.correct-radio label,.cat-btn,.btn-last-q,.btn-dramatic{
+  transition:transform .18s cubic-bezier(.34,1.4,.64,1),border-color .18s,background .18s,color .18s,box-shadow .18s}
+.type-chip{border-radius:12px;padding:10px 18px;background:#ffffff05}
+.type-chip:hover,.dur-btn:hover,.diff-btn:hover{transform:translateY(-1px)}
+.type-chip.active{box-shadow:0 0 0 3px #2ee06a1f}
+.dur-btn{border-width:1.5px;border-radius:12px;background:#ffffff05}
+.dur-btn.dur-active{box-shadow:0 6px 18px -10px #2ee06a, 0 0 0 3px #2ee06a1f}
+.option-letter{border-radius:10px;box-shadow:inset 0 0 0 1px #ffffff0f}
+.modifier-row{background:#ffffff05;border-color:#2ee06a1f;border-radius:14px;padding:14px}
+.btn-primary,.btn-start-main{letter-spacing:.2px}
+.btn-start-main{box-shadow:0 12px 30px -16px #22c55e;transition:transform .18s,filter .18s,box-shadow .18s}
+.btn-start-main:hover{transform:translateY(-2px);filter:brightness(1.06)}
+.btn-start-main:active{transform:translateY(0) scale(.99)}
+
+/* Categories + queue */
+.cat-btn{background:#ffffff05;border-radius:14px}
+.cat-btn.active{box-shadow:0 10px 26px -18px #2ee06a, inset 0 0 26px #2ee06a0f}
+.queue-item{background:#ffffff05;border-color:#2ee06a1f;border-radius:12px}
+.queue-item:not(.used):hover{transform:translateX(-3px);box-shadow:var(--shadow-soft)}
+
+/* Overlays / modals */
+.preview-overlay,.reveal-overlay{backdrop-filter:blur(6px)}
+.preview-modal{border-color:#2ee06a2b;box-shadow:0 40px 90px -40px #000;border-radius:var(--radius-lg)}
+.reveal-card{border-radius:16px;box-shadow:var(--shadow-card)}
+
+/* Toast */
+#toast{background:#0d1f11f2;border-color:#2ee06a55;box-shadow:0 18px 44px -22px #000;backdrop-filter:blur(10px)}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.01ms !important;transition-duration:.01ms !important}
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESIZABLE  COLUMNS
+   ═══════════════════════════════════════════════════════ */
+:root{--sidebar-w:400px}
+.layout{grid-template-columns:1fr 10px var(--sidebar-w)}
+body.resizing{cursor:col-resize;user-select:none}
+body.resizing iframe{pointer-events:none}
+.col-resizer{
+  position:relative;cursor:col-resize;background:transparent;
+  display:flex;align-items:center;justify-content:center;
+  border-inline:1px solid transparent;transition:background .18s;
+}
+.col-resizer::before{
+  content:'';position:absolute;inset-block:0;inset-inline:4px;
+  width:2px;background:#2ee06a20;transition:background .18s;
+}
+.col-resizer:hover::before,body.resizing .col-resizer::before{background:var(--cyan)}
+.col-resizer-grip{
+  position:relative;z-index:2;width:6px;height:46px;border-radius:99px;
+  background:#2ee06a35;box-shadow:0 0 0 4px #040c06;transition:background .18s,height .18s;
+}
+.col-resizer:hover .col-resizer-grip,body.resizing .col-resizer-grip{
+  background:var(--cyan);height:70px;box-shadow:0 0 0 4px #040c06,0 0 16px #2ee06a80;
+}
+.layout.sidebar-collapsed{grid-template-columns:1fr 10px 0px}
+.layout.sidebar-collapsed .sidebar{display:none}
+@media(max-width:900px){
+  .col-resizer{display:none}
+  .layout{grid-template-columns:1fr !important}
+}
+
+/* ═══════════════════════════════════════════════════════
+   iPAD / TABLET + TOUCH TUNING
+   ═══════════════════════════════════════════════════════ */
+html{-webkit-text-size-adjust:100%}
+body{
+  min-height:100dvh;
+  overscroll-behavior-y:none;
+  padding-left:env(safe-area-inset-left);
+  padding-right:env(safe-area-inset-right);
+}
+.app-shell{min-height:100dvh}
+.layout{height:calc(100dvh - 62px)}
+.main,.sidebar{-webkit-overflow-scrolling:touch}
+.sidebar{padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+
+/* Touch devices: bigger hit areas, no hover-only affordances */
+@media (hover:none) and (pointer:coarse){
+  button,.btn,.btn-header,.dur-btn,.opt,.cat-item,select,input[type=submit]{
+    min-height:44px;
+  }
+  input,select,textarea{font-size:16px} /* stops iOS auto-zoom */
+  .col-resizer{width:auto}
+  .col-resizer::after{content:'';position:absolute;inset-block:0;inset-inline:-14px}
+  .col-resizer-grip{width:8px;height:64px;background:var(--cyan);opacity:.55}
+  *{-webkit-tap-highlight-color:transparent}
+}
+
+/* iPad portrait & landscape split view range */
+@media (min-width:901px) and (max-width:1180px){
+  :root{--sidebar-w:340px}
+  .layout{grid-template-columns:1fr 14px var(--sidebar-w)}
+  .main{padding:14px}
+  .sidebar{padding:14px}
+  .app-header{padding:10px 14px}
+  .logo{font-size:18px}
+  .btn-header{padding:8px 12px;font-size:13px}
+  .card-body{padding:16px}
+  .q-options{grid-template-columns:1fr 1fr;gap:10px}
+  .row-2col,.preview-opts,.form-grid{gap:10px}
+  .timer-ring,.timer-ring svg{width:110px;height:110px}
+  .timer-ring .num{font-size:32px}
+  .stat-num{font-size:24px}
+}
+
+/* iPad portrait: stack when sidebar would squeeze the stage */
+@media (min-width:901px) and (max-width:1024px) and (orientation:portrait){
+  .layout{grid-template-columns:1fr 14px 300px}
+  .cat-grid{grid-template-columns:1fr}
+}
+</style>
+
 </head>
 <body>
 
@@ -886,7 +1073,13 @@ textarea.input{min-height:70px;resize:vertical;line-height:1.6}
 
     </main>
 
+    <!-- ─── RESIZER ─── -->
+    <div class="col-resizer" id="col-resizer" title="اسحب لتغيير العرض — نقرة مزدوجة للإرجاع">
+      <div class="col-resizer-grip"></div>
+    </div>
+
     <!-- ─── SIDEBAR ─── -->
+
     <aside class="sidebar">
 
       <section class="card" id="category-section" style="display:none">
@@ -2023,6 +2216,61 @@ socket.on('game:final', ({ top3, leaderboard: lb }) => {
 });
 // تهيئة نوع السؤال عند التحميل
 setQType('normal');
+</script>
+
+<script>
+/* ═══ Resizable main / sidebar columns ═══ */
+(function(){
+  const layout = document.querySelector('.layout');
+  const resizer = document.getElementById('col-resizer');
+  if(!layout || !resizer) return;
+  const MIN = 240, DEFAULT = 400;
+  const maxW = () => Math.max(MIN, Math.min(900, window.innerWidth - 380));
+
+  function setWidth(px, save){
+    const w = Math.round(Math.min(maxW(), Math.max(MIN, px)));
+    document.documentElement.style.setProperty('--sidebar-w', w + 'px');
+    if(save !== false) try{ localStorage.setItem('host-sidebar-w', w); }catch(e){}
+  }
+
+  const saved = (()=>{ try{ return parseInt(localStorage.getItem('host-sidebar-w'),10);}catch(e){ return NaN; } })();
+  if(saved) setWidth(saved, false);
+
+  let dragging = false;
+  const rtl = getComputedStyle(document.documentElement).direction === 'rtl';
+
+  function move(clientX){
+    // in RTL the sidebar sits on the left edge, in LTR on the right edge
+    setWidth(rtl ? clientX + 5 : window.innerWidth - clientX + 5);
+  }
+  function start(e){
+    dragging = true;
+    layout.classList.remove('sidebar-collapsed');
+    document.body.classList.add('resizing');
+    e.preventDefault();
+  }
+  function stop(){ if(!dragging) return; dragging = false; document.body.classList.remove('resizing'); }
+
+  resizer.addEventListener('mousedown', start);
+  window.addEventListener('mousemove', e => { if(dragging) move(e.clientX); });
+  window.addEventListener('mouseup', stop);
+
+  resizer.addEventListener('touchstart', start, {passive:false});
+  window.addEventListener('touchmove', e => { if(dragging){ move(e.touches[0].clientX); e.preventDefault(); } }, {passive:false});
+  window.addEventListener('touchend', stop);
+
+  resizer.addEventListener('dblclick', () => {
+    layout.classList.remove('sidebar-collapsed');
+    setWidth(DEFAULT);
+  });
+
+  window.addEventListener('resize', () => {
+    const cur = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sidebar-w'),10) || DEFAULT;
+    setWidth(cur, false);
+  });
+
+;
+})();
 </script>
 </body>
 </html>
