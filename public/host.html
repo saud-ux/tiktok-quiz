@@ -298,10 +298,10 @@ textarea.input{min-height:70px;resize:vertical;line-height:1.6}
 
 /* Q display */
 .q-display{background:linear-gradient(135deg,#0f230f,#08140800);border:1px solid var(--purple);border-radius:var(--radius);padding:20px;margin-bottom:16px}
-.q-num{font-size:12px;color:var(--purple-light);font-weight:700;margin-bottom:6px}
-.q-text{font-size:18px;font-weight:700;line-height:1.5}
+.q-num{font-size:15px;color:var(--purple-light);font-weight:700;margin-bottom:6px}
+.q-text{font-size:32px;font-weight:800;line-height:1.45}
 .q-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
-.q-opt{padding:10px 14px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;background:var(--surface);border:1px solid var(--border)}
+.q-opt{padding:14px 18px;border-radius:var(--radius-sm);font-size:20px;font-weight:600;background:var(--surface);border:1px solid var(--border)}
 .q-opt.correct{background:#10b98120;border-color:var(--green);color:var(--green)}
 
 /* ═══════════════════════════════════════════════════════
@@ -522,19 +522,27 @@ textarea.input{min-height:70px;resize:vertical;line-height:1.6}
 @keyframes revealPulse{0%{box-shadow:0 0 0 0 #22c55e60}70%{box-shadow:0 0 0 12px transparent}100%{box-shadow:0 0 0 0 transparent}}
 .reveal-card.correct.show{animation:revealPulse .6s ease}
 
-.preview-overlay{position:fixed;inset:0;background:#00000085;z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
-.preview-overlay.open{display:flex}
-.preview-modal{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto}
-.preview-qnum{font-size:12px;font-weight:700;color:var(--cyan);letter-spacing:1px;margin-bottom:10px}
-.preview-qtext{font-size:20px;font-weight:800;line-height:1.6;margin-bottom:20px}
-.preview-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
-.preview-opt{padding:13px 14px;border-radius:12px;border:2px solid var(--border);background:var(--surface);font-size:14px;font-weight:600}
-.preview-opt.correct{border-color:var(--green);background:#10b98118;color:var(--green)}
-.preview-hint{background:#f59e0b12;border:1px solid #f59e0b30;border-radius:10px;padding:10px 14px;font-size:13px;color:var(--gold);margin-bottom:18px}
-.preview-actions{display:flex;gap:10px}
-.btn-preview-start{flex:1;padding:13px;border-radius:12px;border:none;background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px #16a34a40}
-.btn-preview-start:hover{filter:brightness(1.1)}
-.btn-preview-close{padding:13px 18px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.preview-overlay{position:fixed;inset:0;background:#020802e6;backdrop-filter:blur(6px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.preview-overlay.open{display:flex;animation:pvFade .25s ease}
+@keyframes pvFade{from{opacity:0}to{opacity:1}}
+@keyframes pvPop{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
+.preview-modal{position:relative;background:linear-gradient(160deg,#0e2110,#0a170a 60%);border:1px solid var(--purple);border-radius:22px;padding:0;width:100%;max-width:720px;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 60px #000000a8,0 0 60px #22c55e18;animation:pvPop .3s cubic-bezier(.34,1.4,.64,1)}
+.preview-modal::before{content:'';position:absolute;inset-inline:0;top:0;height:4px;background:linear-gradient(90deg,#22c55e,#4ade80,#15803d)}
+.preview-qnum{font-size:13px;font-weight:800;color:#052e10;letter-spacing:.5px;background:var(--purple-light);align-self:flex-start;padding:6px 14px;border-radius:999px;margin:26px 28px 14px}
+.preview-qtext{font-size:36px;font-weight:900;line-height:1.45;margin:0 28px 22px;text-wrap:balance}
+.preview-opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 28px 18px;overflow-y:auto}
+.preview-opt{display:flex;align-items:center;gap:12px;padding:16px 18px;border-radius:14px;border:2px solid var(--border);background:#0c1c0cb0;font-size:20px;font-weight:700;transition:.2s}
+.preview-opt .pv-letter{width:34px;height:34px;flex-shrink:0;display:grid;place-items:center;border-radius:10px;background:var(--surface);border:1px solid var(--border);font-size:16px;font-weight:900;color:var(--muted)}
+.preview-opt.correct{border-color:var(--green);background:#10b98120;color:var(--green);box-shadow:0 0 22px #22c55e22}
+.preview-opt.correct .pv-letter{background:var(--green);border-color:var(--green);color:#052e10}
+.preview-opt.correct::after{content:'✓';margin-inline-start:auto;font-size:20px;font-weight:900}
+.preview-hint{background:#f59e0b12;border:1px solid #f59e0b40;border-radius:12px;padding:12px 16px;font-size:16px;font-weight:600;color:var(--gold);margin:0 28px 18px}
+.preview-actions{display:flex;gap:10px;padding:18px 28px 24px;border-top:1px solid var(--border);background:#06120680}
+.btn-preview-start{flex:1;padding:16px;border-radius:14px;border:none;background:linear-gradient(135deg,#16a34a,#4ade80);color:#04240c;font-family:inherit;font-size:19px;font-weight:900;cursor:pointer;box-shadow:0 6px 22px #16a34a55;transition:.2s}
+.btn-preview-start:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn-preview-close{padding:16px 22px;border-radius:14px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;transition:.2s}
+.btn-preview-close:hover{border-color:var(--purple);color:var(--text)}
+@media(max-width:640px){.preview-opts{grid-template-columns:1fr}.preview-qtext{font-size:28px}}
 
 /* ═══════════════════════════════════════════════════════
    UTILITIES
@@ -573,7 +581,9 @@ textarea.input{min-height:70px;resize:vertical;line-height:1.6}
   .timer-ring svg{width:96px;height:96px}
   .timer-ring .num{font-size:28px}
   .stat-num{font-size:22px}
-  .preview-modal{padding:20px 16px}
+  .preview-qtext{font-size:26px;margin-inline:18px}
+  .preview-opts,.preview-hint{margin-inline:18px}
+  .preview-actions{padding:14px 18px 18px}
 }
 </style>
 <style>
@@ -669,7 +679,7 @@ body::before{background-image:radial-gradient(circle,#2ee06a14 1px,transparent 1
 
 /* Overlays / modals */
 .preview-overlay,.reveal-overlay{backdrop-filter:blur(6px)}
-.preview-modal{border-color:#2ee06a2b;box-shadow:0 40px 90px -40px #000;border-radius:var(--radius-lg)}
+.preview-modal{border-color:#2ee06a55;box-shadow:0 40px 90px -40px #000,0 0 60px #22c55e1a}
 .reveal-card{border-radius:16px;box-shadow:var(--shadow-card)}
 
 /* Toast */
@@ -1181,7 +1191,19 @@ function setDuration(secs) {
 }
 let questionQueue = [];
 let currentQueueIndex = -1;
-let categoriesData = null;
+const DEFAULT_CATEGORIES = {
+  'تجربة جغرافيا': [
+    { text: 'ما عاصمة المملكة العربية السعودية؟', type: 'normal',
+      options: ['الرياض','جدة','مكة المكرمة','الدمام'], correct: 0,
+      hint: 'تبدأ بحرف الراء', difficulty: 'سهل' },
+  ],
+  'تجربة رياضيات': [
+    { text: 'كم ناتج ٧ × ٨ ؟', type: 'normal',
+      options: ['54','56','64','48'], correct: 1,
+      hint: 'أكبر من ٥٠ بقليل', difficulty: 'سهل' },
+  ],
+};
+let categoriesData = { ...DEFAULT_CATEGORIES };
 let activeCategory = null;
 let questionType = 'normal'; // 'normal' | 'order'
 
@@ -1623,7 +1645,7 @@ function parseJSON(text) {
   const data = JSON.parse(text);
   if (Array.isArray(data)) {
     // ملف أسئلة عادي (مصفوفة)
-    categoriesData = null;
+    categoriesData = { ...DEFAULT_CATEGORIES };
     activeCategory = null;
     document.getElementById('category-section').style.display = 'none';
     questionQueue = data.map(q => ({
@@ -1643,7 +1665,7 @@ function parseJSON(text) {
     toast(`✅ تم استيراد ${questionQueue.length} سؤال`);
   } else if (data && typeof data === 'object') {
     // بنك أسئلة مصنّف (object بتصنيفات)
-    categoriesData = data;
+    categoriesData = { ...DEFAULT_CATEGORIES, ...data };
     activeCategory = null;
     questionQueue = [];
     currentQueueIndex = -1;
@@ -1700,11 +1722,11 @@ function previewQuestion(index) {
   document.getElementById('preview-qnum').textContent = `سؤال ${index + 1} من ${questionQueue.length}`;
   document.getElementById('preview-qtext').textContent = q.text;
   if (q.type === 'text') {
-    document.getElementById('preview-opts').innerHTML = `<div class="preview-opt correct" style="font-size:15px">✏️ سؤال مفتوح — الإجابة: <strong>${q.answer}</strong></div>`;
+    document.getElementById('preview-opts').innerHTML = `<div class="preview-opt correct" style="grid-column:1/-1">✏️ سؤال مفتوح — الإجابة: <strong>${q.answer}</strong></div>`;
   } else {
     document.getElementById('preview-opts').innerHTML = q.options.map((o, i) => `
       <div class="preview-opt ${i === q.correctAnswer ? 'correct' : ''}">
-        <strong>${letters[i]}.</strong> ${o}
+        <span class="pv-letter">${letters[i]}</span><span>${o}</span>
       </div>
     `).join('');
   }
@@ -1837,6 +1859,7 @@ function clearQueue() {
   if (!confirm('هل تريد مسح قائمة الأسئلة؟')) return;
   questionQueue = []; currentQueueIndex = -1; activeCategory = null;
   activeDifficulty = null; rawCategoryQuestions = [];
+  categoriesData = { ...DEFAULT_CATEGORIES, ...(categoriesData || {}) };
   document.getElementById('queue-card').style.display = 'none';
   document.getElementById('diff-filter').style.display = 'none';
   if (categoriesData) {
@@ -2271,6 +2294,12 @@ setQType('normal');
 
 ;
 })();
+</script>
+<script>
+  // الفئات التجريبية متاحة دائماً عند فتح اللوحة
+  window.addEventListener('DOMContentLoaded', () => {
+    showCategorySelector(Object.keys(categoriesData));
+  });
 </script>
 </body>
 </html>
