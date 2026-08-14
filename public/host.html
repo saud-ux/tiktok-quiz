@@ -84,11 +84,11 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 }
 .card-icon{font-size:16px;filter:drop-shadow(0 0 8px #4ade8040)}
 .card-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
-.card-body{padding:18px}
+.card-body{padding:22px}
 
 /* Compact card variant (sidebar) */
 .sidebar .card-header{padding:12px 14px}
-.sidebar .card-body{padding:14px}
+.sidebar .card-body{padding:18px}
 .sidebar .card-heading{font-size:13px}
 
 /* ═══════════════════════════════════════════════════════
@@ -113,11 +113,11 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 /* ═══════════════════════════════════════════════════════
    FIELDS  &  INPUTS
    ═══════════════════════════════════════════════════════ */
-.field{margin-bottom:14px}
+.field{margin-bottom:18px}
 .field:last-child{margin-bottom:0}
 .field-label{
   display:block;font-size:13px;font-weight:700;color:var(--text);
-  margin-bottom:8px;
+  margin-bottom:10px;
 }
 .field-label-sm{
   display:block;font-size:11px;font-weight:700;color:var(--muted);
@@ -438,7 +438,7 @@ textarea.input{min-height:70px;resize:vertical;line-height:1.6}
 /* ═══════════════════════════════════════════════════════
    CATEGORIES  &  DIFFICULTY  FILTER  (sidebar)
    ═══════════════════════════════════════════════════════ */
-.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .cat-btn{
   position:relative;padding:12px 8px;border-radius:12px;
   border:1.5px solid var(--border);background:var(--surface);
@@ -571,9 +571,10 @@ textarea.input{min-height:70px;resize:vertical;line-height:1.6}
   .header-actions{flex-wrap:wrap}
   .btn-header{padding:6px 10px;font-size:12px}
   .player-count-badge{padding:5px 10px;font-size:12px}
-  .card-body{padding:14px}
+  .card-body{padding:18px}
   .card-header{padding:12px 14px}
-  .q-options,.form-grid,.preview-opts,.cat-grid,.row-2col{grid-template-columns:1fr}
+  .q-options,.form-grid,.preview-opts,.row-2col{grid-template-columns:1fr}
+  .cat-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   .stats-row{gap:8px}
   .dur-btn{padding:7px 10px;font-size:12px}
   .btn-last-q,.btn-dramatic{font-size:11px;padding:7px 10px}
@@ -646,7 +647,7 @@ body::before{background-image:radial-gradient(circle,#2ee06a14 1px,transparent 1
 .card:hover{border-color:#2ee06a38;box-shadow:var(--shadow-lift)}
 .card-header{background:linear-gradient(180deg,#2ee06a12,transparent);border-bottom-color:#2ee06a1f;padding:16px 20px}
 .card-heading{font-size:15px;letter-spacing:0}
-.card-body{padding:20px}
+.card-body{padding:24px}
 
 /* Inputs */
 .input{background:#ffffff06;border-color:#2ee06a24;border-radius:var(--radius-sm);
@@ -767,7 +768,7 @@ body{
 /* iPad portrait: stack when sidebar would squeeze the stage */
 @media (min-width:901px) and (max-width:1024px) and (orientation:portrait){
   .layout{grid-template-columns:1fr 14px 300px}
-  .cat-grid{grid-template-columns:1fr}
+  .cat-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 }
 </style>
 
