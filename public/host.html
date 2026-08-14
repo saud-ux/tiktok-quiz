@@ -610,8 +610,9 @@ textarea.input{min-height:70px;resize:vertical;line-height:1.6}
             <div class="card-heading"><span class="card-icon">✏️</span>السؤال</div>
             <div class="card-actions">
               <button class="btn-tool" onclick="downloadTemplate()" title="تحميل نموذج JSON">⬇️ نموذج</button>
-              <button class="btn-tool" onclick="loadFushaBank()" title="تحميل بنك الفصحى">📖 فصحى</button>
               <button class="btn-tool btn-tool-primary" onclick="document.getElementById('file-import').click()">📂 استيراد</button>
+                             <button class="btn-tool" onclick="loadFushaBank()" title="تحميل بنك الفصحى"> اسئله</button>
+
               <input type="file" id="file-import" accept=".json,.csv" style="display:none" onchange="importFile(this)">
             </div>
           </div>
