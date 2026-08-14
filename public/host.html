@@ -68,6 +68,14 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 .btn-header-warning:hover{filter:brightness(1.1)}
 .btn-header-danger{border-color:var(--red);color:var(--red)}
 .btn-header-danger:hover{background:var(--red);color:#fff}
+.btn-header-icon{
+  width:36px;height:36px;padding:0;display:flex;align-items:center;justify-content:center;
+  border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);
+  font-size:18px;cursor:pointer;transition:.15s;flex-shrink:0;
+}
+.btn-header-icon:hover{transform:translateY(-2px);border-color:var(--gold);background:#f59e0b15;box-shadow:0 0 14px #f59e0b30}
+.btn-header-icon.btn-header-gold{border-color:var(--gold);color:var(--gold)}
+.btn-header-icon.btn-header-gold:hover{background:var(--gold);color:#000}
 
 /* ═══════════════════════════════════════════════════════
    CARDS  &  SECTION  HEADERS
@@ -789,7 +797,7 @@ body{
       <span class="player-count-badge"><span id="player-count">0 لاعب</span></span>
     </div>
     <div class="header-actions">
-      <button class="btn-header btn-header-gold" onclick="toggleLbModal()"> الترتيب</button>
+      <button class="btn-header btn-header-icon btn-header-gold" onclick="toggleLbModal()" title="الترتيب الكلي" aria-label="الترتيب الكلي">🏆</button>
       <button class="btn-header btn-header-warning" onclick="endGame()"> إنهاء</button>
       <button class="btn-header btn-header-danger" onclick="resetGame()"> إعادة</button>
     </div>
@@ -1124,16 +1132,6 @@ body{
         </div>
       </section>
 
-      <section class="card">
-        <div class="card-header">
-          <div class="card-heading"><span class="card-icon"></span>الليدربورد</div>
-        </div>
-        <div class="card-body">
-          <div id="leaderboard-list">
-            <div class="empty-hint-center">لا يوجد لاعبون بعد</div>
-          </div>
-        </div>
-      </section>
 
     </aside>
   </div>
@@ -1919,7 +1917,6 @@ function renderLeaderboard(lb) {
         ${p.streak >= 3 ? `<div class="lb-streak">🔥${p.streak}</div>` : ''}
         <div class="lb-pts">${p.points.toLocaleString()}</div>
       </div>`).join('');
-  document.getElementById('leaderboard-list').innerHTML = html;
   document.getElementById('lb-modal-list').innerHTML = html;
 }
 
