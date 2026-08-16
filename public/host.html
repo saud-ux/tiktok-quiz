@@ -487,19 +487,20 @@ textarea.input{min-height:70px;resize:vertical;line-height:1.6}
 /* ═══════════════════════════════════════════════════════
    CATEGORIES  &  DIFFICULTY  FILTER  (sidebar)
    ═══════════════════════════════════════════════════════ */
-.cat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-height:170px;overflow-y:auto;padding-right:2px}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:6px;max-height:170px;overflow-y:auto;padding-right:2px}
 .cat-grid::-webkit-scrollbar{width:4px}
 .cat-grid::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 .cat-btn{
-  position:relative;padding:9px 6px;border-radius:10px;
+  position:relative;padding:5px 3px;border-radius:8px;aspect-ratio:1/1;
   border:1.5px solid var(--border);background:var(--surface);
-  color:var(--text);font-family:inherit;font-size:11px;font-weight:700;
-  cursor:pointer;transition:all .2s;text-align:center;line-height:1.3;
-  display:flex;flex-direction:column;align-items:center;gap:3px;
+  color:var(--text);font-family:inherit;font-size:9px;font-weight:700;
+  cursor:pointer;transition:all .2s;text-align:center;line-height:1.2;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  overflow:hidden;
 }
 .cat-btn .cat-count{
-  font-size:9px;font-weight:600;color:var(--muted);
-  background:var(--bg);padding:2px 6px;border-radius:20px;
+  font-size:8px;font-weight:600;color:var(--muted);
+  background:var(--bg);padding:1px 4px;border-radius:20px;
   border:1px solid var(--border);
 }
 .cat-btn:hover{transform:translateY(-2px);border-color:var(--cyan);background:#22c55e0a;color:var(--cyan)}
@@ -511,8 +512,8 @@ textarea.input{min-height:70px;resize:vertical;line-height:1.6}
 }
 .cat-btn.active .cat-count{background:#16a34a20;border-color:var(--green);color:var(--green)}
 .cat-btn.active::after{
-  content:'✓';position:absolute;top:4px;left:6px;
-  font-size:10px;color:var(--green);font-weight:900;
+  content:'✓';position:absolute;top:2px;left:4px;
+  font-size:9px;color:var(--green);font-weight:900;
 }
 
 .cat-info{
@@ -634,7 +635,7 @@ textarea.input{min-height:70px;resize:vertical;line-height:1.6}
   .card-body{padding:18px}
   .card-header{padding:12px 14px}
   .q-options,.form-grid,.preview-opts,.row-2col{grid-template-columns:1fr}
-  .cat-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .cat-grid{grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}
   .stats-row{gap:8px}
   .dur-btn{padding:7px 10px;font-size:12px}
   .btn-last-q,.btn-dramatic{font-size:11px;padding:7px 10px}
@@ -733,7 +734,7 @@ body::before{background-image:radial-gradient(circle,#2ee06a14 1px,transparent 1
 .btn-start-main:active{transform:translateY(0) scale(.99)}
 
 /* Categories + queue */
-.cat-btn{background:#ffffff05;border-radius:14px}
+.cat-btn{background:#ffffff05;border-radius:10px}
 .cat-btn.active{box-shadow:0 10px 26px -18px #2ee06a, inset 0 0 26px #2ee06a0f}
 .queue-item{background:#ffffff05;border-color:#2ee06a1f;border-radius:12px}
 .queue-item:not(.used):hover{transform:translateX(-3px);box-shadow:var(--shadow-soft)}
@@ -828,7 +829,7 @@ body{
 /* iPad portrait: stack when sidebar would squeeze the stage */
 @media (min-width:901px) and (max-width:1024px) and (orientation:portrait){
   .layout{grid-template-columns:1fr 14px 300px}
-  .cat-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .cat-grid{grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}
 }
 </style>
 
