@@ -98,8 +98,42 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 .card-toggle:hover{color:var(--text);border-color:var(--purple)}
 .card-toggle span{display:inline-block;transition:transform .25s ease}
 #category-section.collapsed .card-toggle span{transform:rotate(-90deg)}
-#category-section .card-body{overflow:hidden;transition:max-height .3s ease,padding .3s ease,opacity .2s ease;max-height:1400px;opacity:1}
+#category-section{display:none}
+#category-section.visible{display:flex;flex-direction:column;height:var(--cat-h,320px);flex-shrink:0}
+#category-section .card-body{overflow:hidden;transition:max-height .3s ease,padding .3s ease,opacity .2s ease;max-height:var(--cat-h,320px);opacity:1}
+#category-section.visible:not(.collapsed) .card-body{flex:1;overflow-y:auto;min-height:0}
 #category-section.collapsed .card-body{max-height:0;padding-top:0;padding-bottom:0;opacity:0}
+#category-section.visible:not(.collapsed) .card-body{display:flex;flex-direction:column;gap:10px}
+#category-section.visible:not(.collapsed) .cat-grid{max-height:none;flex:1 1 auto;min-height:80px}
+#category-section.visible:not(.collapsed) #diff-filter,
+#category-section.visible:not(.collapsed) #cat-info{flex-shrink:0}
+
+/* Vertical resizer between category and queue */
+body.row-resizing{cursor:row-resize;user-select:none}
+body.row-resizing iframe{pointer-events:none}
+.row-resizer{
+  position:relative;cursor:row-resize;background:transparent;
+  display:none;align-items:center;justify-content:center;
+  height:10px;flex-shrink:0;
+  border-block:1px solid transparent;transition:background .18s;
+}
+.row-resizer::before{
+  content:'';position:absolute;inset-inline:0;inset-block:4px;
+  height:2px;background:#2ee06a20;transition:background .18s;
+}
+.row-resizer:hover::before,body.row-resizing .row-resizer::before{background:var(--cyan)}
+.row-resizer-grip{
+  position:relative;z-index:2;width:46px;height:6px;border-radius:99px;
+  background:#2ee06a35;box-shadow:0 0 0 4px #040c06;transition:background .18s,width .18s;
+}
+.row-resizer:hover .row-resizer-grip,body.row-resizing .row-resizer-grip{
+  background:var(--cyan);width:70px;box-shadow:0 0 0 4px #040c06,0 0 16px #2ee06a80;
+}
+#category-section.visible:not(.collapsed) + .row-resizer{display:flex}
+
+#queue-card{flex:1;min-height:0;flex-direction:column}
+#queue-card .card-body{flex:1;overflow-y:auto;min-height:0}
+#queue-card .queue-scroll{max-height:none}
 
 /* Compact card variant (sidebar) */
 .sidebar .card-header{padding:12px 14px}
@@ -1139,6 +1173,10 @@ body{
         </div>
       </section>
 
+      <div class="row-resizer" id="cat-resizer" title="اسحب لتغيير الارتفاع — نقرة مزدوجة للإرجاع">
+        <div class="row-resizer-grip"></div>
+      </div>
+
       <section class="card" id="queue-card" style="display:none">
         <div class="card-header">
           <div class="card-heading"><span class="card-icon">📋</span>قائمة الأسئلة <span id="queue-counter" class="queue-counter"></span></div>
@@ -1718,7 +1756,14 @@ function parseJSON(text) {
     // ملف أسئلة عادي (مصفوفة)
     categoriesData = { ...DEFAULT_CATEGORIES };
     activeCategory = null;
-    document.getElementById('category-section').style.display = 'none';
+    {
+      const sec = document.getElementById('category-section');
+      sec.style.display = 'none';
+      sec.classList.remove('visible');
+      const r = document.getElementById('cat-resizer');
+      if (r) r.style.display = 'none';
+    }
+    activeCategory = null;
     questionQueue = data.map(q => ({
       text:            q.text || q.question || q['سؤال'] || '',
       type:            q.type || 'normal',
@@ -1774,7 +1819,8 @@ function parseCSV(text) {
 function renderQueue() {
   const card = document.getElementById('queue-card');
   if (!questionQueue.length) { card.style.display = 'none'; return; }
-  card.style.display = 'block';
+  card.style.display = 'flex';
+  card.style.flexDirection = 'column';
   // مزامنة مع السجل المحفوظ قبل العرض
   syncQueueWithAsked();
   const remaining = questionQueue.filter(q => !q.used).length;
@@ -1881,7 +1927,14 @@ const CAT_ICONS = {
 function showCategorySelector(cats) {
   const section = document.getElementById('category-section');
   if (!section) return;
-  section.style.display = 'block';
+  section.style.display = '';
+  section.classList.add('visible');
+  const resizer = document.getElementById('cat-resizer');
+  if (resizer) resizer.style.display = '';
+  if (localStorage.getItem('categorySectionCollapsed') === '1') {
+    section.classList.add('collapsed');
+    if (resizer) resizer.style.display = 'none';
+  }
   document.getElementById('cat-grid').innerHTML = cats.map(cat => {
     const count = (categoriesData[cat] || []).length;
     const icon  = CAT_ICONS[cat] || '📂';
@@ -1958,8 +2011,10 @@ function setDifficulty(diff) {
 function toggleCategorySection(force) {
   const sec = document.getElementById('category-section');
   if (!sec) return;
+  const resizer = document.getElementById('cat-resizer');
   const collapsed = typeof force === 'boolean' ? force : !sec.classList.contains('collapsed');
   sec.classList.toggle('collapsed', collapsed);
+  if (resizer) resizer.style.display = collapsed ? 'none' : '';
   try { localStorage.setItem('categorySectionCollapsed', collapsed ? '1' : '0'); } catch(e) {}
 }
 try {
@@ -1980,7 +2035,9 @@ function clearQueue() {
     document.getElementById('cat-info').textContent = 'اختر تصنيفاً لتحميل أسئلته';
   } else {
     const sec = document.getElementById('category-section');
-    if (sec) sec.style.display = 'none';
+    if (sec) { sec.style.display = 'none'; sec.classList.remove('visible'); }
+    const r = document.getElementById('cat-resizer');
+    if (r) r.style.display = 'none';
   }
   toast('🗑️ تم مسح القائمة');
 }
@@ -2407,6 +2464,61 @@ setQType('normal');
   });
 
 ;
+})();
+
+// Vertical resizer for category section
+(function(){
+  const section = document.getElementById('category-section');
+  const resizer = document.getElementById('cat-resizer');
+  const sidebar = document.querySelector('.sidebar');
+  if (!resizer || !section || !sidebar) return;
+  const DEFAULT = 320, MIN = 160;
+  const MIN_QUEUE = 120;
+
+  function setHeight(px, save){
+    const h = Math.round(Math.max(MIN, px));
+    const maxH = Math.max(MIN, sidebar.clientHeight - MIN_QUEUE - 18);
+    if (px >= maxH - 4) { document.documentElement.style.setProperty('--cat-h', maxH + 'px');
+      if (save !== false) try { localStorage.setItem('host-cat-h', maxH); } catch(e){}
+      return; }
+    const finalH = Math.min(h, maxH);
+    document.documentElement.style.setProperty('--cat-h', finalH + 'px');
+    if (save !== false) try { localStorage.setItem('host-cat-h', finalH); } catch(e){}
+  }
+
+  const saved = (()=>{ try{ return parseInt(localStorage.getItem('host-cat-h'),10); }catch(e){ return NaN; } })();
+  if (saved) setHeight(saved, false);
+
+  let dragging = false;
+  function start(e){
+    dragging = true;
+    document.body.classList.add('row-resizing');
+    e.preventDefault();
+  }
+  function stop(){
+    if (!dragging) return;
+    dragging = false;
+    document.body.classList.remove('row-resizing');
+  }
+  function move(clientY){
+    const rect = section.getBoundingClientRect();
+    setHeight(clientY - rect.top);
+  }
+
+  resizer.addEventListener('mousedown', start);
+  window.addEventListener('mousemove', e => { if (dragging) move(e.clientY); });
+  window.addEventListener('mouseup', stop);
+
+  resizer.addEventListener('touchstart', start, {passive:false});
+  window.addEventListener('touchmove', e => { if (dragging){ move(e.touches[0].clientY); e.preventDefault(); } }, {passive:false});
+  window.addEventListener('touchend', stop);
+
+  resizer.addEventListener('dblclick', () => setHeight(DEFAULT));
+
+  window.addEventListener('resize', () => {
+    const cur = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cat-h'), 10) || DEFAULT;
+    setHeight(cur, false);
+  });
 })();
 </script>
 <script>
