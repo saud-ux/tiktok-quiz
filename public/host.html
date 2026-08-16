@@ -93,6 +93,13 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 .card-icon{font-size:16px;filter:drop-shadow(0 0 8px #4ade8040)}
 .card-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .card-body{padding:22px}
+/* Collapsible category section */
+.card-toggle{background:transparent;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;transition:.2s}
+.card-toggle:hover{color:var(--text);border-color:var(--purple)}
+.card-toggle span{display:inline-block;transition:transform .25s ease}
+#category-section.collapsed .card-toggle span{transform:rotate(-90deg)}
+#category-section .card-body{overflow:hidden;transition:max-height .3s ease,padding .3s ease,opacity .2s ease;max-height:1400px;opacity:1}
+#category-section.collapsed .card-body{max-height:0;padding-top:0;padding-bottom:0;opacity:0}
 
 /* Compact card variant (sidebar) */
 .sidebar .card-header{padding:12px 14px}
@@ -1115,6 +1122,7 @@ body{
       <section class="card" id="category-section" style="display:none">
         <div class="card-header">
           <div class="card-heading"><span class="card-icon">📚</span>اختر تصنيفاً</div>
+          <button class="card-toggle" id="category-toggle" onclick="toggleCategorySection()" title="طي/توسيع"><span>▾</span></button>
         </div>
         <div class="card-body">
           <div class="cat-grid" id="cat-grid"></div>
@@ -1946,6 +1954,19 @@ function setDifficulty(diff) {
   document.getElementById('cat-info').textContent = label;
   toast(diff ? `🎯 ${diff} — ${filtered.length} سؤال` : `📚 الكل — ${questionQueue.length} سؤال`);
 }
+
+function toggleCategorySection(force) {
+  const sec = document.getElementById('category-section');
+  if (!sec) return;
+  const collapsed = typeof force === 'boolean' ? force : !sec.classList.contains('collapsed');
+  sec.classList.toggle('collapsed', collapsed);
+  try { localStorage.setItem('categorySectionCollapsed', collapsed ? '1' : '0'); } catch(e) {}
+}
+try {
+  if (localStorage.getItem('categorySectionCollapsed') === '1') {
+    document.addEventListener('DOMContentLoaded', () => toggleCategorySection(true));
+  }
+} catch(e) {}
 
 function clearQueue() {
   if (!confirm('هل تريد مسح قائمة الأسئلة؟')) return;
